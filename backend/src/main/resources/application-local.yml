@@ -1,0 +1,13 @@
+# 로컬 개발. DB 연결 정보는 compose.yaml에서 spring-boot-docker-compose가 자동으로 채운다.
+spring:
+  docker:
+    compose:
+      lifecycle-management: start-only
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug

@@ -8,14 +8,14 @@ HacKHU 동아리 홈페이지. 인증·권한, 게시판, 갤러리를 만들면
 
 ```
 frontend/   웹 프론트엔드 — 프레임워크 미정
-backend/    API 서버 — Spring vs Python 미정 (PL 결정)
+backend/    API 서버 — Spring Boot 4.1 / Java 21 / PostgreSQL 17
 infra/      Terraform (AWS). 콘솔 직접 수정 금지, 이 디렉터리 PR로만 변경
 docs/       컨벤션, API 규약, 보안 문서
 practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 아니다
 .github/    CI, 보안 스캔, CODEOWNERS
 ```
 
-스택이 정해지면 이 표와 아래 "영역별 규칙"을 같은 PR에서 갱신한다.
+프론트엔드 프레임워크가 정해지면 이 표와 아래 "영역별 규칙"을 같은 PR에서 갱신한다.
 
 ## 작업 전에 읽을 문서
 
@@ -56,4 +56,7 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 
 ## 영역별 규칙
 
-스택이 정해지기 전이라 공통 규칙만 둔다. 스택 확정 후 `frontend/CLAUDE.md`, `backend/CLAUDE.md`를 만들어 세부 규칙을 적는다.
+| 영역 | 규칙 |
+|---|---|
+| backend | [backend/CLAUDE.md](backend/CLAUDE.md) |
+| frontend | 프레임워크 확정 후 `frontend/CLAUDE.md`를 만든다 |

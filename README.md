@@ -7,7 +7,7 @@ HacKHU 동아리 홈페이지. 기능을 개발하면서 보안 도구를 라운
 | 디렉터리 | 내용 | 상태 |
 |---|---|---|
 | [`frontend/`](frontend/) | 웹 프론트엔드 | 프레임워크 미정 |
-| [`backend/`](backend/) | API 서버 | Spring vs Python 미정 |
+| [`backend/`](backend/) | API 서버 | Spring Boot 4.1 / Java 21 / PostgreSQL 17 |
 | [`infra/`](infra/) | Terraform (AWS) | S2부터 작성 |
 | [`docs/`](docs/) | 컨벤션, API 규약, 보안 문서 | |
 | [`practice/`](practice/) | Juice Shop 보안 도구 실습 환경 | S1 실습용 |

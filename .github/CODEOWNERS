@@ -4,10 +4,7 @@
 # PL: @sumin0218
 # PM: @kangkyunghyun
 #
-# TODO: 인프라팀(이소연·소광현·우새봄) GitHub ID를 받으면 infra/ 줄에 추가한다.
-#       인원이 자주 바뀌면 org 팀(@khu-HacKHU/infra)을 만들어 팀 핸들로 바꾼다.
-# TODO: 백엔드 스택이 정해지면 인증·파일 업로드·권한 코드 경로를 PL 오너로 추가한다
-#       (운영 규칙: 인증·파일 업로드·권한 관련 PR은 PL 최종 승인).
+# TODO: org 팀 @khu-HacKHU/gallery-infra 가 만들어지면 infra/ 줄에 추가한다.
 
 # 인프라 — PM·인프라팀
 /infra/                  @kangkyunghyun
@@ -21,3 +18,14 @@
 /CLAUDE.md               @sumin0218
 /docs/conventions/       @sumin0218
 /docs/security/          @sumin0218
+
+# 인증·권한·파일 업로드 — PL 최종 승인 (운영 규칙). 패키지 구조는 backend/CLAUDE.md
+/backend/src/main/java/com/hackhu/hp/global/security/   @sumin0218
+/backend/src/main/java/com/hackhu/hp/global/auth/       @sumin0218
+/backend/src/main/java/com/hackhu/hp/global/storage/    @sumin0218
+/backend/src/main/java/com/hackhu/hp/global/error/      @sumin0218
+/backend/src/main/java/com/hackhu/hp/domain/auth/       @sumin0218
+
+# 의존성·런타임 설정 — PL
+/backend/build.gradle.kts                               @sumin0218
+/backend/src/main/resources/application*.yml            @sumin0218

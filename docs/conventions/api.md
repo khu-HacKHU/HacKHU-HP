@@ -4,7 +4,7 @@
 
 ## 1. URL
 
-- 모든 경로는 `/api/v1`로 시작한다. 헬스체크(`/health`)와 API 문서 경로는 예외다.
+- 모든 경로는 `/api/v1`로 시작한다. 헬스체크(`/actuator/health`)와 API 문서 경로(`/v3/api-docs`, `/swagger-ui`)는 예외다.
 - 리소스는 kebab-case 복수형 명사로 쓴다. 동사를 경로에 넣지 않는다.
 - 관리자 전용 API는 `/api/v1/admin/...` 아래에 둔다. 경로만으로 권한을 판단하지 말고 서버에서 역할을 검사한다.
 
@@ -24,7 +24,7 @@
 - `Content-Type: application/json; charset=utf-8`. 파일은 서버가 받지 않고 presigned URL로 S3에 직접 올린다.
 - 필드명은 camelCase.
 - 시각은 ISO 8601 UTC 문자열: `"2026-10-12T09:30:00Z"`. 화면 표시에서만 KST로 바꾼다.
-- ID는 문자열 또는 정수 중 하나로 통일한다 (백엔드 스택 확정 시 결정). 순차 ID를 쓰더라도 **ID를 안다고 접근할 수 있어서는 안 된다** — 모든 단건 API에서 권한을 검사한다.
+- ID는 정수(JSON number, 서버에서는 `Long`)로 통일한다. 순차 ID이므로 **ID를 안다고 접근할 수 있어서는 안 된다** — 모든 단건 API에서 권한을 검사한다.
 - 값이 없으면 `null`로 준다. 필드를 빼지 않는다.
 
 ### 성공 응답
@@ -35,7 +35,7 @@
 {
   "id": 42,
   "title": "10월 정기 세미나 공지",
-  "author": { "id": 7, "nickname": "hacker" },
+  "author": { "id": 7, "nickname": "khu_member" },
   "createdAt": "2026-10-12T09:30:00Z"
 }
 ```
@@ -109,4 +109,4 @@
 
 - 응답 필드를 삭제하거나 이름·타입을 바꾸는 것은 호환성을 깨는 변경이다. 프론트엔드와 합의한 뒤 같은 PR에서 명세를 갱신한다.
 - 필드 추가는 호환되는 변경이다.
-- API 명세 도구(OpenAPI 등)는 백엔드 스택 확정 후 정한다.
+- API 명세는 springdoc-openapi가 코드에서 생성한다. 로컬에서 http://localhost:8080/swagger-ui.html 로 확인하고, 컨트롤러·DTO에 `@Operation`, `@Schema`로 설명을 단다.

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: hackhu-hp
+  profiles:
+    default: local
+  jpa:
+    # 스키마는 Flyway 마이그레이션만 바꾼다. Hibernate는 검증만 한다.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  # 에러 응답에 스택 트레이스·예외 메시지를 싣지 않는다 (docs/conventions/api.md 3절).
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
