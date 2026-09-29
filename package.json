@@ -1,0 +1,15 @@
+{
+  "name": "hackhu-hp",
+  "private": true,
+  "description": "저장소 전체에 걸리는 도구만 둔다. 앱 의존성은 frontend/, backend/ 안에 둔다.",
+  "scripts": {
+    "prepare": "husky",
+    "commitlint": "commitlint",
+    "test:commitlint": "bash .github/scripts/test-commitlint.sh"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^9.1.7"
+  }
+}

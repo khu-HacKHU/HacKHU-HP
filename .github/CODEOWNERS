@@ -1,0 +1,23 @@
+# 코드 오너. 여기 적힌 사람의 승인이 있어야 해당 경로의 PR을 머지할 수 있다 (ruleset: require code owner review).
+# 나중 줄이 앞 줄을 덮어쓴다. 오너로 지정하려면 해당 계정이나 팀에 레포 write 권한이 있어야 한다.
+#
+# PL: @sumin0218
+# PM: @kangkyunghyun
+#
+# TODO: 인프라팀(이소연·소광현·우새봄) GitHub ID를 받으면 infra/ 줄에 추가한다.
+#       인원이 자주 바뀌면 org 팀(@khu-HacKHU/infra)을 만들어 팀 핸들로 바꾼다.
+# TODO: 백엔드 스택이 정해지면 인증·파일 업로드·권한 코드 경로를 PL 오너로 추가한다
+#       (운영 규칙: 인증·파일 업로드·권한 관련 PR은 PL 최종 승인).
+
+# 인프라 — PM·인프라팀
+/infra/                  @kangkyunghyun
+
+# CI·보안 도구·저장소 규칙 — PL
+/.github/                @sumin0218
+/.gitleaks.toml          @sumin0218
+/.semgrepignore          @sumin0218
+/commitlint.config.mjs   @sumin0218
+/AGENTS.md               @sumin0218
+/CLAUDE.md               @sumin0218
+/docs/conventions/       @sumin0218
+/docs/security/          @sumin0218

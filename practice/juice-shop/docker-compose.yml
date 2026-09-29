@@ -1,0 +1,20 @@
+# OWASP Juice Shop — 일부러 취약하게 만든 실습용 웹앱.
+#
+# 반드시 127.0.0.1에만 바인딩한다. 0.0.0.0으로 열면 같은 네트워크(학교 와이파이 등)의
+# 누구나 취약한 앱에 접근할 수 있다. 클라우드 서버에 띄우지 않는다.
+
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:v20.2.0
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: "no"
+
+  # DAST 맛보기 (2R 대비). `docker compose --profile dast run --rm zap` 으로 실행한다.
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles: [dast]
+    depends_on: [juice-shop]
+    volumes:
+      - ./reports:/zap/wrk
+    command: zap-baseline.py -t http://juice-shop:3000 -r zap-report.html -I

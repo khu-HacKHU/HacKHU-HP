@@ -1,0 +1,13 @@
+# gitleaks 설정. 기본 규칙을 그대로 쓰고, 오탐만 여기서 허용한다.
+# 허용 목록을 추가할 때는 PR 본문에 오탐인 이유를 적는다 (1R SCA·시크릿 담당자 리뷰).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "예시 파일과 잠금 파일"
+paths = [
+  '''(^|/)\.env\.example$''',
+  '''(^|/)terraform\.tfvars\.example$''',
+  '''(^|/)package-lock\.json$''',
+]

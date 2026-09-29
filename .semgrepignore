@@ -1,0 +1,12 @@
+# 이 파일이 있으면 Semgrep 기본 제외 목록이 대체되므로 필요한 것을 모두 적는다.
+:include .gitignore
+
+.git/
+node_modules/
+dist/
+build/
+*.min.js
+package-lock.json
+
+# 실습용 취약 앱 환경. 본 프로젝트 코드가 아니다.
+practice/

@@ -1,0 +1,146 @@
+name: CI
+
+# 바뀐 경로의 잡만 돌린다 (dorny/paths-filter).
+#
+# 워크플로 단위 `on.paths` 대신 잡 단위 `if`로 거르는 이유: ruleset의 필수 상태 검사는
+# 워크플로 자체가 트리거되지 않으면 "대기 중"으로 남아 PR이 영원히 머지되지 않는다.
+# 잡 단위로 건너뛰면 skipped는 성공으로 취급된다. 필수 검사로는 마지막 `ci-ok` 하나만 건다.
+#
+# TODO: 프레임워크가 정해지면 frontend/backend 잡의 "빌드·테스트" 단계를 채운다.
+
+on:
+  pull_request:
+    branches: [main, develop, 'release/**']
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      infra: ${{ steps.filter.outputs.infra }}
+      repo: ${{ steps.filter.outputs.repo }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
+            infra:
+              - 'infra/**'
+            repo:
+              - '.github/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'commitlint.config.mjs'
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - name: 빌드·테스트
+        run: |
+          if [ ! -f package.json ]; then
+            echo "::notice::frontend 프레임워크가 아직 정해지지 않아 빌드를 건너뜁니다."
+            exit 0
+          fi
+          # TODO: 프레임워크 확정 후 setup-node(캐시 포함)와 함께 교체
+          npm ci
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - name: 빌드·테스트
+        run: |
+          # TODO: 백엔드 스택(Spring vs Python) 확정 후 setup-java / setup-python과 함께 교체
+          if [ -f gradlew ]; then
+            ./gradlew build
+          elif [ -f pyproject.toml ] || [ -f requirements.txt ]; then
+            echo "::warning::Python 빌드 단계가 아직 없습니다. ci.yml backend 잡을 채워주세요."
+          else
+            echo "::notice::backend 스택이 아직 정해지지 않아 빌드를 건너뜁니다."
+          fi
+
+  infra:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: tf
+        name: Terraform 파일 확인
+        run: |
+          if find infra -name '*.tf' | grep -q .; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::infra/에 Terraform 파일이 아직 없습니다."
+          fi
+      - if: steps.tf.outputs.present == 'true'
+        uses: hashicorp/setup-terraform@v4
+      # 원격 백엔드·AWS 자격 증명 없이 문법만 본다. plan은 OIDC 연동 후 별도 워크플로에서 한다.
+      - if: steps.tf.outputs.present == 'true'
+        name: fmt·validate
+        run: |
+          terraform fmt -check -recursive infra
+          for dir in $(find infra -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u); do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+  repo:
+    needs: changes
+    if: needs.changes.outputs.repo == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: 스크립트 규칙 테스트
+        run: bash .github/scripts/test-validate-pr-source.sh
+
+  # ruleset 필수 검사는 이 잡 하나만 건다. 건너뛴 잡은 통과, 실패·취소된 잡이 있으면 실패.
+  ci-ok:
+    if: always()
+    needs: [changes, frontend, backend, infra, repo]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 결과 집계
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "잡 결과: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              exit 1
+            fi
+          done

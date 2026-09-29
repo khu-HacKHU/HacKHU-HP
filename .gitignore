@@ -1,0 +1,55 @@
+# 환경변수 — 시크릿은 GitHub Secrets에만 둔다 (docs/security/secure-coding.md)
+.env
+.env.*
+!.env.example
+
+# Terraform — tfstate에는 DB 비밀번호 같은 값이 평문으로 들어간다
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+terraform.tfvars
+*.auto.tfvars
+!*.tfvars.example
+
+# 자격 증명 파일 — 저장소 안에 두면 그대로 커밋되므로 파일명 자체를 막는다
+client_secret*.json
+*credentials*.json
+*.pem
+*.key
+*.p12
+application-secret*.yml
+application-secret*.properties
+
+# 보안 도구 로컬 출력물
+*.sarif
+gitleaks-report.*
+semgrep-report.*
+checkov-report.*
+
+# Node
+node_modules/
+dist/
+.next/
+coverage/
+
+# Java / Gradle
+build/
+.gradle/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+.DS_Store
+Thumbs.db
