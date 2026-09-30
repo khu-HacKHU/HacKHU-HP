@@ -1,15 +1,41 @@
 # backend
 
-API 서버. **스택 미정 (Spring vs Python, PL 결정).**
+HacKHU 홈페이지 API 서버. Spring Boot 4.1 / Java 21 / PostgreSQL 17.
 
-스택이 정해지면 같은 PR에서 다음을 함께 갱신한다.
+작업 규칙은 [AGENTS.md](AGENTS.md)에 있다.
 
-- [ ] 이 README — 실행 방법, 환경변수 (`.env.example`)
-- [ ] [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) `backend` 잡 — setup-java / setup-python, 빌드·테스트
-- [ ] [`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml) — `java-kotlin` 또는 `python` 추가
-- [ ] [`.github/dependabot.yml`](../.github/dependabot.yml) — `gradle` 또는 `pip` (`/backend`) 추가
-- [ ] [`.github/workflows/security.yml`](../.github/workflows/security.yml) Semgrep 규칙셋 — `p/java`·`p/spring` 또는 `p/python`·`p/django`/`p/flask`
-- [ ] [`.github/CODEOWNERS`](../.github/CODEOWNERS) — 인증·파일 업로드·권한 코드 경로에 PL 오너 지정
-- [ ] [`docs/conventions/api.md`](../docs/conventions/api.md) — ID 타입, API 명세 도구 확정
-- [ ] [`docs/conventions/code-style.md`](../docs/conventions/code-style.md) "스택별 규칙"
-- [ ] `backend/CLAUDE.md` — 영역별 규칙 (패키지 구조, 예외 처리, 마이그레이션 등)
+## 준비물
+
+- **JDK**: 따로 설치하지 않아도 된다. 처음 빌드할 때 Gradle이 JDK 21을 자동으로 내려받는다
+- **Docker Desktop**: 로컬 DB와 통합 테스트에 필요하다
+
+## 실행
+
+```bash
+cd backend
+./gradlew bootRun          # Windows: gradlew.bat bootRun
+```
+
+- `compose.yaml`의 PostgreSQL이 자동으로 뜨고 연결된다 (`local` 프로파일)
+- 헬스체크: http://localhost:8080/actuator/health
+- API 문서 (Swagger UI): http://localhost:8080/swagger-ui.html
+
+## 빌드·테스트
+
+```bash
+./gradlew spotlessApply    # 포매팅 자동 수정
+./gradlew build            # 포매팅 검사 + 컴파일 + 테스트
+```
+
+CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 통과한다.
+
+## 환경변수 (`prod` 프로파일)
+
+| 변수 | 설명 |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `DATABASE_URL` | `jdbc:postgresql://호스트:5432/DB이름` |
+| `DATABASE_USERNAME` | DB 계정 |
+| `DATABASE_PASSWORD` | DB 비밀번호 |
+
+값은 GitHub Secrets 또는 AWS 파라미터 스토어에만 둔다.

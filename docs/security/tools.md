@@ -29,8 +29,8 @@ gitleaks만 막는 이유: 한 번 푸시된 시크릿은 되돌릴 수 없다. 
 
 | 영역 | 담당 | 할 일 |
 |---|---|---|
-| SAST | 양수환, 이나은 | Semgrep 규칙셋을 스택에 맞게 조정 (`p/java` 또는 `p/python` 추가), CodeQL 언어 추가, 경고 판별 |
-| SCA·시크릿 | 박지은, 김유석 | Dependabot ecosystem 추가, 취약 의존성 판별, gitleaks 오탐 관리 |
+| SAST | 양수환, 이나은 | Semgrep 규칙셋 조정 (`p/java` 적용됨, Spring 규칙 검토), CodeQL `java-kotlin` 결과와 비교, 경고 판별 |
+| SCA·시크릿 | 박지은, 김유석 | Dependabot(`gradle` 적용됨) 알림 판별, 프론트 ecosystem 추가, gitleaks 오탐 관리 |
 | IaC | 서영채, 이소연 | Checkov 경고 판별, `infra/` PR 리뷰 참여, 스킵 기준 문서화 |
 
 판별 결과는 이슈로 남긴다: 제목 `security: [도구] 경고 요약`, `security` 라벨.

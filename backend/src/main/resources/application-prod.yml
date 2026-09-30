@@ -1,0 +1,13 @@
+# 스테이징·운영. 모든 접속 정보는 환경변수로 주입한다 — 이 파일에 값을 적지 않는다.
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+# API 문서는 운영에서 노출하지 않는다.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

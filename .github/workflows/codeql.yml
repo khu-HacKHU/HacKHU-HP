@@ -3,10 +3,7 @@ name: CodeQL
 # SAST 보조 도구. Semgrep과 달리 데이터 흐름을 따라가므로 두 결과를 비교해 보는 것이 1R 실습이다.
 # 결과는 Code scanning 탭에 올라가며 PR을 막지 않는다.
 #
-# TODO: 스택이 정해지면 matrix에 언어를 추가한다.
-#   frontend (TS/JS)  → javascript-typescript
-#   backend (Spring)  → java-kotlin   (build-mode: none 으로 빌드 없이 분석 가능)
-#   backend (Python)  → python
+# TODO: 프론트엔드 프레임워크가 정해지면 matrix에 javascript-typescript를 추가한다.
 
 on:
   pull_request:
@@ -32,6 +29,9 @@ jobs:
       matrix:
         include:
           - language: actions
+            build-mode: none
+          # 빌드 없이 소스만으로 분석한다. 빌드가 필요한 정밀 분석이 필요해지면 autobuild로 바꾼다.
+          - language: java-kotlin
             build-mode: none
     steps:
       - uses: actions/checkout@v7
