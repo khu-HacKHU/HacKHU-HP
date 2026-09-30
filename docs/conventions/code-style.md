@@ -43,4 +43,4 @@
 ## 스택별 규칙
 
 - frontend: 미정
-- backend: [backend/CLAUDE.md](../../backend/CLAUDE.md) — 포매터는 Spotless(google-java-format AOSP 스타일), `./gradlew spotlessApply`
+- backend: [backend/AGENTS.md](../../backend/AGENTS.md) — 포매터는 Spotless(google-java-format AOSP 스타일), `./gradlew spotlessApply`

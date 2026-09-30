@@ -2,7 +2,7 @@
 
 HacKHU 홈페이지 API 서버. Spring Boot 4.1 / Java 21 / PostgreSQL 17.
 
-작업 규칙은 [CLAUDE.md](CLAUDE.md)에 있다.
+작업 규칙은 [AGENTS.md](AGENTS.md)에 있다.
 
 ## 준비물
 

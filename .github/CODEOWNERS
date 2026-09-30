@@ -15,11 +15,10 @@
 /.semgrepignore          @sumin0218
 /commitlint.config.mjs   @sumin0218
 /AGENTS.md               @sumin0218
-/CLAUDE.md               @sumin0218
 /docs/conventions/       @sumin0218
 /docs/security/          @sumin0218
 
-# 인증·권한·파일 업로드 — PL 최종 승인 (운영 규칙). 패키지 구조는 backend/CLAUDE.md
+# 인증·권한·파일 업로드 — PL 최종 승인 (운영 규칙). 패키지 구조는 backend/AGENTS.md
 /backend/src/main/java/com/hackhu/hp/global/security/   @sumin0218
 /backend/src/main/java/com/hackhu/hp/global/auth/       @sumin0218
 /backend/src/main/java/com/hackhu/hp/global/storage/    @sumin0218
