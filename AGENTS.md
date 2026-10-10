@@ -38,11 +38,16 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 | backend | [backend/AGENTS.md](backend/AGENTS.md) |
 | frontend | 프레임워크 확정 후 `frontend/AGENTS.md`를 만든다 |
 
-## PR을 올릴 때
+## 작업 순서
 
-- 일반 작업은 `develop`에서 분기해 `develop`으로 PR을 보낸다. `main`에는 `release/vX.Y.Z`, `hotfix/vX.Y.Z`만 PR을 보낸다.
-- 제목은 `type(scope): 한글 설명` (예: `feat(board): 공지 목록 조회 API 구현`). scope는 팀 영역(`auth`, `board`, `gallery`, `infra`)이고 팀에 속하지 않는 변경은 생략한다. 이슈 번호는 쓰지 않는다.
-- 본문에 `Closes #이슈번호`를 적고 본인을 assignee로 지정한다 (`gh pr create --assignee @me`).
+1. **이슈부터.** 작업할 이슈를 확인한다. 없으면 이슈 템플릿으로 먼저 만든다. 제목은 커밋과 같은 `type(scope): 한글 설명`이다.
+2. **브랜치.** `git fetch origin` 후 `origin/develop`에서 `{type}/{이슈번호}-{영어 kebab-case slug}`로 만든다 (예: `feat/12-notice-list`). 로컬 초안이어도 이슈 번호 없이 브랜치를 만들지 않는다. hotfix만 `origin/main`에서 `hotfix/vX.Y.Z`로 만든다.
+3. **커밋.** 메시지는 `type(scope): 한글 설명` (예: `feat(board): 공지 목록 조회 API 구현`). scope는 팀 영역(`auth`, `board`, `gallery`, `infra`)이고 팀에 속하지 않는 변경은 생략한다. 이슈 번호는 쓰지 않는다.
+4. **PR.** `develop`으로 보낸다. `main`에는 `release/vX.Y.Z`, `hotfix/vX.Y.Z`만 보낸다. 제목은 커밋과 같은 형식이고, 본문은 PR 템플릿을 채운 뒤 `Closes #이슈번호`를 적는다. 본인을 assignee로 지정한다 (`gh pr create --assignee @me`).
+5. **리뷰 반영.** 새 커밋으로 올린다. force push로 덮어쓰지 않는다.
+
+브랜치 이름, PR 제목, `Closes #` 누락은 CI(`Lint PR`)가 막는다. 세부 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md)에 있다.
+
 - **PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.** AI가 만든 코드도 마찬가지다.
 - 인증·파일 업로드·권한 관련 PR은 PL(@sumin0218)의 최종 승인을 받는다.
 

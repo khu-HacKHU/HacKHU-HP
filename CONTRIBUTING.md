@@ -64,7 +64,7 @@ main(v0.1.0) ── hotfix/v0.1.1 ──PR──> main (v0.1.1)
                               └─PR──> develop
 ```
 
-- 작업 브랜치: `{type}/{issue-number}-{slug}` (예: `feat/12-notice-list`)
+- 작업 브랜치: `{type}/{issue-number}-{slug}` (예: `feat/12-notice-list`). type은 1절 목록에서 `release`를 뺀 것이다. CI가 develop, release 대상 PR의 출발 브랜치 이름을 검사한다.
 - 출시 브랜치: `release/v{major}.{minor}.{patch}` (예: `release/v0.1.0`)
 - 긴급 수정 브랜치: `hotfix/v{major}.{minor}.{patch}` (예: `hotfix/v0.1.1`). 운영 중인 버전의 긴급 수정만 다룬다
 - 이슈 번호는 `#` 없이 숫자만, slug는 영어 kebab-case로 쓴다.
@@ -99,7 +99,7 @@ Rebase and merge는 쓰지 않는다.
 - **필수 검사**: `CI / ci-ok`, `Lint PR / pr-title`, `Security / gitleaks`.
 - **보안 스캔 결과**: Semgrep·Checkov·CodeQL은 PR을 막지 않지만, 새로 생긴 경고는 PR에서 확인하고 오탐이면 이유를 적는다.
 - **작성자 책임**: PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.
-- **이슈 연결**: 본문에 `Closes #12`를 적는다.
+- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. dependabot과 release 브랜치의 PR은 검사하지 않는다.
 - **API 변경**: [API 규약](docs/conventions/api.md)을 따르고, API 명세를 같은 PR에서 갱신한다.
 
 ---

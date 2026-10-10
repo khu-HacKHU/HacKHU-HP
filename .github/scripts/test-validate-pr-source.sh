@@ -27,6 +27,12 @@ expect_pass develop fix/31-login-loop
 expect_pass release/v0.1.0 fix/42-release-blocker
 expect_pass main hotfix/v0.1.1
 expect_pass develop hotfix/v0.1.1
+expect_pass develop release/v0.1.0
+expect_pass develop chore/7-frontend-react-setup
+expect_pass develop docs/13-feature-spec
+expect_pass develop security/40-post-owner-check
+expect_pass develop dependabot/npm_and_yarn/develop/tooling-1172afec0c
+expect_pass feat/12-notice-list feat/12-notice-list-ui
 
 expect_fail main develop
 expect_fail main feat/12-notice-list
@@ -35,6 +41,15 @@ expect_fail main release/v0.1
 expect_fail main release/v01.0.0
 expect_fail main hotfix/0.1.1
 expect_fail main hotfix/31-login-loop
+expect_fail develop chore/backend-spring-setup
+expect_fail develop docs/spec-draft
+expect_fail develop feat/notice-list
+expect_fail develop feat/12_notice_list
+expect_fail develop feat/12-Notice-List
+expect_fail develop feat/012-notice-list
+expect_fail develop wip/12-notice-list
+expect_fail develop release/12-notice-list
+expect_fail release/v0.1.0 bugfix/42-release-blocker
 
 if [ "$failures" -ne 0 ]; then
   echo "PR 출발 브랜치 규칙 검사 실패: $failures건" >&2
