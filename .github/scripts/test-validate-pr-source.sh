@@ -25,12 +25,16 @@ expect_pass main release/v1.12.3
 expect_pass develop feat/12-notice-list
 expect_pass develop fix/31-login-loop
 expect_pass release/v0.1.0 fix/42-release-blocker
+expect_pass main hotfix/v0.1.1
+expect_pass develop hotfix/v0.1.1
 
 expect_fail main develop
 expect_fail main feat/12-notice-list
 expect_fail main release/0.1.0
 expect_fail main release/v0.1
 expect_fail main release/v01.0.0
+expect_fail main hotfix/0.1.1
+expect_fail main hotfix/31-login-loop
 
 if [ "$failures" -ne 0 ]; then
   echo "PR 출발 브랜치 규칙 검사 실패: $failures건" >&2

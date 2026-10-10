@@ -40,8 +40,8 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 
 ## PR을 올릴 때
 
-- 일반 작업은 `develop`에서 분기해 `develop`으로 PR을 보낸다. `main`에는 `release/vX.Y.Z`만 PR을 보낸다.
-- 제목은 `type: 한글 설명` (예: `feat: 공지 목록 조회 API 구현`). scope와 이슈 번호는 쓰지 않는다.
+- 일반 작업은 `develop`에서 분기해 `develop`으로 PR을 보낸다. `main`에는 `release/vX.Y.Z`, `hotfix/vX.Y.Z`만 PR을 보낸다.
+- 제목은 `type(scope): 한글 설명` (예: `feat(board): 공지 목록 조회 API 구현`). scope는 팀 영역(`auth`, `board`, `gallery`, `infra`)이고 팀에 속하지 않는 변경은 생략한다. 이슈 번호는 쓰지 않는다.
 - 본문에 `Closes #이슈번호`를 적고 본인을 assignee로 지정한다 (`gh pr create --assignee @me`).
 - **PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.** AI가 만든 코드도 마찬가지다.
 - 인증·파일 업로드·권한 관련 PR은 PL(@sumin0218)의 최종 승인을 받는다.

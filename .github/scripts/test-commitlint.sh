@@ -34,6 +34,10 @@ expect_pass 'fix: 로그인 후 무한 리다이렉트 수정'
 expect_pass 'security: 게시글 수정 API에 작성자 검사 추가'
 expect_pass 'release: v0.1.0 출시'
 expect_pass 'chore: bump dependencies'
+expect_pass 'feat(board): 공지 목록 조회 API 구현'
+expect_pass 'fix(auth): 토큰 갱신 실패 수정'
+expect_pass 'feat(gallery): 사진 업로드 추가'
+expect_pass 'chore(infra): VPC 모듈 추가'
 
 for type in feat fix docs design cicd refactor test chore security release; do
   expect_pass "$type: 형식 확인"
@@ -44,6 +48,7 @@ expect_fail 'wip: 대충 저장'
 expect_fail '공지 목록 구현'
 expect_fail 'feat:'
 expect_fail 'feat(web): 공지 화면 추가'
+expect_fail 'feat(photo): 사진 업로드 추가'
 expect_fail 'feat: 공지 조회 API 구현 #110'
 expect_fail 'fix: 세션 갱신 수정 (#91)'
 expect_fail "docs: $(printf '가%.0s' $(seq 1 80))"
