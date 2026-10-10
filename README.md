@@ -14,11 +14,13 @@ HacKHU 동아리 홈페이지. 기능을 개발하면서 보안 도구를 라운
 
 ## 팀
 
-| 팀 | 담당 기능 |
-|---|---|
-| 인증·권한 | 회원가입, 로그인, JWT, OAuth2, 관리자 기능 |
-| 게시판 | 공지, 자유·자료 게시판, 첨부파일 |
-| 갤러리 + 인프라 | 갤러리 업로드(presigned URL), Terraform, 스테이징·운영 배포, CloudWatch |
+| 팀 | 팀원 | 담당 |
+|---|---|---|
+| 인증·권한 | 권승원, 양수환, 박지은 | [인증권한](docs/spec/auth/BACKGROUND.md) |
+| 게시판 | 서영채, 김유석, 이나은, 윤예진 | [게시판](docs/spec/board/BACKGROUND.md), [홈](docs/spec/home/BACKGROUND.md) |
+| 갤러리 + 인프라 | 이소연, 소광현, 우새봄 | [갤러리](docs/spec/gallery/BACKGROUND.md), [배포](docs/spec/DEPLOYMENT.md) |
+
+기능별 범위는 각 기능의 배경 문서와 [제품 명세](docs/spec/PRODUCT.md)에 있다.
 
 PM: 강경현 (@kangkyunghyun) · PL: 손수민 (@sumin0218)
 
@@ -26,8 +28,8 @@ PM: 강경현 (@kangkyunghyun) · PL: 손수민 (@sumin0218)
 
 | 스프린트 | 기간 | 내용 | 보안 라운드 |
 |---|---|---|---|
-| S1 | 9/28 ~ 10/11 | 세팅과 설계 | Juice Shop 실습 |
-| S2 | 10/12 ~ 11/1 | 개발 1 (중간고사 주 제외) | 1R — SAST, SCA·시크릿, IaC |
+| S1 | 9/28 ~ 10/11 | 세팅, 교육(10/6 보안 도구, 10/8 Git) | |
+| S2 | 10/12 ~ 11/1 | 팀 설계 마감(10/16), 개발 1 (중간고사 주 제외) | 1R — SAST, SCA·시크릿, IaC |
 | S3 | 11/2 ~ 11/15 | 스테이징과 MVP 완성, 7주차 주말 기능 동결 | 2R — 전 영역 + DAST |
 | S4 | 11/16 ~ 11/29 | Exploit과 수정 | 3R — 보안 회귀 테스트 |
 | S5 | 11/30 ~ 12/13 | 내부 테스트와 운영 배포 | |

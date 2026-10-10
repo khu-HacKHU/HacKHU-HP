@@ -1,6 +1,6 @@
 # API 공통 규약
 
-모든 팀의 API가 따르는 형식이다. 기능별 API 명세는 각 팀 문서(`docs/auth/`, `docs/board/`, `docs/gallery/`)에 두고, 여기서는 반복되는 규칙만 정한다.
+모든 팀의 API가 따르는 형식이다. 기능별 API 명세는 각 기능 명세의 `backend/4-2-INTERACTION-CONTRACT.md`(`docs/spec/auth/`, `docs/spec/board/`, `docs/spec/gallery/`)에 두고, 여기서는 반복되는 규칙만 정한다.
 
 ## 1. URL
 
@@ -101,7 +101,7 @@
 
 ## 4. 인증
 
-- 인증 방식과 토큰 구조는 인증·권한 팀이 S1 2주차에 `docs/auth/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
+- 인증 방식과 토큰 구조는 인증·권한 팀이 `docs/spec/auth/backend/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
 - 토큰을 URL 쿼리스트링에 넣지 않는다 (로그·Referer로 샌다).
 - 인증이 필요 없는 API는 명세에 **"공개"라고 명시**한다. 명시가 없으면 인증 필요가 기본값이다.
 
