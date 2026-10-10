@@ -2,7 +2,7 @@
 # (spring-boot-docker-compose). 계정·비밀번호는 로컬 전용 값이며 운영 DB에는 쓰지 않는다.
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_DB: hackhu
       POSTGRES_USER: hackhu
