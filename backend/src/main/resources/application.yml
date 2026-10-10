@@ -10,6 +10,11 @@ spring:
     open-in-view: false
   flyway:
     locations: classpath:db/migration
+  # 목록 API의 size 상한 (docs/conventions/api.md 2절). 넘으면 100으로 잘린다.
+  data:
+    web:
+      pageable:
+        max-page-size: 100
 
 server:
   # 에러 응답에 스택 트레이스·예외 메시지를 싣지 않는다 (docs/conventions/api.md 3절).
@@ -29,8 +34,11 @@ management:
     health:
       show-details: never
 
+# API 문서는 기본으로 끄고 local에서만 켠다. 새 프로파일이 생겨도 실수로 노출되지 않게 한다.
 springdoc:
   api-docs:
+    enabled: false
     path: /v3/api-docs
   swagger-ui:
+    enabled: false
     path: /swagger-ui.html

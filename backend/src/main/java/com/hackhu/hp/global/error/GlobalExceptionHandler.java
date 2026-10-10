@@ -57,6 +57,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleUnexpected(Exception e) {
+        // Spring MVC 표준 예외(415, 406, ResponseStatusException 등)는 자기 상태 코드를 그대로 쓴다.
+        // 클라이언트 잘못이라 ERROR로 남기지 않는다. 누구나 ERROR 로그를 쌓을 수 있게 되기 때문이다 (CWE-779).
+        if (e instanceof org.springframework.web.ErrorResponse er
+                && er.getStatusCode().is4xxClientError()) {
+            log.debug("클라이언트 요청 오류: {}", e.getClass().getSimpleName());
+            return respond(CommonErrorCode.from(er.getStatusCode()));
+        }
+        // TODO(인증·권한 팀): Spring Security를 붙이면 AccessDeniedException(403),
+        // AuthenticationException(401) 핸들러를 여기 위에 추가한다. 없으면 500이 된다.
         log.error("처리되지 않은 예외", e);
         return respond(CommonErrorCode.INTERNAL_ERROR);
     }

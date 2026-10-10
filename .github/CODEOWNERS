@@ -9,14 +9,18 @@
 # 인프라 — PM·인프라팀
 /infra/                  @kangkyunghyun
 
-# CI·보안 도구·저장소 규칙 — PL
-/.github/                @sumin0218
-/.gitleaks.toml          @sumin0218
-/.semgrepignore          @sumin0218
-/commitlint.config.mjs   @sumin0218
-/AGENTS.md               @sumin0218
-/docs/conventions/       @sumin0218
-/docs/security/          @sumin0218
+# 오너가 여럿이면 그중 한 명만 승인해도 된다. PR 작성자는 자기 PR을 승인할 수 없으므로
+# 오너가 한 명뿐인 경로는 그 사람이 올린 PR을 아무도 승인할 수 없다. 그래서 PL과 PM을 함께 둔다.
+# 인증, 권한, 업로드 경로만 "PL 최종 승인" 규칙 때문에 PL 혼자 둔다.
+
+# CI·보안 도구·저장소 규칙 — PL (PM 공동)
+/.github/                @sumin0218 @kangkyunghyun
+/.gitleaks.toml          @sumin0218 @kangkyunghyun
+/.semgrepignore          @sumin0218 @kangkyunghyun
+/commitlint.config.mjs   @sumin0218 @kangkyunghyun
+/AGENTS.md               @sumin0218 @kangkyunghyun
+/docs/conventions/       @sumin0218 @kangkyunghyun
+/docs/security/          @sumin0218 @kangkyunghyun
 
 # 인증·권한·파일 업로드 — PL 최종 승인 (운영 규칙). 패키지 구조는 backend/AGENTS.md
 /backend/src/main/java/com/hackhu/hp/global/security/   @sumin0218
@@ -25,6 +29,11 @@
 /backend/src/main/java/com/hackhu/hp/global/error/      @sumin0218
 /backend/src/main/java/com/hackhu/hp/domain/auth/       @sumin0218
 
-# 의존성·런타임 설정 — PL
-/backend/build.gradle.kts                               @sumin0218
-/backend/src/main/resources/application*.yml            @sumin0218
+# 빌드·의존성·런타임 설정 — PL (PM 공동)
+/backend/build.gradle.kts                               @sumin0218 @kangkyunghyun
+/backend/settings.gradle.kts                            @sumin0218 @kangkyunghyun
+/backend/gradle/wrapper/                                @sumin0218 @kangkyunghyun
+/backend/gradlew                                        @sumin0218 @kangkyunghyun
+/backend/gradlew.bat                                    @sumin0218 @kangkyunghyun
+/backend/src/main/resources/application*.yml            @sumin0218 @kangkyunghyun
+/backend/AGENTS.md                                      @sumin0218 @kangkyunghyun
