@@ -10,4 +10,4 @@
 - [ ] [`.github/dependabot.yml`](../.github/dependabot.yml) — `npm` (`/frontend`) 추가
 - [ ] [`.github/workflows/security.yml`](../.github/workflows/security.yml) Semgrep 규칙셋 — 필요 시 `p/typescript`, `p/react` 등
 - [ ] [`docs/conventions/code-style.md`](../docs/conventions/code-style.md) "스택별 규칙"
-- [ ] `frontend/CLAUDE.md` — 영역별 규칙 (API 호출 위치, 상태관리 등)
+- [ ] `frontend/AGENTS.md` — 영역별 규칙 (API 호출 위치, 상태관리 등)

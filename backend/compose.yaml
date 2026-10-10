@@ -1,0 +1,12 @@
+# 로컬 개발용 PostgreSQL. `./gradlew bootRun`을 하면 Spring Boot가 자동으로 띄우고 연결한다
+# (spring-boot-docker-compose). 계정·비밀번호는 로컬 전용 값이며 운영 DB에는 쓰지 않는다.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: hackhu
+      POSTGRES_USER: hackhu
+      POSTGRES_PASSWORD: local-only
+    ports:
+      # 같은 네트워크의 다른 기기에서 접근하지 못하게 127.0.0.1에만 연다.
+      - "127.0.0.1:5432:5432"
