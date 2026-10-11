@@ -57,10 +57,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void 요청_파라미터_검증_실패는_400으로_응답한다() throws Exception {
+    void 요청_파라미터_검증_실패는_파라미터별_사유를_담는다() throws Exception {
         mockMvc.perform(get("/test/page").param("page", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.errors[0].field").value("page"))
+                .andExpect(jsonPath("$.errors[0].reason").isNotEmpty());
     }
 
     @Test

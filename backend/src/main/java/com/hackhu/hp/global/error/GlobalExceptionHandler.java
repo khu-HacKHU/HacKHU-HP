@@ -1,14 +1,17 @@
 package com.hackhu.hp.global.error;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -32,6 +35,23 @@ public class GlobalExceptionHandler {
                 e.getBindingResult().getFieldErrors().stream()
                         .map(f -> new ErrorResponse.FieldError(f.getField(), f.getDefaultMessage()))
                         .toList();
+        ErrorCode code = CommonErrorCode.INVALID_INPUT;
+        return ResponseEntity.status(code.status()).body(ErrorResponse.of(code, errors));
+    }
+
+    // @RequestParam, @PathVariable 검증 실패. errors에 파라미터별 사유를 담는다 (api.md 3절).
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    ResponseEntity<ErrorResponse> handleParameterValidation(HandlerMethodValidationException e) {
+        List<ErrorResponse.FieldError> errors = new ArrayList<>();
+        for (ParameterValidationResult result : e.getParameterValidationResults()) {
+            String name = result.getMethodParameter().getParameterName();
+            result.getResolvableErrors()
+                    .forEach(
+                            err ->
+                                    errors.add(
+                                            new ErrorResponse.FieldError(
+                                                    name, err.getDefaultMessage())));
+        }
         ErrorCode code = CommonErrorCode.INVALID_INPUT;
         return ResponseEntity.status(code.status()).body(ErrorResponse.of(code, errors));
     }
