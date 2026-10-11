@@ -1,6 +1,6 @@
 # infra
 
-AWS 인프라 Terraform. S2 3주차부터 갤러리 + 인프라 팀이 작성한다. 코드 오너는 PM·인프라팀이다 ([CODEOWNERS](../.github/CODEOWNERS)).
+AWS 인프라 Terraform. S3부터 갤러리 + 인프라 팀이 작성한다. 코드 오너는 PM·인프라팀이다 ([CODEOWNERS](../.github/CODEOWNERS)).
 
 ## 규칙
 
@@ -9,7 +9,7 @@ AWS 인프라 Terraform. S2 3주차부터 갤러리 + 인프라 팀이 작성한
 - IAM은 최소 권한. 예산 알림을 설정한다.
 - `terraform.tfvars`, `*.tfstate`는 커밋하지 않는다 (`.gitignore`로 막혀 있다). 변수 예시는 `terraform.tfvars.example`에 값 없이 둔다.
 - PR에서 CI가 `terraform fmt -check`와 `validate`를 돌리고, Checkov가 설정 취약점을 Code scanning에 보고한다.
-- 1R IaC 담당자(서영채, 이소연)가 이 디렉터리 PR의 리뷰어로 참여한다.
+- S3 IaC 담당자가 이 디렉터리 PR의 리뷰어로 참여한다.
 
 ## 구조 (예정)
 

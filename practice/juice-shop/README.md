@@ -1,8 +1,8 @@
 # Juice Shop 보안 도구 실습
 
-S1 1주차 실습. [OWASP Juice Shop](https://owasp.org/www-project-juice-shop/)은 OWASP Top 10 취약점을 일부러 넣어 둔 웹앱이다. 1R에서 쓸 도구(Semgrep, gitleaks, Checkov)를 실제 취약 코드에 돌려 보고, **도구가 찾은 것과 못 찾은 것**을 직접 확인한다.
+S1 1주차 실습. [OWASP Juice Shop](https://owasp.org/www-project-juice-shop/)은 OWASP Top 10 취약점을 일부러 넣어 둔 웹앱이다. S3부터 쓸 도구(Semgrep, gitleaks, Checkov)를 실제 취약 코드에 돌려 보고, **도구가 찾은 것과 못 찾은 것**을 직접 확인한다.
 
-> ⚠️ 실습 환경은 본인 PC에서만 띄운다. 여기서 배운 공격 기법은 이 앱과 우리 프로젝트의 S4 Exploit 범위 안에서만 쓴다.
+> ⚠️ 실습 환경은 본인 PC에서만 띄운다. 여기서 배운 공격 기법은 이 앱과 우리 프로젝트의 S5 Exploit 범위 안에서만 쓴다.
 
 ## 준비물
 
@@ -54,7 +54,7 @@ docker run --rm -v "$PWD/src:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.30.1 d
 docker run --rm -v "$PWD/src:/src" -w /src bridgecrew/checkov -d . --framework dockerfile,github_actions,kubernetes --compact
 ```
 
-### DAST 맛보기 — OWASP ZAP (2R 예습, 선택)
+### DAST 맛보기 — OWASP ZAP (S4 예습, 선택)
 
 ```bash
 docker compose --profile dast run --rm zap
@@ -81,4 +81,4 @@ docker compose --profile dast run --rm zap
 - 도구가 찾은 취약점 중 **실제로 공격에 성공한 것** 하나
 - 도구가 **못 찾았는데** 스코어보드로 찾은 것 하나
 
-두 번째가 이 실습의 핵심이다. 도구가 못 잡는 것(주로 인가 로직)은 코드 리뷰와 S4 Exploit에서 사람이 찾아야 한다.
+두 번째가 이 실습의 핵심이다. 도구가 못 잡는 것(주로 인가 로직)은 코드 리뷰와 S5 Exploit에서 사람이 찾아야 한다.

@@ -1,18 +1,18 @@
 # 보안 도구
 
-## 라운드별 도입
+## 스프린트별 도입
 
 | 영역 | 도구 | 열리는 시점 | 설정 위치 |
 |---|---|---|---|
-| SAST | Semgrep, CodeQL | 1R (S2) | [security.yml](../../.github/workflows/security.yml), [codeql.yml](../../.github/workflows/codeql.yml) |
-| SCA | Dependabot | 1R (S2) | [dependabot.yml](../../.github/dependabot.yml), 저장소 설정 |
-| 시크릿 | gitleaks, GitHub secret scanning | 1R (S2) | [security.yml](../../.github/workflows/security.yml), [.gitleaks.toml](../../.gitleaks.toml) |
-| IaC | Checkov | 1R (S2) | [security.yml](../../.github/workflows/security.yml) |
-| 컨테이너 | Trivy, ECR 스캔 | 2R (스테이징 배포 후) | 미설정 |
-| DAST | OWASP ZAP | 2R (7주차) | 미설정 |
-| 보안 회귀 테스트 | 테스트 코드 | 3R | 각 팀 테스트 |
+| SAST | Semgrep, CodeQL | S3 | [security.yml](../../.github/workflows/security.yml), [codeql.yml](../../.github/workflows/codeql.yml) |
+| SCA | Dependabot | S3 | [dependabot.yml](../../.github/dependabot.yml), 저장소 설정 |
+| 시크릿 | gitleaks, GitHub secret scanning | S3 | [security.yml](../../.github/workflows/security.yml), [.gitleaks.toml](../../.gitleaks.toml) |
+| IaC | Checkov | S3 | [security.yml](../../.github/workflows/security.yml) |
+| 컨테이너 | Trivy, ECR 스캔 | S4 (스테이징 배포 후) | 미설정 |
+| DAST | OWASP ZAP | S4 | 미설정 |
+| 보안 회귀 테스트 | 테스트 코드 | S5 | 각 팀 테스트 |
 
-## 1R 현재 설정
+## 현재 설정
 
 | 도구 | 언제 도는가 | PR을 막는가 | 결과 보는 곳 |
 |---|---|---|---|
@@ -23,9 +23,9 @@
 | Dependabot | 주 1회 (Actions), 월 1회 (npm) + 취약점 발견 즉시 | 막지 않는다 | Security → Dependabot, PR 목록 |
 | secret scanning | push 시 | push protection이 막는다 | Security → Secret scanning |
 
-gitleaks만 막는 이유: 한 번 푸시된 시크릿은 되돌릴 수 없다. 나머지는 오탐이 섞여 있어서, **1R 담당자가 결과를 판별하고 차단 기준을 정하는 것이 1R의 목표다.**
+gitleaks만 막는 이유: 한 번 푸시된 시크릿은 되돌릴 수 없다. 나머지는 오탐이 섞여 있어서, **S3 보안 담당자가 결과를 판별하고 차단 기준을 정하는 것이 S3 보안 점검의 목표다.**
 
-## 1R 담당자가 할 일
+## S3 보안 담당자가 할 일
 
 | 영역 | 담당 | 할 일 |
 |---|---|---|
