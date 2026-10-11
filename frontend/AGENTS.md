@@ -4,7 +4,7 @@
 
 ## 스택
 
-React 19 / TypeScript / Vite / oxlint / Vitest
+React 19 / TypeScript / Vite / oxlint / Prettier / Vitest
 
 ## 코드 규칙
 
@@ -17,7 +17,9 @@ React 19 / TypeScript / Vite / oxlint / Vitest
 
 API 호출 위치, 상태 관리, 라우팅, 스타일링 방식은 아직 정하지 않았다. 필요해지면 추측해서 넣지 말고 PL과 정한 뒤 이 문서에 적는다.
 
+인증 토큰 저장 위치는 인증권한팀 명세(`docs/spec/auth/`)를 따른다. 정해지기 전에는 추측해서 구현하지 않는다 (CWE-922).
+
 ## 테스트
 
 - 컴포넌트 테스트는 `*.test.tsx`로 같은 폴더에 둔다 (Vitest + Testing Library)
-- 커밋 전에 `npm run lint`, `npm test`, `npm run build`를 돌린다
+- 커밋 전에 `npm run format`, `npm run lint`, `npm test`, `npm run build`를 돌린다
