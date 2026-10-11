@@ -60,9 +60,9 @@ HacKHU 홈페이지는 경희대학교 보안 동아리 HacKHU의 공식 홈페�
 |---|---|---|
 | 인증권한 | [auth/](auth/AGENTS.md) | 인증권한팀 |
 | 게시판 | [board/](board/AGENTS.md) | 게시판팀 |
-| 갤러리 | [gallery/](gallery/AGENTS.md) | 갤러리인프라팀 |
+| 갤러리 | [gallery/](gallery/AGENTS.md) | 갤러리팀 |
 | 홈 | [home/](home/AGENTS.md) | 게시판팀 |
-| 배포와 인프라 | [DEPLOYMENT.md](DEPLOYMENT.md) | 갤러리인프라팀 |
+| 배포와 인프라 | [DEPLOYMENT.md](DEPLOYMENT.md) | PM, PL |
 
 PM은 무엇을 만드는지와 일정을 정하고, PL은 아키텍처와 보안 기준을 정한다. 팀원과 일정은 레포 README에 있다. ([README](../../README.md))
 

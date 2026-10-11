@@ -12,11 +12,11 @@ HacKHU 홈페이지 명세를 읽고 수정할 때 필요한 문서와 작성 �
 |---|---|---|
 | [PRODUCT.md](PRODUCT.md) | 제품 정의, 첫 버전 범위와 하지 않는 것, 역할, 기능과 담당, 공통 용어 | PM |
 | [UI-DESIGN-SYSTEM.md](UI-DESIGN-SYSTEM.md) | 색, 글꼴, 간격, 공용 컴포넌트, 공통 헤더와 메뉴 | PM |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | 백엔드와 프론트엔드 배포, AWS 구성, 환경 변수와 시크릿 | 갤러리인프라팀 |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | 백엔드와 프론트엔드 배포, AWS 구성, 환경 변수와 시크릿 | PM, PL |
 | [DECISIONS.md](DECISIONS.md) | 제품 단위 결정과 PM 결정의 이력 | PM |
 | [auth/](auth/AGENTS.md) | 가입, 로그인, 가입 승인, 역할 변경, 내 정보 | 인증권한팀 |
 | [board/](board/AGENTS.md) | 공지, 자유게시판, 자료게시판, 첨부파일 | 게시판팀 |
-| [gallery/](gallery/AGENTS.md) | 앨범과 사진의 업로드, 조회, 삭제 | 갤러리인프라팀 |
+| [gallery/](gallery/AGENTS.md) | 앨범과 사진의 업로드, 조회, 삭제 | 갤러리팀 |
 | [home/](home/AGENTS.md) | 메인 화면과 동아리 소개 | 게시판팀 |
 
 - 처음에는 `PRODUCT.md`를 읽고, 작업할 기능 폴더의 `BACKGROUND.md`와 `USER-STORIES.md`를 읽는다. 그다음 `backend/`나 `frontend/` 세트를 1번부터 읽는다.

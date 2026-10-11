@@ -14,13 +14,14 @@ HacKHU 동아리 홈페이지. 기능을 개발하면서 보안 도구를 스프
 
 ## 팀
 
-| 팀 | 팀원 | 담당 |
-|---|---|---|
-| 인증·권한 | 권승원, 양수환, 박지은 | [인증권한](docs/spec/auth/BACKGROUND.md) |
-| 게시판 | 서영채, 김유석, 이나은, 윤예진 | [게시판](docs/spec/board/BACKGROUND.md), [홈](docs/spec/home/BACKGROUND.md) |
-| 갤러리 + 인프라 | 이소연, 소광현, 우새봄 | [갤러리](docs/spec/gallery/BACKGROUND.md), [배포](docs/spec/DEPLOYMENT.md) |
+| 팀 | 담당 |
+|---|---|
+| 인증권한 | [인증권한](docs/spec/auth/BACKGROUND.md) |
+| 게시판 | [게시판](docs/spec/board/BACKGROUND.md), [홈](docs/spec/home/BACKGROUND.md) |
+| 갤러리 | [갤러리](docs/spec/gallery/BACKGROUND.md) |
+| PM, PL | [배포와 인프라](docs/spec/DEPLOYMENT.md) |
 
-기능별 범위는 각 기능의 배경 문서와 [제품 명세](docs/spec/PRODUCT.md)에 있다.
+팀원은 S2에 프론트엔드와 백엔드 희망을 받아 배정한다. 같은 기능의 API 담당과 화면 담당은 같은 팀에 둔다. 기능별 범위는 각 기능의 배경 문서와 [제품 명세](docs/spec/PRODUCT.md)에 있다.
 
 PM: 강경현 (@kangkyunghyun) · PL: 손수민 (@sumin0218)
 
@@ -30,7 +31,7 @@ PM: 강경현 (@kangkyunghyun) · PL: 손수민 (@sumin0218)
 |---|---|---|---|
 | S1 | 9/28 ~ 10/11 | 세팅, 교육(10/6 보안 도구, 10/8 Git) | |
 | S2 | 10/12 ~ 10/25 | 희망 역할 조사와 배정, 중간고사 | |
-| S3 | 10/26 ~ 11/8 | 설계와 개발 1 | SAST, SCA·시크릿, IaC |
+| S3 | 10/26 ~ 11/8 | 설계와 개발 시작 | SAST, SCA·시크릿, IaC |
 | S4 | 11/9 ~ 11/22 | 스테이징과 MVP 완성, 마지막 주말 기능 동결 | 컨테이너, 배포, 모니터링, DAST 추가 |
 | S5 | 11/23 ~ 12/6 | Exploit과 수정, 내부 테스트와 운영 배포 | 보안 회귀 테스트 |
 
