@@ -5,6 +5,13 @@ title: "fix(scope): "
 labels: bug
 ---
 
+## 영역
+
+<!-- 이 이슈에서 손댈 곳에 체크하면 backend, frontend 레이블이 자동으로 붙는다 (CONTRIBUTING.md 5절). 인프라 작업이면 체크하지 않고 제목 scope를 infra로 쓴다 -->
+
+- [ ] backend
+- [ ] frontend
+
 ## 증상
 
 ## 재현 방법
@@ -16,3 +23,4 @@ labels: bug
 ## 환경
 
 <!-- 브라우저, OS, 브랜치나 커밋 -->
+<!-- 레포가 공개라 이슈도 누구나 본다. 로그와 스크린샷의 토큰, 쿠키, 개인정보는 지우고 올린다 -->

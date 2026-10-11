@@ -7,6 +7,13 @@ labels: feature
 
 <!-- 제목의 scope는 auth, board, gallery, infra 중 하나. 팀에 속하지 않으면 지운다 -->
 
+## 영역
+
+<!-- 이 이슈에서 손댈 곳에 체크하면 backend, frontend 레이블이 자동으로 붙는다 (CONTRIBUTING.md 5절). 인프라 작업이면 체크하지 않고 제목 scope를 infra로 쓴다 -->
+
+- [ ] backend
+- [ ] frontend
+
 ## 배경
 
 <!-- 왜 필요한지. 스펙 문서가 있으면 링크 -->
