@@ -3,11 +3,9 @@
 #
 # PL: @sumin0218
 # PM: @kangkyunghyun
-#
-# TODO: org 팀 @khu-HacKHU/gallery-infra 가 만들어지면 infra/ 줄에 추가한다.
 
 # 인프라 — PM·인프라팀
-/infra/                  @kangkyunghyun
+/infra/                  @kangkyunghyun @khu-HacKHU/hp-gallery-infra
 
 # 오너가 여럿이면 그중 한 명만 승인해도 된다. PR 작성자는 자기 PR을 승인할 수 없으므로
 # 오너가 한 명뿐인 경로는 그 사람이 올린 PR을 아무도 승인할 수 없다. 그래서 PL과 PM을 함께 둔다.
