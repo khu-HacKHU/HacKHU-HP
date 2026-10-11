@@ -23,7 +23,7 @@ current_diff() {
 
 current_diff >"$work/changes"
 
-# DRY_RUN=1이면 바꿀 내용만 보여 주고 끝낸다 (기존 이슈 일괄 적용 전 미리보기).
+# DRY_RUN=1이면 바꿀 내용만 보여 주고 끝낸다 (backfill-issue-labels.sh 미리보기).
 if [ "${DRY_RUN:-}" = "1" ]; then
   if [ -s "$work/changes" ]; then
     echo "#$number 바꿀 예정: $(paste -sd' ' "$work/changes")"

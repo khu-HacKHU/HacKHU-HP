@@ -6,7 +6,7 @@
 # - 제목의 type으로 type 레이블을, 제목 scope와 본문의 영역 체크박스로 영역 레이블을 붙인다.
 # - 기능·버그 이슈(feature, bug)에 영역 레이블(backend, frontend, infra)이 하나도 없으면 문제로 본다.
 # - 문제가 있으면 이슈에 안내 댓글을 하나 달고(이미 있으면 고친다) 실패한다. 문제가 없어지면 댓글을 지운다.
-#   --no-comment면 댓글 없이 문제만 출력한다 (기존 이슈 일괄 적용용).
+#   --no-comment면 댓글 없이 문제만 출력한다 (backfill-issue-labels.sh가 쓴다).
 #
 # GH_TOKEN, GITHUB_REPOSITORY가 필요하다. 제목과 본문은 사용자 입력이라 인자가 아닌 환경변수로 받는다.
 

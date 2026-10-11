@@ -6,24 +6,18 @@ name: Issue Labels
 #
 # - issues 이벤트는 기본 브랜치(develop)의 워크플로로 돈다. 이 파일을 고치면 머지 뒤에 반영된다.
 # - 레포가 public이라 누구나 이슈를 열 수 있다. 제목과 본문은 run에 넣지 않고 환경변수로 넘긴다.
-# - 수동 실행(workflow_dispatch)은 열린 이슈 전체에 규칙을 적용한다. 기본은 미리보기(dry_run)다.
+# - 기존 이슈에 한 번에 적용할 때는 .github/scripts/backfill-issue-labels.sh를 로컬에서 돌린다.
 
 on:
   issues:
     types: [opened, edited, reopened, labeled, unlabeled]
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 바꾸지 않고 바꿀 내용만 보기
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
   issue-labels:
-    if: github.event_name == 'issues' && !github.event.issue.pull_request
+    if: ${{ !github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     concurrency:
       group: issue-labels-${{ github.event.issue.number }}
@@ -40,40 +34,3 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: bash .github/scripts/issue-labels.sh "$ISSUE_NUMBER"
-
-  backfill:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: issue-labels-backfill
-    permissions:
-      contents: read
-      issues: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
-    steps:
-      - uses: actions/checkout@v7
-      - name: 열린 이슈 전체에 적용
-        run: |
-          set -o pipefail
-          gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --paginate \
-            --jq '.[] | select(.pull_request | not) | .number' > numbers.txt
-          echo "대상 이슈 $(wc -l < numbers.txt)개, 미리보기: ${DRY_RUN:-아님}"
-          failed=0
-          while IFS= read -r n; do
-            gh api "repos/$GITHUB_REPOSITORY/issues/$n" < /dev/null > issue.json
-            if ! ISSUE_TITLE="$(jq -r .title issue.json)" ISSUE_BODY="$(jq -r '.body // ""' issue.json)" \
-              bash .github/scripts/issue-labels.sh "$n" --no-comment < /dev/null | tee -a result.txt; then
-              failed=$((failed + 1))
-            fi
-          done < numbers.txt
-          {
-            echo "## 이슈 레이블 일괄 적용 ${DRY_RUN:+(미리보기)}"
-            echo
-            echo "문제가 남은 이슈: ${failed}개"
-            echo
-            echo '```'
-            cat result.txt 2>/dev/null || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"

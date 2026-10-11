@@ -116,6 +116,6 @@ fix/31-login-loop   ──PR──> develop
 
 **그 밖에**
 - Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다.
-- 기존 이슈에는 Actions 탭의 `Issue Labels` 수동 실행으로 한 번에 적용한다. 기본은 미리보기다.
+- 기존 이슈에 한 번에 적용할 때는 PL이 로컬에서 `DRY_RUN=1 bash .github/scripts/backfill-issue-labels.sh`로 미리 본 뒤 `DRY_RUN` 없이 돌린다.
 - 출시 때 GitHub 자동 릴리스 노트가 이 레이블로 항목을 나눈다 ([release.yml](.github/release.yml)).
 - 규칙의 원본은 이 절이고, [`labels.sh`](.github/scripts/labels.sh)가 그것을 옮긴 것이다. 둘은 같은 PR에서 함께 고친다.
