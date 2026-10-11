@@ -90,9 +90,11 @@ fix/31-login-loop   ──PR──> develop
 
 ---
 
-## 5. PR 레이블
+## 5. PR·이슈 레이블
 
-**사람이 붙이지 않는다.** `PR Labels` 워크플로가 PR 제목의 type으로 레이블을 자동으로 붙이고, 맞지 않으면 PR을 막는다 (필수 검사 `pr-labels`). 제목을 고치면 레이블도 따라 바뀐다.
+**레이블은 워크플로가 붙인다.** `PR Labels`, `Issue Labels` 워크플로가 제목과 영역으로 레이블을 자동으로 붙이고, 제목을 고치면 레이블도 따라 바뀐다. 사람이 정하는 것은 이슈 본문의 영역 체크박스뿐이다.
+
+**type 레이블** — 제목의 type으로 정한다. 하나만 남고, 다른 type 레이블을 손으로 붙이면 다음 실행에서 떼어진다.
 
 | 제목 type | 레이블 |
 |---|---|
@@ -101,9 +103,19 @@ fix/31-login-loop   ──PR──> develop
 | `docs` | `documentation` |
 | `security`, `design`, `cicd`, `refactor`, `test`, `chore`, `release` | type과 같은 이름 |
 
-- scope가 `infra`이거나 `infra/` 아래 파일을 바꾸면 `infra`도 붙는다.
-- type 레이블은 하나만 남는다. 다른 type 레이블을 손으로 붙이면 다음 실행에서 떼어진다.
-- `infra`, `dependencies` 같은 type 외 레이블은 손으로 붙여도 그대로 둔다.
+**영역 레이블** (`backend`, `frontend`, `infra`) — 붙이기만 하고 떼지 않는다. 손으로 붙여도 그대로 둔다.
+
+| | `backend` | `frontend` | `infra` |
+|---|---|---|---|
+| PR | `backend/` 아래 파일을 바꿈 | `frontend/` 아래 파일을 바꿈 | `infra/` 아래 파일을 바꿈, 또는 scope가 `infra` |
+| 이슈 | 본문에 `- [x] backend` | 본문에 `- [x] frontend` | scope가 `infra` |
+
+**검사**
+- PR: 레이블이 제목·경로와 맞지 않으면 필수 검사 `pr-labels`가 실패해 머지가 막힌다.
+- 이슈: 제목 형식이 틀리거나, 기능·버그 이슈(`feature`, `bug`)에 영역 레이블이 하나도 없으면 봇이 이슈에 안내 댓글을 단다. 고치면 댓글이 지워진다.
+
+**그 밖에**
 - Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다.
+- 기존 이슈에는 Actions 탭의 `Issue Labels` 수동 실행으로 한 번에 적용한다. 기본은 미리보기다.
 - 출시 때 GitHub 자동 릴리스 노트가 이 레이블로 항목을 나눈다 ([release.yml](.github/release.yml)).
-- 규칙의 원본은 이 절이고, [`pr-labels.sh`](.github/scripts/pr-labels.sh)가 그것을 옮긴 것이다. 둘은 같은 PR에서 함께 고친다.
+- 규칙의 원본은 이 절이고, [`labels.sh`](.github/scripts/labels.sh)가 그것을 옮긴 것이다. 둘은 같은 PR에서 함께 고친다.

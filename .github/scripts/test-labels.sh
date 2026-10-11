@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# pr-labels.sh 규칙 자체를 검사한다.
+# labels.sh 규칙 자체를 검사한다.
 # type 하나가 목록에서 빠지거나 매핑이 바뀌면 그 type의 PR이 전부 막히므로 type마다 확인한다.
 
 set -euo pipefail
 
-script="$(dirname "${BASH_SOURCE[0]}")/pr-labels.sh"
+script="$(dirname "${BASH_SOURCE[0]}")/labels.sh"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 failures=0
@@ -58,12 +58,44 @@ expect_labels 'release: v0.1.0 출시' '' 'release'
 expect_labels 'feat(auth): 로그인 API 구현' '' 'feature'
 expect_labels 'test(board): 권한 거부 테스트' '' 'test'
 
-# --- infra ------------------------------------------------------------------
+# --- 영역 (scope, 경로) ------------------------------------------------------
 expect_labels 'cicd(infra): 스테이징 배포' '' $'cicd\ninfra'
-expect_labels 'feat(gallery): presigned URL 발급' $'backend/a.java\ninfra/s3.tf' $'feature\ninfra'
+expect_labels 'feat(gallery): presigned URL 발급' $'backend/a.java\ninfra/s3.tf' $'feature\nbackend\ninfra'
 expect_labels 'chore: 버킷 이름 변경' 'infra/main.tf' $'chore\ninfra'
 expect_labels 'docs: 인프라 설명' $'docs/a.md\ninfrastructure.md' 'documentation'
-expect_labels 'feat(board): 글 작성' $'backend/a.java\nfrontend/b.tsx' 'feature'
+expect_labels 'feat(board): 글 작성' $'backend/a.java\nfrontend/b.tsx' $'feature\nbackend\nfrontend'
+expect_labels 'fix(auth): 로그인 화면 오류' 'frontend/src/Login.tsx' $'bug\nfrontend'
+# 이름이 영역으로 시작하기만 하는 파일은 그 영역이 아니다
+expect_labels 'chore: 설정' $'backend.md\nfrontend-notes.md' 'chore'
+
+# --- 이슈 제목 (변경 파일 없음) ---------------------------------------------
+expect_labels 'security: [Semgrep] 게시글 검색 SQL 문자열 연결' '' 'security'
+expect_labels 'feat(infra): 스테이징 환경 Terraform' '' $'feature\ninfra'
+expect_labels 'docs(board): ERD 작성' '' 'documentation'
+
+# --- 이슈 본문 체크박스 → 영역 ---------------------------------------------
+# expect_areas <본문> <기대 출력>
+expect_areas() {
+  local actual
+  actual="$(printf '%s' "$1" | bash "$script" checked-areas)"
+  if [[ "$actual" != "$2" ]]; then
+    echo "체크된 영역이 다릅니다: [$1]" >&2
+    echo "  기대: $(echo "$2" | paste -sd, -)  실제: $(echo "$actual" | paste -sd, -)" >&2
+    failures=$((failures + 1))
+  fi
+}
+expect_areas $'## 영역\n\n- [x] backend\n- [ ] frontend' 'backend/'
+expect_areas $'- [X] backend\n* [x] frontend' $'backend/\nfrontend/'
+expect_areas $'  - [x] frontend\r\n' 'frontend/'
+expect_areas $'- [ ] backend\n- [ ] frontend' ''
+expect_areas $'backend 작업\n- [x] backendless\n- [x]backend' ''
+
+# 체크박스에서 레이블까지 이어서
+chained="$(printf '%s' $'- [x] backend\n- [x] frontend' | bash "$script" checked-areas | bash "$script" expected 'feat(auth): 로그인')"
+if [[ "$chained" != $'feature\nbackend\nfrontend' ]]; then
+  echo "체크박스에서 레이블까지 이어진 결과가 다릅니다: $(echo "$chained" | paste -sd, -)" >&2
+  failures=$((failures + 1))
+fi
 
 # --- 거절 -------------------------------------------------------------------
 expect_reject 'wip: 대충 저장'
@@ -82,9 +114,11 @@ expect_diff 'chore' 'feature' $'+chore\n-feature'
 # type 레이블이 아닌 것(dependencies, infra 등)은 건드리지 않는다
 expect_diff 'chore' $'chore\ndependencies\njava' ''
 expect_diff 'feature' $'feature\ninfra' ''
+# 영역 레이블은 떼지 않는다
+expect_diff $'bug\nfrontend' $'bug\nbackend\nfrontend' ''
 
 if [ "$failures" -ne 0 ]; then
-  echo "PR 레이블 규칙 검사 실패: $failures건" >&2
+  echo "레이블 규칙 검사 실패: $failures건" >&2
   exit 1
 fi
-echo "PR 레이블 규칙 검사 통과"
+echo "레이블 규칙 검사 통과"
