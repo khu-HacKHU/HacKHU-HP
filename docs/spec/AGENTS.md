@@ -35,8 +35,9 @@ HacKHU 홈페이지 명세를 읽고 수정할 때 필요한 문서와 작성 �
 | 역할의 정의 | [PRODUCT.md](PRODUCT.md) |
 | 기능별 권한, 파일 형식과 크기, 개수 제한 | 각 기능의 `USER-STORIES.md` |
 | API 계약 | 각 기능의 `backend/4-2-INTERACTION-CONTRACT.md` |
-| 현재 사용자와 역할을 확인하는 방법 | [auth/backend](auth/backend/AGENTS.md) |
-| presigned URL 발급 | [gallery/backend](gallery/backend/AGENTS.md) |
+| 현재 사용자와 역할을 확인하는 방법 | [auth/backend/3-1](auth/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md) |
+| 로그인 상태와 토큰 보관 위치 | [auth/frontend/4-2](auth/frontend/4-2-QUALITY.md) |
+| presigned URL 발급과 만료 처리. 게시판 첨부파일도 이 정의를 쓴다 | [gallery/backend/3-1](gallery/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md) |
 | API 공통 형식 | [docs/conventions/api.md](../conventions/api.md) |
 | 업로드, 인증, 입력 검증의 공통 규칙 | [docs/security/secure-coding.md](../security/secure-coding.md) |
 | 백엔드 공통 코드 규칙 | 레포의 [backend/AGENTS.md](../../backend/AGENTS.md) |

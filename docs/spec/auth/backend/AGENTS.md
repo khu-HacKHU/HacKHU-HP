@@ -16,7 +16,7 @@
 | [3-2-DESIGN-DB-SCHEMA.md](3-2-DESIGN-DB-SCHEMA.md) | 이 기능이 정하는 테이블, 컬럼, 인덱스, 제약과 데이터 수명. 다른 기능의 테이블은 참조만 한다 |
 | [3-3-DESIGN-CONVENTIONS.md](3-3-DESIGN-CONVENTIONS.md) | 이 기능에만 있는 이름, 예외, 트랜잭션, 로그 규칙. 공통 규칙은 레포의 backend/AGENTS.md에 있으므로 반복하지 않는다 |
 | [4-1-INTERACTION-PIPELINES.md](4-1-INTERACTION-PIPELINES.md) | 요청 수신부터 응답까지 처리 순서와 단계 사이에 오가는 데이터 |
-| [4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) | 엔드포인트, 요청과 성공 응답의 실제 예시, 필수와 선택 필드. 공통 형식은 docs/conventions/api.md를 따르고, 실패 형식은 5-3에서 정한다 |
+| [4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) | 엔드포인트, 요청과 성공 응답의 실제 예시, 필수와 선택 필드. 공통 형식과 실패 응답 형식은 docs/conventions/api.md를 따르고, 이 기능의 에러 코드와 403, 404 선택은 5-3에서 정한다 |
 | [5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) | API별 인증 수준과 권한 검사, 입력 검증, 개인정보, 위협 모델링. 공통 규칙은 docs/security/secure-coding.md를 따른다 |
 | [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md) | 동시 요청, 중복 처리, 잠금, 순서 보장 |
 | [5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md) | 이 기능의 에러 코드와 상태, 실패별 처리. 오류 처리는 여기 한곳에 모은다 |

@@ -109,4 +109,5 @@
 
 - 응답 필드를 삭제하거나 이름·타입을 바꾸는 것은 호환성을 깨는 변경이다. 프론트엔드와 합의한 뒤 같은 PR에서 명세를 갱신한다.
 - 필드 추가는 호환되는 변경이다.
+- 기능별 API의 기준은 각 기능 명세의 `backend/4-2-INTERACTION-CONTRACT.md`다. 아래 Swagger 문서는 구현 결과를 확인하는 용도이고, 둘이 어긋나면 4-2를 먼저 고치고 코드를 맞춘다.
 - API 명세는 springdoc-openapi가 코드에서 생성한다. 로컬에서 http://localhost:8080/swagger-ui.html 로 확인하고, 컨트롤러·DTO에 `@Operation`, `@Schema`로 설명을 단다.

@@ -21,7 +21,7 @@
 | [3-3-COMPOSITION-WIRING.md](3-3-COMPOSITION-WIRING.md) | 화면, 컴포넌트, 상태, 데이터 계층을 어떻게 이어 붙이는지 |
 | [3-4-INTERACTION-FLOWS.md](3-4-INTERACTION-FLOWS.md) | 사용자가 시간순으로 거치는 화면 흐름과 분기 |
 | [4-1-ERROR-HANDLING.md](4-1-ERROR-HANDLING.md) | 오류별 표시, 재시도, 복귀 경로. 오류 처리는 여기 한곳에 모은다 |
-| [4-2-QUALITY.md](4-2-QUALITY.md) | 접근성, 로그인 상태 처리, 성능 |
+| [4-2-QUALITY.md](4-2-QUALITY.md) | 접근성, 성능, 로그인 상태와 토큰 보관 위치. 다른 기능의 화면도 이 정의를 따른다 |
 | [5-VERIFICATION.md](5-VERIFICATION.md) | 테스트 항목, 실행 명령과 통과 증거, 린트. 항목이 있는 것과 실행해 통과한 것을 구분한다 |
 | [DECISIONS.md](DECISIONS.md) | 이 세트 결정의 이력 |
 
