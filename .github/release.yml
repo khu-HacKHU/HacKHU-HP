@@ -1,0 +1,21 @@
+# GitHub 자동 릴리스 노트의 분류. PR 레이블로 나눈다 (CONTRIBUTING.md 5절).
+# 한 PR은 위에서부터 처음 맞는 분류 하나에만 들어간다.
+changelog:
+  exclude:
+    labels:
+      - release
+  categories:
+    - title: 보안
+      labels: [security]
+    - title: 새 기능
+      labels: [feature]
+    - title: 버그 수정
+      labels: [bug]
+    - title: 인프라
+      labels: [infra]
+    - title: 화면
+      labels: [design]
+    - title: 문서
+      labels: [documentation]
+    - title: 그 외
+      labels: ['*']
