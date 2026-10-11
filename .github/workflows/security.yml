@@ -6,7 +6,7 @@ name: Security
 #   Semgrep   SAST     보고만 — Code scanning 탭에 SARIF로 올린다
 #   Checkov   IaC      보고만 — Code scanning 탭에 SARIF로 올린다
 #
-# 보고만 하는 도구의 차단 기준은 S3 보안 담당자가 결과를 판별한 뒤 정한다.
+# 보고만 하는 도구의 차단 기준은 결과가 쌓이면 PL이 정한다.
 # 차단으로 바꾸려면 해당 잡의 `|| true`나 `soft_fail`을 지우고 ruleset 필수 검사에 추가한다.
 
 on:
@@ -54,7 +54,7 @@ jobs:
       image: semgrep/semgrep:1.178.0
     steps:
       - uses: actions/checkout@v7
-      # 규칙셋 조정은 S3 SAST 담당자 몫이다. 프론트엔드가 정해지면 해당 언어 규칙을 추가한다.
+      # 규칙셋 조정은 PL 리뷰를 받는다. 프론트엔드 규칙은 #18에서 추가한다.
       - name: SAST 스캔
         run: |
           semgrep scan --metrics=off \
