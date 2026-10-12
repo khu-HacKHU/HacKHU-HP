@@ -10,7 +10,7 @@ services:
       - "127.0.0.1:3000:3000"
     restart: "no"
 
-  # DAST 맛보기 (2R 대비). `docker compose --profile dast run --rm zap` 으로 실행한다.
+  # DAST 맛보기 (S4 대비). `docker compose --profile dast run --rm zap` 으로 실행한다.
   zap:
     image: ghcr.io/zaproxy/zaproxy:stable
     profiles: [dast]
