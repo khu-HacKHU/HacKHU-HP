@@ -4,6 +4,6 @@
 
 | 디렉터리 | 내용 | 시점 |
 |---|---|---|
-| [juice-shop/](juice-shop/) | OWASP Juice Shop + 1R 도구 실습 | S1 1주차 |
+| [juice-shop/](juice-shop/) | OWASP Juice Shop + S3 보안 도구 실습 | S1 1주차 |
 
 여기 있는 취약한 코드나 설정을 본 서비스(`frontend/`, `backend/`, `infra/`)로 복사하지 않는다.

@@ -1,6 +1,6 @@
 name: CodeQL
 
-# SAST 보조 도구. Semgrep과 달리 데이터 흐름을 따라가므로 두 결과를 비교해 보는 것이 1R 실습이다.
+# SAST 보조 도구. Semgrep과 달리 데이터 흐름을 따라가므로 두 결과를 비교해 보는 것이 S3 보안 점검 실습이다.
 # 결과는 Code scanning 탭에 올라가며 PR을 막지 않는다.
 #
 # TODO: 프론트엔드 프레임워크가 정해지면 matrix에 javascript-typescript를 추가한다.
