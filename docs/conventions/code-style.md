@@ -42,5 +42,5 @@
 
 ## 스택별 규칙
 
-- frontend: 미정
+- frontend: [frontend/AGENTS.md](../../frontend/AGENTS.md). 포매터는 Prettier, `npm run format`. 린터는 oxlint, `npm run lint`
 - backend: [backend/AGENTS.md](../../backend/AGENTS.md) — 포매터는 Spotless(google-java-format AOSP 스타일), `./gradlew spotlessApply`

@@ -9,15 +9,13 @@ AI 코딩 도구(Codex, Claude Code, Cursor 등)가 공통으로 읽는 작업 �
 모노레포. 현재 상태·일정·역할은 [README.md](README.md)가 진입점이다.
 
 ```
-frontend/   웹 프론트엔드 — 프레임워크 미정
+frontend/   웹 프론트엔드 — React 19 / TypeScript / Vite
 backend/    API 서버 — Spring Boot 4.1 / Java 21 / PostgreSQL 17
 infra/      Terraform (AWS). 콘솔 직접 수정 금지, 이 디렉터리 PR로만 변경
 docs/       컨벤션, API 규약, 보안 문서
 practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 아니다
 .github/    CI, 보안 스캔, CODEOWNERS
 ```
-
-프론트엔드 프레임워크가 정해지면 이 표와 아래 "영역별 규칙"을 같은 PR에서 갱신한다.
 
 ## 작업 전에 읽을 문서
 
@@ -36,7 +34,7 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 | 영역 | 규칙 |
 |---|---|
 | backend | [backend/AGENTS.md](backend/AGENTS.md) |
-| frontend | 프레임워크 확정 후 `frontend/AGENTS.md`를 만든다 |
+| frontend | [frontend/AGENTS.md](frontend/AGENTS.md) |
 
 ## 작업 순서
 

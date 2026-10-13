@@ -5,8 +5,6 @@ name: CI
 # 워크플로 단위 `on.paths` 대신 잡 단위 `if`로 거르는 이유: ruleset의 필수 상태 검사는
 # 워크플로 자체가 트리거되지 않으면 "대기 중"으로 남아 PR이 영원히 머지되지 않는다.
 # 잡 단위로 건너뛰면 skipped는 성공으로 취급된다. 필수 검사로는 마지막 `ci-ok` 하나만 건다.
-#
-# TODO: 프론트엔드 프레임워크가 정해지면 frontend 잡의 "빌드·테스트" 단계를 채운다.
 
 on:
   pull_request:
@@ -59,17 +57,18 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: 빌드·테스트
         run: |
-          if [ ! -f package.json ]; then
-            echo "::notice::frontend 프레임워크가 아직 정해지지 않아 빌드를 건너뜁니다."
-            exit 0
-          fi
-          # TODO: 프레임워크 확정 후 setup-node(캐시 포함)와 함께 교체
           npm ci
-          npm run lint --if-present
-          npm test --if-present
-          npm run build --if-present
+          npm run format:check
+          npm run lint
+          npm test
+          npm run build
 
   backend:
     needs: changes
