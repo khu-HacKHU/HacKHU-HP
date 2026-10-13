@@ -5,9 +5,4 @@ spring:
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
 
-# API 문서는 운영에서 노출하지 않는다.
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
+# API 문서는 application.yml에서 기본으로 꺼져 있다. 여기서 켜지 않는다.

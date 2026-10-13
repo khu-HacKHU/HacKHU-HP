@@ -50,7 +50,7 @@ com.hackhu.hp
 
 - 프로파일: `local`(기본, docker compose로 DB 자동 실행), `prod`(환경변수로 주입)
 - `application*.yml`에 비밀번호·키를 적지 않는다. `${ENV_VAR}`로만 참조한다
-- Swagger UI는 `prod`에서 꺼져 있다. 켜지 않는다
+- API 문서(Swagger UI, `/v3/api-docs`)는 기본으로 꺼져 있고 `local`에서만 켠다. 다른 프로파일에서 켜지 않는다
 
 ## 테스트
 

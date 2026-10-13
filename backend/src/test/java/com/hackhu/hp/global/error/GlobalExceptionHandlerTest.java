@@ -6,17 +6,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.TestController.class)
 @Import({GlobalExceptionHandlerTest.TestController.class, GlobalExceptionHandler.class})
@@ -46,6 +50,29 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void 지원하지_않는_Content_Type은_415로_응답한다() throws Exception {
+        mockMvc.perform(post("/test/validate").contentType(MediaType.TEXT_PLAIN).content("title"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
+    void 요청_파라미터_검증_실패는_파라미터별_사유를_담는다() throws Exception {
+        mockMvc.perform(get("/test/page").param("page", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.errors[0].field").value("page"))
+                .andExpect(jsonPath("$.errors[0].reason").isNotEmpty());
+    }
+
+    @Test
+    void ResponseStatusException은_지정한_상태로_응답한다() throws Exception {
+        mockMvc.perform(get("/test/conflict"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLICT"));
+    }
+
+    @Test
     void 예상하지_못한_예외는_내부_정보를_노출하지_않는다() throws Exception {
         mockMvc.perform(get("/test/boom"))
                 .andExpect(status().isInternalServerError())
@@ -65,6 +92,14 @@ class GlobalExceptionHandlerTest {
 
         @PostMapping("/test/validate")
         void validate(@Valid @RequestBody TitleRequest request) {}
+
+        @GetMapping("/test/page")
+        void page(@RequestParam @Min(1) int page) {}
+
+        @GetMapping("/test/conflict")
+        void conflict() {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
 
         @GetMapping("/test/boom")
         void boom() {

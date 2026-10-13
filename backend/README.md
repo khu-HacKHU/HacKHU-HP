@@ -6,7 +6,7 @@ HacKHU 홈페이지 API 서버. Spring Boot 4.1 / Java 21 / PostgreSQL 17.
 
 ## 준비물
 
-- **JDK**: 따로 설치하지 않아도 된다. 처음 빌드할 때 Gradle이 JDK 21을 자동으로 내려받는다
+- **JDK 17 이상**: Gradle을 실행하는 데 필요하다. 컴파일용 JDK 21은 처음 빌드할 때 Gradle이 자동으로 내려받는다
 - **Docker Desktop**: 로컬 DB와 통합 테스트에 필요하다
 
 ## 실행
