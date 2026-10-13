@@ -3,18 +3,20 @@
 > 팀원이 실제로 따를 수 있는 최소한만 담았습니다. 필요해지면 그때 추가합니다.
 
 - **이슈 관리**: GitHub Projects 보드 하나가 백로그의 단일 원본이다. 단톡방에서 정한 것도 이슈에 남긴다.
+- **이슈 제목**: 커밋 메시지와 같은 `type(scope): 한글 설명` 형식으로 쓴다 (1절). 예: `feat(board): 공지 목록 조회`
 - **WIP 제한**: 한 사람이 동시에 `In Progress`로 진행하는 이슈는 최대 2개다.
 
 ---
 
 ## 1. 커밋 메시지
 
-형식: `type: 한글 설명`
+형식: `type(scope): 한글 설명`. scope는 선택이다.
 
 ```
-feat: 공지 목록 조회 API 구현
-fix: 로그인 후 무한 리다이렉트 수정
-security: 게시글 수정 API에 작성자 검사 추가
+feat(board): 공지 목록 조회 API 구현
+fix(auth): 로그인 후 무한 리다이렉트 수정
+security(board): 게시글 수정 API에 작성자 검사 추가
+chore: 의존성 업데이트
 ```
 
 | type | 용도 |
@@ -28,9 +30,17 @@ security: 게시글 수정 API에 작성자 검사 추가
 | `refactor` | 동작 변경 없는 코드 구조 개선 |
 | `test` | 테스트 추가·수정. 프로덕션 코드 변경은 포함하지 않는다 |
 | `chore` | 설정, 의존성, 그 외 유지보수 |
-| `release` | 출시 PR (`release/vX.Y.Z → main`) 전용 |
+| `release` | 출시 PR (`release/vX.Y.Z → main`, `hotfix/vX.Y.Z → main`) 전용 |
 
-- scope는 쓰지 않는다. 어느 영역인지는 diff가 보여준다.
+| scope | 영역 |
+|---|---|
+| `auth` | 인증·권한 팀 |
+| `board` | 게시판 팀 |
+| `gallery` | 갤러리 + 인프라 팀의 갤러리 기능 |
+| `infra` | 갤러리 + 인프라 팀의 Terraform, 배포 |
+
+- scope는 팀 영역이다. 모노레포라 어느 팀의 변경인지 제목에서 바로 보이게 한다.
+- 공통 설정, 문서, CI처럼 팀에 속하지 않는 변경은 scope를 생략한다.
 - 제목은 **72자** 안에서 쓴다. squash merge가 ` (#123)`을 덧붙이므로 여유가 필요하다.
 - 제목에 이슈 번호를 넣지 않는다. 이슈 연결은 브랜치명과 PR 본문이 한다.
 - 본문이 필요하면 빈 줄 하나 띄우고 **왜** 바꿨는지 위주로 쓴다.
@@ -50,14 +60,20 @@ feat/12-notice-list ──PR──> develop
                                └── release/v0.1.0 ──PR──> main
 fix/31-login-loop   ──PR──> develop
                     release/v0.1.0 <──PR── fix/42-release-blocker
+main(v0.1.0) ── hotfix/v0.1.1 ──PR──> main (v0.1.1)
+                              └─PR──> develop
 ```
 
-- 작업 브랜치: `{type}/{issue-number}-{slug}` (예: `feat/12-notice-list`)
+- 작업 브랜치: `{type}/{issue-number}-{slug}` (예: `feat/12-notice-list`). type은 1절 목록에서 `release`를 뺀 것이다. CI가 develop, release 대상 PR의 출발 브랜치 이름을 검사한다.
 - 출시 브랜치: `release/v{major}.{minor}.{patch}` (예: `release/v0.1.0`)
+- 긴급 수정 브랜치: `hotfix/v{major}.{minor}.{patch}` (예: `hotfix/v0.1.1`). 운영 중인 버전의 긴급 수정만 다룬다
 - 이슈 번호는 `#` 없이 숫자만, slug는 영어 kebab-case로 쓴다.
-- 분기 전에 `git fetch origin`을 하고 `origin/develop`에서 자른다.
-- `main`에는 `release/vX.Y.Z` 브랜치만 PR을 보낸다. CI가 출발 브랜치를 검사한다.
+- 분기 전에 `git fetch origin`을 하고 `origin/develop`에서 자른다. hotfix만 `origin/main`에서 자른다.
+- `main`에는 `release/vX.Y.Z`, `hotfix/vX.Y.Z` 브랜치만 PR을 보낸다. CI가 출발 브랜치를 검사한다.
 - release 브랜치를 만든 뒤에는 새 기능을 넣지 않고 출시를 막는 수정만 반영한다. release에만 들어간 수정은 출시 후 `release → develop` PR로 되돌린다.
+- hotfix는 main에 머지한 뒤 같은 브랜치에서 `hotfix → develop` PR을 보내 develop에도 반영한다.
+- release와 hotfix 흐름은 PL이 맡는다.
+- **버전 태그**: main에 머지된 커밋에 `vX.Y.Z` 태그를 단다. GitHub Releases에서 대상 `main`으로 만들거나 `git tag -a vX.Y.Z -m "release: vX.Y.Z"` 후 push한다. release 브랜치의 마지막 커밋에 미리 달지 않는다.
 - 오래 사는 브랜치는 만들지 않는다. 며칠 안에 머지가 안 되면 범위를 쪼갠다.
 
 ---
@@ -70,13 +86,20 @@ fix/31-login-loop   ──PR──> develop
 | 수정 브랜치 → `release/vX.Y.Z` | Squash merge |
 | `release/vX.Y.Z` → `main` | Merge commit (어느 버전이 언제 배포됐는지 남긴다) |
 | `release/vX.Y.Z` → `develop` | Squash merge |
+| `hotfix/vX.Y.Z` → `main` | Merge commit |
+| `hotfix/vX.Y.Z` → `develop` | Squash merge |
+
+Rebase and merge는 쓰지 않는다.
 
 - **리뷰**: 같은 팀원 1명 이상의 승인이 필요하다. 코드 오너 경로(`infra/`, `.github/` 등)는 코드 오너 승인도 필요하다.
 - **PL 최종 승인**: 인증·파일 업로드·권한 관련 PR.
+- **PR 크기**: 리뷰어가 30분 안에 읽을 수 있는 크기로 만든다. 넘으면 PR을 쪼갠다.
+- **리뷰 반영**: 수정은 새 커밋으로 올린다. force push로 덮어쓰지 않는다. 어차피 squash merge로 합쳐진다.
+- **리뷰 코멘트 머리표** (권장): 코멘트 앞에 강도를 붙인다. `[필수]` 고쳐야 머지 가능, `[제안]` 고려해 볼 만함, `[질문]` 이해가 안 됨.
 - **필수 검사**: `CI / ci-ok`, `Lint PR / pr-title`, `Security / gitleaks`.
 - **보안 스캔 결과**: Semgrep·Checkov·CodeQL은 PR을 막지 않지만, 새로 생긴 경고는 PR에서 확인하고 오탐이면 이유를 적는다.
 - **작성자 책임**: PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.
-- **이슈 연결**: 본문에 `Closes #12`를 적는다.
+- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. dependabot과 release 브랜치의 PR은 검사하지 않는다.
 - **API 변경**: [API 규약](docs/conventions/api.md)을 따르고, API 명세를 같은 PR에서 갱신한다.
 
 ---

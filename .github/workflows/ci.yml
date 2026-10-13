@@ -125,7 +125,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: 스크립트 규칙 테스트
-        run: bash .github/scripts/test-validate-pr-source.sh
+        run: |
+          bash .github/scripts/test-validate-pr-source.sh
+          bash .github/scripts/test-validate-pr-body.sh
 
   # ruleset 필수 검사는 이 잡 하나만 건다. 건너뛴 잡은 통과, 실패·취소된 잡이 있으면 실패.
   ci-ok:

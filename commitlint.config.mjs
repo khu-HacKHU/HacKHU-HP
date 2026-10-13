@@ -17,7 +17,7 @@ const TYPES = [
   'test',
   'chore',
   'security',
-  // 출시 PR(`release/vX.Y.Z → main`) 전용. 목록에서 출시를 잡일과 구분하기 위해 둔다.
+  // 출시 PR(`release/vX.Y.Z`, `hotfix/vX.Y.Z → main`) 전용. 목록에서 출시를 잡일과 구분하기 위해 둔다.
   'release',
 ]
 
@@ -36,8 +36,8 @@ export default {
   plugins: [noIssueNumber],
   rules: {
     'type-enum': [2, 'always', TYPES],
-    // scope는 쓰지 않는다. 어느 영역인지는 diff가 보여준다.
-    'scope-empty': [2, 'always'],
+    // scope는 팀 영역이고 선택이다. 모노레포라 어느 팀의 변경인지 제목에서 바로 보이게 한다.
+    'scope-enum': [2, 'always', ['auth', 'board', 'gallery', 'infra']],
     // 한글에는 대소문자가 없어 subject-case가 의미가 없다.
     'subject-case': [0],
     // squash merge가 " (#123)"을 덧붙이므로 기본값 100보다 낮춘다.

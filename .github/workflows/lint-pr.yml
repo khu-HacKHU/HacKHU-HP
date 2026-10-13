@@ -33,3 +33,9 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           HEAD_REF: ${{ github.head_ref }}
         run: bash .github/scripts/validate-pr-source.sh "$BASE_REF" "$HEAD_REF"
+      # 본문은 사용자 입력이라 run에 직접 넣지 않고 환경변수로 넘긴다 (스크립트 주입 방지).
+      - name: PR 본문 이슈 연결 검사
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bash .github/scripts/validate-pr-body.sh "$HEAD_REF"
