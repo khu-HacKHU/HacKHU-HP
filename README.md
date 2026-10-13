@@ -54,4 +54,4 @@ git switch develop
 - 모든 이슈와 진행 상황은 GitHub Projects 보드 하나에서 관리한다
 - 업무 할당은 GitHub 이슈로 공개적으로 한다. 결정 사항도 이슈에 남긴다
 - PR 리뷰는 같은 팀 안에서 한다. 인증·파일 업로드·권한 관련 PR은 PL이 최종 승인한다
-- `infra/` 변경은 PM·인프라팀, `.github/` 변경은 PL이 코드 오너로 리뷰한다 ([CODEOWNERS](.github/CODEOWNERS))
+- `infra/` 변경은 PM과 PL, `.github/` 변경은 PL이 코드 오너로 리뷰한다 ([CODEOWNERS](.github/CODEOWNERS))
