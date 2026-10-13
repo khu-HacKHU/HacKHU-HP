@@ -1,0 +1,36 @@
+name: Issue Labels
+
+# 이슈 제목의 type(과 scope), 본문의 영역 체크박스로 레이블을 자동으로 맞춘다 (CONTRIBUTING.md 5절).
+# 규칙은 PR Labels와 같다. 제목 형식이 틀리거나 기능·버그 이슈에 영역이 없으면 이슈에 안내 댓글을 달고,
+# 고쳐지면 댓글을 지운다.
+#
+# - issues 이벤트는 기본 브랜치(develop)의 워크플로로 돈다. 이 파일을 고치면 머지 뒤에 반영된다.
+# - 레포가 public이라 누구나 이슈를 열 수 있다. 제목과 본문은 run에 넣지 않고 환경변수로 넘긴다.
+# - 기존 이슈에 한 번에 적용할 때는 .github/scripts/backfill-issue-labels.sh를 로컬에서 돌린다.
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  issue-labels:
+    if: ${{ !github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: issue-labels-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: 레이블 맞추기와 검사
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: bash .github/scripts/issue-labels.sh "$ISSUE_NUMBER"

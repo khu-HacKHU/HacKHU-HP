@@ -1,0 +1,49 @@
+name: PR Labels
+
+# PR 제목의 type(과 scope, 변경 경로)으로 레이블을 자동으로 맞추고, 맞지 않으면 실패한다
+# (CONTRIBUTING.md 5절). 사람이 레이블을 붙일 필요는 없다. 잘못 붙이거나 떼면 다음 실행에서 되돌린다.
+#
+# - GITHUB_TOKEN으로 바꾼 레이블은 새 워크플로를 트리거하지 않으므로 무한 반복되지 않는다.
+# - Dependabot PR은 토큰이 읽기 전용이라 레이블을 바꿀 수 없다. dependabot.yml의 labels로 미리 붙인다.
+# - pull_request_target은 쓰지 않는다 (docs/security/secure-coding.md 10절).
+# - 이슈는 issue-labels.yml이 같은 규칙으로 맞춘다.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-labels-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # 규칙 자체를 검사한다. type 매핑이 깨지면 그 type의 PR이 전부 막힌다.
+      - name: 레이블 규칙 테스트
+        run: bash .github/scripts/test-labels.sh
+
+      # 제목은 사용자 입력이라 run에 직접 넣지 않고 환경변수로 넘긴다 (스크립트 주입 방지).
+      - name: 붙어야 할 레이블 계산
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename' > changed-files.txt
+          bash .github/scripts/labels.sh expected "$PR_TITLE" < changed-files.txt > expected-labels.txt
+          echo "붙어야 할 레이블: $(paste -sd, expected-labels.txt)"
+
+      # 맞추기에 실패하면(Dependabot·포크 PR의 읽기 전용 토큰 등) 마지막 확인에서 막힌다.
+      - name: 레이블 맞추기와 검사
+        run: bash .github/scripts/apply-labels.sh "$PR_NUMBER" expected-labels.txt
