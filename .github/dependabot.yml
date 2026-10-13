@@ -13,6 +13,8 @@ updates:
       day: monday
       timezone: Asia/Seoul
     target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [chore, dependencies]
     commit-message:
       prefix: chore
     groups:
@@ -26,6 +28,8 @@ updates:
       interval: monthly
       timezone: Asia/Seoul
     target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [chore, dependencies]
     commit-message:
       prefix: chore
 
@@ -36,6 +40,8 @@ updates:
       day: monday
       timezone: Asia/Seoul
     target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [cicd, dependencies]
     commit-message:
       prefix: cicd
     groups:
@@ -49,6 +55,8 @@ updates:
       interval: monthly
       timezone: Asia/Seoul
     target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [chore, dependencies]
     commit-message:
       prefix: chore
     groups:
