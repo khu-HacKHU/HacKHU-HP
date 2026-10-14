@@ -22,6 +22,7 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 | 하려는 일 | 읽을 것 |
 |---|---|
 | 모든 코드 작업 (필수) | [docs/security/secure-coding.md](docs/security/secure-coding.md) |
+| 기능 구현, 명세 작성 | [docs/spec/AGENTS.md](docs/spec/AGENTS.md) |
 | API 추가·변경 | [docs/conventions/api.md](docs/conventions/api.md) |
 | 코드 스타일·네이밍 | [docs/conventions/code-style.md](docs/conventions/code-style.md) |
 | 보안 도구 결과 판별 | [docs/security/tools.md](docs/security/tools.md) |
