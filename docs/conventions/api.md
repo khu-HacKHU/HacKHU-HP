@@ -1,6 +1,6 @@
 # API 공통 규약
 
-모든 팀의 API가 따르는 형식이다. 기능별 API 명세는 각 팀 문서(`docs/auth/`, `docs/board/`, `docs/gallery/`)에 두고, 여기서는 반복되는 규칙만 정한다.
+모든 팀의 API가 따르는 형식이다. 기능별 API 명세는 각 기능 명세의 `backend/4-2-INTERACTION-CONTRACT.md`(`docs/spec/auth/`, `docs/spec/board/`, `docs/spec/gallery/`)에 두고, 여기서는 반복되는 규칙만 정한다.
 
 ## 1. URL
 
@@ -101,7 +101,7 @@
 
 ## 4. 인증
 
-- 인증 방식과 토큰 구조는 인증·권한 팀이 S1 2주차에 `docs/auth/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
+- 인증 방식과 토큰 구조는 인증·권한 팀이 `docs/spec/auth/backend/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
 - 토큰을 URL 쿼리스트링에 넣지 않는다 (로그·Referer로 샌다).
 - 인증이 필요 없는 API는 명세에 **"공개"라고 명시**한다. 명시가 없으면 인증 필요가 기본값이다.
 
@@ -109,4 +109,5 @@
 
 - 응답 필드를 삭제하거나 이름·타입을 바꾸는 것은 호환성을 깨는 변경이다. 프론트엔드와 합의한 뒤 같은 PR에서 명세를 갱신한다.
 - 필드 추가는 호환되는 변경이다.
+- 기능별 API의 기준은 각 기능 명세의 `backend/4-2-INTERACTION-CONTRACT.md`다. 아래 Swagger 문서는 구현 결과를 확인하는 용도이고, 둘이 어긋나면 4-2를 먼저 고치고 코드를 맞춘다.
 - API 명세는 springdoc-openapi가 코드에서 생성한다. 로컬에서 http://localhost:8080/swagger-ui.html 로 확인하고, 컨트롤러·DTO에 `@Operation`, `@Schema`로 설명을 단다.
