@@ -1,8 +1,10 @@
 # SCA — 의존성 업데이트 PR. 취약점 알림·보안 업데이트는 저장소 설정에서 켠다 (docs/security/tools.md).
 #
+# 항목마다 commit-message.prefix를 반드시 둔다. 없으면 Dependabot이 기본 형식
+# `chore(deps):`를 쓰는데, `deps`가 commitlint scope-enum에 없어서 필수 검사 pr-title이 막는다.
+#
 # TODO: 스택이 정해지면 ecosystem을 추가한다.
-#   frontend → npm (/frontend)
-#   infra    → terraform (/infra), docker (Dockerfile 위치)
+#   infra → terraform (/infra), docker (Dockerfile 위치)
 version: 2
 updates:
   # Spring Boot BOM이 대부분의 버전을 관리하므로 Boot 자체와 BOM 밖 라이브러리 위주로 올라온다.
@@ -47,6 +49,22 @@ updates:
     groups:
       actions:
         patterns: ['*']
+
+  # 프론트엔드 React·Vite 의존성
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Seoul
+    target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [chore, dependencies]
+    commit-message:
+      prefix: chore
+    groups:
+      frontend-minor:
+        update-types: [minor, patch]
 
   # 저장소 루트의 commitlint·husky
   - package-ecosystem: npm
