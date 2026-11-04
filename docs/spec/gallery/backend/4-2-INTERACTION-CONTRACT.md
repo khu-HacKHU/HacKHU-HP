@@ -26,7 +26,7 @@
 }
 ```
 
-`coverPhotoUrl`은 **CDN(CloudFront) 주소**로 내려준다. 갤러리는 공개 콘텐츠라 presigned GET이 필요 없다 (1-BACKGROUND.md 3절 참고).
+`coverPhotoUrl`은 **CDN(CloudFront) 서명 URL**로 내려준다. 만료시간은 1시간(조회마다 새로 서명해서 내려주는 거라 넉넉하게 잡음). 공개 콘텐츠라도 루트 `AGENTS.md`의 "파일은 presigned URL로만 주고받는다" 규칙을 지키려고 서명을 건다 (1-BACKGROUND.md 3절 참고).
 
 <br>
 
@@ -58,8 +58,8 @@
 ```json
 {
   "files": [
-    { "contentType": "image/jpeg" },
-    { "contentType": "image/png" }
+    { "contentType": "image/jpeg", "size": 2048000 },
+    { "contentType": "image/png", "size": 1024000 }
   ]
 }
 ```
@@ -77,7 +77,8 @@
 
 - `files` 1~20개 아니면 400.
 - `contentType`이 jpg/png/webp의 MIME이 아니면 400 (`GALLERY_UNSUPPORTED_FORMAT`).
-- **방식은 presigned PUT이다.** 클라이언트는 `uploadUrl`에 `PUT` + 파일 바이트를 그대로 보낸다.
+- `size`(바이트)가 10MB를 넘으면 400 (`GALLERY_FILE_TOO_LARGE`). S3에 아무것도 올리기 전에, 발급 시점에 바로 거부한다.
+- **방식은 presigned PUT이다.** 클라이언트는 `uploadUrl`에 `PUT` + 파일 바이트를 그대로 보낸다. 이때 보내는 `Content-Length`는 요청에 적은 `size`와 정확히 같아야 한다. 서명에 그 값이 고정돼 있어서, 실제로 더 큰 파일을 보내면 S3가 서명 불일치로 업로드 자체를 거부한다.
 - **만료 시간: 10분.**
 - 응답엔 S3 객체 키를 노출하지 않는다. `uploadId`만 내려주고, 실제 키는 서버 내부(`global/storage` 발급기록)에서만 관리한다 (1-BACKGROUND.md "업로드 발급 기록" 참고).
 
@@ -100,7 +101,7 @@
 - 응답 201 + `Location: /api/v1/albums/{id}`, 본문은 2절 상세 응답과 동일한 형태.
 - **처리 순서 (전부 이 API 안에서 동기):**
   1. 각 `uploadId`가 발급 기록에 있고, 호출자 본인에게 발급된 것이고, 아직 안 쓰였는지 확인 (소유자 확인, 싸니까 먼저)
-  2. 통과한 것만 S3 Range GetObject(첫 12바이트)로 매직바이트 확인 + `ContentLength`로 10MB 이하 확인
+  2. 통과한 것만 S3 Range GetObject(첫 12바이트)로 매직바이트 확인. 크기는 발급 시점에 서명으로 이미 고정돼 있어서 여기서 다시 확인할 필요는 없다.
   3. 하나라도 실패하면 **전체 거부**. 관련 S3 객체 전부 삭제, 발급 기록 전부 소비 처리, 400 + `errors` 배열(실패한 `uploadId`별 사유)
   4. 전부 통과하면 발급 기록을 소비 처리하고, 같은 트랜잭션으로 `album`/`photo` insert
 

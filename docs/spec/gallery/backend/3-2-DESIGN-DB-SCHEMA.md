@@ -46,3 +46,5 @@
 ### 4. 참고: 업로드 발급 기록 테이블 (이 도메인 소유 아님)
 
 `uploadId + DB 발급기록` 방식의 실제 테이블은 갤러리가 아니라 `global/storage`(PL 소유, 게시판 첨부파일과 공유)에 둔다. 여기엔 정의하지 않고 참조만 한다. 컬럼 구성은 `id(uploadId)`, `user_id`, `purpose`, `object_key`, `content_type`, `size_bytes`, `status(ISSUED/USED)`, `expires_at`, `created_at`.
+
+확정 없이 끝까지 `ISSUED` 상태로 남는 행이 쌓이면 S3에 쓰레기 객체도 같이 쌓인다. 만료된 `ISSUED` 기록을 찾아 DB 행과 S3 객체를 같이 지우는 배치가 필요하다 (5-1 참고). 이 배치도 `global/storage` 소유라 여기서 구현하지 않고, 인프라팀 쪽에 필요하다고 전달만 한다.
