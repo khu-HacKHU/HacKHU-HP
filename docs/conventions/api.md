@@ -102,6 +102,8 @@
 ## 4. 인증
 
 - 인증 방식과 토큰 구조는 인증·권한 팀이 `docs/spec/auth/backend/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
+- 로그인이 필요한 API는 `Authorization: Bearer {accessToken}` 헤더로 access 토큰(15분)을 받는다. refresh 토큰은 `/api/v1/auth` 경로에만 실리는 HttpOnly 쿠키로 주고받는다. 상세는 [인증권한 API 계약](../spec/auth/backend/4-2-INTERACTION-CONTRACT.md)에 있다.
+- access 토큰이 만료되면 `401 TOKEN_EXPIRED`, 토큰이 없거나 무효면 `401 UNAUTHORIZED`를 준다. 클라이언트는 `TOKEN_EXPIRED`일 때만 갱신을 시도한다.
 - 토큰을 URL 쿼리스트링에 넣지 않는다 (로그·Referer로 샌다).
 - 인증이 필요 없는 API는 명세에 **"공개"라고 명시**한다. 명시가 없으면 인증 필요가 기본값이다.
 
