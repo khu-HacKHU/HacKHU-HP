@@ -3,6 +3,10 @@
 # 항목마다 commit-message.prefix를 반드시 둔다. 없으면 Dependabot이 기본 형식
 # `chore(deps):`를 쓰는데, `deps`가 commitlint scope-enum에 없어서 필수 검사 pr-title이 막는다.
 #
+# 항목마다 cooldown도 둔다. 새로 올라온 버전을 7일 기다린 뒤 PR을 올려서, 탈취된 패키지의
+# 악성 버전이 적발·철회되는 창을 지나치게 한다 (CWE-1357). 보안 업데이트에는 적용되지 않으므로
+# 취약점 알림에서 생성되는 긴급 패치는 그대로 즉시 올라온다.
+#
 # TODO: 스택이 정해지면 ecosystem을 추가한다.
 #   infra → terraform (/infra), docker (Dockerfile 위치)
 version: 2
@@ -19,6 +23,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
     groups:
       backend-minor:
         update-types: [minor, patch]
@@ -34,6 +40,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: github-actions
     directory: /
@@ -46,6 +54,8 @@ updates:
     labels: [cicd, dependencies]
     commit-message:
       prefix: cicd
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ['*']
@@ -62,6 +72,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
     groups:
       frontend-minor:
         update-types: [minor, patch]
@@ -77,6 +89,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
     groups:
       tooling:
         patterns: ['*']
