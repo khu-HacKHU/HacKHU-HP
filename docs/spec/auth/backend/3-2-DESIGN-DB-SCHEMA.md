@@ -107,7 +107,7 @@
 | 처음 관리자 생성 | 행 추가, `role = ADMIN`, `must_change_password = true`, `temp_password_expires_at = NULL` | | |
 | 승인 | `role = MEMBER`, `approved_at` 기록 | | |
 | 거절 | 행 삭제 | CASCADE로 삭제 | CASCADE로 삭제 |
-| 로그인 | 임시 비밀번호였으면 `temp_password_used_at` 기록 | 행 추가 | 첫 토큰 추가 |
+| 로그인 | 임시 비밀번호였으면 `temp_password_used_at` 기록 | 행 추가 <br> 요청에 기존 refresh 쿠키가 있었으면 그 세션에 `revoked_at` 기록 | 첫 토큰 추가 |
 | refresh | | | 4-2-5의 규칙대로 회전 |
 | 로그아웃 | | 그 세션에 `revoked_at` 기록 | |
 | 역할 변경 | `role` 변경 | | |
