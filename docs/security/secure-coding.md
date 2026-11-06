@@ -77,3 +77,4 @@
 - `pull_request_target`을 쓰지 않는다.
 - `run:`에 `${{ github.event.* }}` 값을 직접 넣지 않고 `env:`로 넘긴다 (스크립트 인젝션). (CWE-78)
 - 워크플로 `permissions`는 필요한 최소한만 준다.
+- `uses:`는 태그가 아니라 40자 커밋 SHA로 고정하고 뒤에 버전 주석을 단다 (예: `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`). 태그는 액션 주인이 다른 커밋으로 옮길 수 있다. 버전은 Dependabot이 SHA와 주석을 함께 올린다. (CWE-829)

@@ -29,7 +29,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # 규칙 자체를 검사한다. type 매핑이 깨지면 그 type의 PR이 전부 막힌다.
       - name: 레이블 규칙 테스트
