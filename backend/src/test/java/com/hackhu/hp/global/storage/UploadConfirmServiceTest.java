@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.core.exception.SdkClientException;
 
 class UploadConfirmServiceTest {
 
@@ -193,6 +194,23 @@ class UploadConfirmServiceTest {
                 () ->
                         service.confirmImages(
                                 OWNER, UploadPurpose.GALLERY, List.of(attachment.getId())));
+    }
+
+    @Test
+    void S3_장애로_검사를_못_하면_기록을_소비하지_않고_그대로_터뜨린다() {
+        UploadRecord record = issued(OWNER);
+        givenRecords(record);
+        when(imageFormatValidator.isSupportedImage(record.getObjectKey()))
+                .thenThrow(SdkClientException.create("connection reset"));
+
+        // 클라이언트 잘못이 아니라 우리 쪽 문제라, 확정 실패(400)로 바꾸지 않고 그대로 올려 500이 되게 한다.
+        assertThrows(
+                SdkClientException.class,
+                () -> service.confirmImages(OWNER, UploadPurpose.GALLERY, List.of(record.getId())));
+
+        // 기록이 ISSUED로 남아야 사용자가 사진을 다시 올리지 않고 재시도할 수 있다.
+        assertTrue(record.isPending());
+        verify(objectStore, never()).deleteAll(anyList());
     }
 
     @Test
