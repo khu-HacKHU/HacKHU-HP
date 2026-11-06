@@ -99,6 +99,15 @@ public class UploadRecord {
         return status == UploadStatus.ISSUED && now.isBefore(expiresAt);
     }
 
+    /** 아직 어느 앨범·게시글에도 붙지 않은 상태. 이 객체는 지워도 살아있는 콘텐츠를 깨지 않는다. */
+    public boolean isPending() {
+        return status == UploadStatus.ISSUED;
+    }
+
+    public UploadPurpose getPurpose() {
+        return purpose;
+    }
+
     public UUID getId() {
         return id;
     }

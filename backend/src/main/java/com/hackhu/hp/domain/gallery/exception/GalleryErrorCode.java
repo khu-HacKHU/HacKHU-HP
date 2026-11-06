@@ -8,6 +8,8 @@ public enum GalleryErrorCode implements ErrorCode {
     UNSUPPORTED_FORMAT(
             HttpStatus.BAD_REQUEST, "GALLERY_UNSUPPORTED_FORMAT", "jpg, png, webp 형식만 올릴 수 있습니다."),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "GALLERY_FILE_TOO_LARGE", "사진 한 장은 10MB를 넘을 수 없습니다."),
+    INVALID_UPLOAD(
+            HttpStatus.BAD_REQUEST, "GALLERY_INVALID_UPLOAD", "올린 사진을 확인할 수 없습니다. 다시 올려주세요."),
     TOO_MANY_REQUESTS(
             HttpStatus.TOO_MANY_REQUESTS,
             "GALLERY_TOO_MANY_REQUESTS",
