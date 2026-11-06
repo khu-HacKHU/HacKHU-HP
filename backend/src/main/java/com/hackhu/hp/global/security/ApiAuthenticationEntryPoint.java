@@ -10,8 +10,9 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 /**
  * 로그인이 필요한 API를 로그인 없이 부르면 {@code 401 UNAUTHORIZED}를 준다.
  *
- * <p>누구나 부를 수 있는 경로라 로그를 남기지 않는다. 남기면 로그를 마음대로 쌓을 수 있게 된다 (CWE-779). 만료된 토큰의 {@code TOKEN_EXPIRED}는
- * 토큰 검증을 붙일 때 여기서 나눈다 (5-1-4).
+ * <p>토큰이 없거나, 만료됐거나, 무효인 경우 모두 같은 응답을 준다. 만료를 따로 알려 주지 않는다 (결정 기록 A14, 5-1-4).
+ *
+ * <p>누구나 부를 수 있는 경로라 여기서는 로그를 남기지 않는다. 남기면 로그를 마음대로 쌓을 수 있게 된다 (CWE-779).
  */
 final class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

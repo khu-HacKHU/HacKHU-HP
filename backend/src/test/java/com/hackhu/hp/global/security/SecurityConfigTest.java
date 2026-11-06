@@ -1,6 +1,7 @@
 package com.hackhu.hp.global.security;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -125,8 +127,15 @@ class SecurityConfigTest {
         }
 
         @Test
-        void 승인_대기_회원도_통과() throws Exception {
+        void 승인_대기_회원도_조회_비밀번호_변경_탈퇴는_통과() throws Exception {
             perform(get("/api/v1/users/me"), "PENDING").andExpect(status().isOk());
+            perform(put("/api/v1/users/me/password"), "PENDING").andExpect(status().isOk());
+            perform(delete("/api/v1/users/me"), "PENDING").andExpect(status().isOk());
+        }
+
+        @Test
+        void 내_정보_아래라도_세_API가_아니면_승인_대기_회원은_403() throws Exception {
+            expectForbidden(perform(get("/api/v1/users/me/settings"), "PENDING"));
         }
     }
 
@@ -201,6 +210,15 @@ class SecurityConfigTest {
                     .andExpect(status().isForbidden())
                     .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
         }
+
+        @Test
+        void 허용하지_않은_메서드의_사전_요청은_거부() throws Exception {
+            mockMvc.perform(
+                            options("/api/v1/test/members")
+                                    .header(HttpHeaders.ORIGIN, FRONTEND)
+                                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "PATCH"))
+                    .andExpect(status().isForbidden());
+        }
     }
 
     @RestController
@@ -230,6 +248,21 @@ class SecurityConfigTest {
 
         @GetMapping("/api/v1/users/me")
         String me() {
+            return "ok";
+        }
+
+        @PutMapping("/api/v1/users/me/password")
+        String changePassword() {
+            return "ok";
+        }
+
+        @DeleteMapping("/api/v1/users/me")
+        String withdraw() {
+            return "ok";
+        }
+
+        @GetMapping("/api/v1/users/me/settings")
+        String settings() {
             return "ok";
         }
 

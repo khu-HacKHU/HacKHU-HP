@@ -48,13 +48,11 @@ public class SecurityConfig {
 
     // 공개 API. 명세에 "공개"라고 적힌 API만 메서드별로 넣는다 (5-1-1, api.md 4절).
     // 공지, 갤러리 조회처럼 GET 공개 API가 생기면 PUBLIC_GET_PATHS 배열과 아래 규칙을 추가한다.
-    // refresh와 로그아웃은 access 토큰 대신 refresh 쿠키로 확인하므로 여기 둔다. 쿠키와 Origin 검사는 그 API가 한다.
+    // refresh와 로그아웃은 access 토큰 대신 refresh 쿠키로 확인하므로 여기 둔다.
+    // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사는 그 API가 한다 (5-1-5).
     private static final String[] PUBLIC_POST_PATHS = {
         "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout"
     };
-
-    // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API에만 쓴다 (5-1-1).
-    private static final String[] SIGNED_IN_PATHS = {"/api/v1/users/me", "/api/v1/users/me/**"};
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) {
@@ -76,7 +74,13 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
                                         .permitAll()
-                                        .requestMatchers(SIGNED_IN_PATHS)
+                                        // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
+                                        .hasRole(PENDING)
+                                        .requestMatchers(
+                                                HttpMethod.PUT, "/api/v1/users/me/password")
+                                        .hasRole(PENDING)
+                                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
                                         .hasRole(PENDING)
                                         .requestMatchers(
                                                 HttpMethod.PUT, "/api/v1/admin/users/*/role")
@@ -108,16 +112,16 @@ public class SecurityConfig {
                 .build();
     }
 
-    // 프론트엔드 주소만 허용한다. *를 쓰지 않는다 (5-1-5).
+    // 프론트엔드 주소만 허용한다. *를 쓰지 않는다. 메서드와 헤더도 5-1-5에 적힌 것만 연다.
     @Bean
     CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(properties.allowedOrigins());
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         // 생성 API의 Location, 요청 제한의 Retry-After를 프론트엔드가 읽는다 (api.md 1절, 4-2-1).
         config.setExposedHeaders(List.of("Location", "Retry-After"));
-        // refresh와 로그아웃이 refresh 쿠키를 싣는다.
+        // 프론트엔드가 모든 요청에 credentials: 'include'를 붙인다 (4-2-1).
         config.setAllowCredentials(true);
         config.setMaxAge(Duration.ofHours(1));
 
