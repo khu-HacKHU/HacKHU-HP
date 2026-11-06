@@ -40,6 +40,17 @@ com.hackhu.hp
 - 정렬·검색 필드는 허용 목록으로 검사한다
 - 목록 API는 `Pageable`을 받고 `size` 최대 100으로 제한한다
 
+## 인증·권한
+
+규칙의 기준은 [인증권한 보안 명세](../docs/spec/auth/backend/5-1-QUALITY-SECURITY.md)이고, 설정은 `global/security/SecurityConfig`에 있다.
+
+- 기본은 **동아리원(`MEMBER`) 이상**이다. 승인 대기 회원(`PENDING`)은 방문자와 같으므로 "로그인만 하면 통과"로 열지 않는다
+- 역할 순서는 `PENDING` < `MEMBER` < `STAFF` < `ADMIN`이다. `hasRole('MEMBER')`는 운영진과 관리자도 통과한다
+- 공개 API는 명세에 "공개"라고 적고 `SecurityConfig`의 공개 목록에 메서드와 경로를 추가한다. 이 파일은 PL이 리뷰한다
+- `/api/v1/admin/**`은 운영진 이상이 기본이다. 경로 규칙은 최소 수준일 뿐이므로 작성자 확인 같은 검사는 각 API가 한다
+- 비로그인은 `401 UNAUTHORIZED`, 역할 부족은 `403 FORBIDDEN`으로 Security가 응답한다. 컨트롤러에서 직접 만들지 않는다
+- `@WebMvcTest`에서는 `@Import(SecurityConfig.class)`를 붙이고 `with(user("1").roles("MEMBER"))`나 `@WithMockUser(roles = "MEMBER")`로 역할을 준다. 예시는 `SecurityConfigTest`
+
 ## DB
 
 - 스키마 변경은 Flyway 마이그레이션(`src/main/resources/db/migration/V{번호}__{설명}.sql`)으로만 한다. `ddl-auto`는 `validate`로 고정한다
