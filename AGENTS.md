@@ -25,6 +25,7 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 | 기능 구현, 명세 작성 | [docs/spec/AGENTS.md](docs/spec/AGENTS.md) |
 | API 추가·변경 | [docs/conventions/api.md](docs/conventions/api.md) |
 | 코드 스타일·네이밍 | [docs/conventions/code-style.md](docs/conventions/code-style.md) |
+| 리뷰 작성, 리뷰 반영 | [docs/conventions/code-review.md](docs/conventions/code-review.md) |
 | 보안 도구 결과 판별 | [docs/security/tools.md](docs/security/tools.md) |
 | 커밋·브랜치·PR | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
@@ -69,12 +70,8 @@ practice/   Juice Shop 등 보안 도구 실습 환경. 본 서비스 코드가 
 
 ## 코드 리뷰 규칙
 
-- 모든 리뷰 코멘트와 리뷰 요약은 한국어로 작성한다.
-- 코드 식별자, 파일 경로, 로그, 오류 메시지는 원문을 유지한다.
-- 다음을 우선 확인한다.
-  1. 보안 취약점 — 인가 누락(IDOR), 인젝션, XSS, 시크릿 노출, 안전하지 않은 파일 업로드
-  2. 런타임 오류와 데이터 손실 가능성
-  3. API 응답 형식이나 DB 스키마의 하위 호환성을 깨는 변경
-- 동작이 바뀌었는데 테스트가 없으면 지적한다.
-- 보안 지적에는 가능하면 관련 OWASP Top 10 / CWE 항목을 함께 적는다.
+리뷰 본문 구조, 머리표, 승인·수정 요청 판정 기준, 스레드 해결 규칙은 [docs/conventions/code-review.md](docs/conventions/code-review.md)에 있다. 리뷰를 쓰기 전에 읽는다.
+
+- 리뷰 글은 한국어로 쓴다. 코드 식별자, 파일 경로, 로그, 오류 메시지는 원문을 유지한다.
+- 보안 지적에는 관련 OWASP Top 10 2021 / CWE 항목을 함께 적는다.
 - 단순 스타일이나 포매팅은 리뷰하지 않는다 (린터 몫).
