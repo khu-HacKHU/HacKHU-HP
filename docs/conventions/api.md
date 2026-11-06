@@ -86,7 +86,7 @@
 | 상태 | 쓰는 때 | code 예 |
 |---|---|---|
 | 400 | 입력 형식·검증 실패 | `INVALID_INPUT` |
-| 401 | 인증 없음, 토큰 만료·위조 | `UNAUTHORIZED`, `TOKEN_EXPIRED` |
+| 401 | 인증 없음, 토큰 만료·위조 | `UNAUTHORIZED` |
 | 403 | 인증은 됐지만 권한 없음 | `FORBIDDEN`, `POST_FORBIDDEN` |
 | 404 | 리소스 없음 | `POST_NOT_FOUND` |
 | 409 | 상태 충돌 (중복 가입 등) | `DUPLICATE_EMAIL` |
@@ -103,7 +103,7 @@
 
 - 인증 방식과 토큰 구조는 인증·권한 팀이 `docs/spec/auth/backend/`에 정한다. 이 절은 그 결정에 맞춰 갱신한다.
 - 로그인이 필요한 API는 `Authorization: Bearer {accessToken}` 헤더로 access 토큰(15분)을 받는다. refresh 토큰은 `/api/v1/auth` 경로에만 실리는 HttpOnly 쿠키로 주고받는다. 상세는 [인증권한 API 계약](../spec/auth/backend/4-2-INTERACTION-CONTRACT.md)에 있다.
-- access 토큰이 만료되면 `401 TOKEN_EXPIRED`, 토큰이 없거나 무효면 `401 UNAUTHORIZED`를 준다. 클라이언트는 access 토큰을 보낸 요청이 401을 받으면 코드와 상관없이 갱신을 한 번 시도하고, 갱신도 401이면 로그인 화면으로 보낸다.
+- 토큰이 없거나, 만료되었거나, 무효면 모두 `401 UNAUTHORIZED`를 준다. 만료를 따로 알려 주지 않는다(만료 여부는 서버 로그에만 남김). 클라이언트는 access 토큰을 보낸 요청이 401을 받으면 갱신을 한 번 시도하고, 갱신도 401이면 로그인 화면으로 보낸다. 갱신 결과의 사용자가 원래 요청의 사용자와 다르면 원래 요청을 다시 보내지 않는다.
 - 토큰을 URL 쿼리스트링에 넣지 않는다 (로그·Referer로 샌다).
 - 인증이 필요 없는 API는 명세에 **"공개"라고 명시**한다. 명시가 없으면 인증 필요가 기본값이다.
 
