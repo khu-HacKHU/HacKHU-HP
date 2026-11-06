@@ -13,7 +13,7 @@
 | 로그인 세션의 최대 수명 | 로그인부터 30일 <br> 계속 써도 30일이 지나면 다시 로그인함 |
 | 직전 refresh 토큰을 동시 요청으로 받아 주는 시간 | 회전한 뒤 10초 |
 
-- access 토큰이 만료되어도 사용자는 로그아웃되지 않는다. 프론트엔드는 `401`과 `TOKEN_EXPIRED` 코드를 받으면 refresh API로 새 access 토큰을 받고 실패한 요청을 한 번 다시 보낸다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md))
+- access 토큰이 만료되거나 서명 키가 바뀌어도 사용자는 로그아웃되지 않는다. 프론트엔드는 access 토큰을 보낸 요청이 `401`을 받으면 코드와 상관없이 refresh API로 새 access 토큰을 받고 실패한 요청을 한 번 다시 보낸다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md))
 - 프론트엔드는 동시에 여러 요청이 만료되어도 refresh API를 한 번만 부르고, 나머지 요청은 그 결과를 기다린다. 여러 탭이 동시에 부르는 경우는 백엔드가 직전 토큰을 10초 동안 받아 주는 것으로 흡수한다.
 - refresh 응답이 네트워크 오류로 유실되어도 로그아웃되지 않는다. 다음 갱신에서 새 쿠키를 받는다. 규칙은 계약 문서를 따른다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md))
 - 의도한 로그아웃만 일어난다. 직접 로그아웃, 비밀번호 변경, 비밀번호 초기화, 탈퇴, refresh 토큰 만료, 로그인 세션의 최대 수명 도달, refresh 토큰 재사용 감지다.
