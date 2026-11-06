@@ -270,6 +270,7 @@ Set-Cookie: refresh_token={값}; Path=/api/v1/auth; Max-Age=1209600; HttpOnly; S
 |---|---|
 | `password`가 비었거나 틀림, 또는 검증 직후 비밀번호가 바뀜 | 400 <br> 401을 쓰지 않음 |
 | 활성 관리자가 자기 한 명뿐임 | 409 |
+| 처리 도중 자기 역할이 계속 바뀌어 처리하지 못함 | 409 <br> 다시 시도하면 됨 (5-2-QUALITY-CONCURRENCY.md 5-2-3) |
 | 요청 횟수 제한 | 429 |
 
 <br>
@@ -355,6 +356,7 @@ Set-Cookie: refresh_token={값}; Path=/api/v1/auth; Max-Age=1209600; HttpOnly; S
 | 회원이 없거나 탈퇴함 | 404 |
 | 대상이 승인 대기 회원임 | 409 <br> 승인은 가입 승인 API로만 함 |
 | 활성 관리자가 대상 한 명뿐인데 역할을 내리려 함 | 409 |
+| 처리 도중 대상의 역할이 계속 바뀌어 처리하지 못함 | 409 <br> 다시 시도하면 됨 (5-2-QUALITY-CONCURRENCY.md 5-2-4) |
 
 <br>
 
