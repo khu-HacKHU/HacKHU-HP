@@ -31,6 +31,10 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
+    // AWS SDK 모듈 버전은 BOM 한 줄로 맞춘다. 모듈은 버전 없이 추가한다 (예: s3).
+    implementation(platform("software.amazon.awssdk:bom:2.46.7"))
+    // 갤러리 사진 조회 주소(CloudFront 서명 URL)
+    implementation("software.amazon.awssdk:cloudfront")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
