@@ -6,3 +6,8 @@ spring:
     password: ${DATABASE_PASSWORD}
 
 # API 문서는 application.yml에서 기본으로 꺼져 있다. 여기서 켜지 않는다.
+
+# 프론트엔드 주소 하나 (예: https://hackhu.example). *를 쓰지 않는다 (docs/spec/auth/backend/5-1-QUALITY-SECURITY.md 5-1-5).
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN}
