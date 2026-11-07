@@ -18,6 +18,8 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 @Slf4j
 final class ApiAccessDeniedHandler implements AccessDeniedHandler {
 
+    private static final int MAX_LOG_VALUE_LENGTH = 200;
+
     private final SecurityErrorResponseWriter errorWriter;
 
     ApiAccessDeniedHandler(SecurityErrorResponseWriter errorWriter) {
@@ -35,8 +37,21 @@ final class ApiAccessDeniedHandler implements AccessDeniedHandler {
         log.info(
                 "권한 거부: userId={}, method={}, path={}",
                 userId,
-                request.getMethod(),
-                request.getRequestURI());
+                forLog(request.getMethod()),
+                forLog(request.getRequestURI()));
         errorWriter.write(response, CommonErrorCode.FORBIDDEN);
+    }
+
+    // 메서드와 경로는 클라이언트가 정하는 값이다. 줄바꿈과 제어 문자를 바꿔 로그 줄을 위조하지 못하게 하고,
+    // 긴 경로로 로그를 부풀리지 못하게 자른다 (CWE-117).
+    static String forLog(String value) {
+        if (value == null) {
+            return null;
+        }
+        String oneLine = value.replaceAll("[\r\n]", "_");
+        String printable = oneLine.replaceAll("\\p{Cntrl}", "_");
+        return printable.length() > MAX_LOG_VALUE_LENGTH
+                ? printable.substring(0, MAX_LOG_VALUE_LENGTH)
+                : printable;
     }
 }
