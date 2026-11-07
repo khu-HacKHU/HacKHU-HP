@@ -65,7 +65,7 @@ API 경로는 계약 문서를 따른다. ([4-2-INTERACTION-CONTRACT.md](4-2-INT
 
 ### 5-1-4. 게시판 종류 구분
 
-세 게시판이 `posts` 테이블 하나를 같이 쓴다. ([3-2-DESIGN-DB-SCHEMA.md](3-2-DESIGN-DB-SCHEMA.md)) 그래서 공지 API가 다른 게시판의 글을 읽거나 바꾸지 않도록 아래를 지킨다.
+세 게시판이 `post` 테이블 하나를 같이 쓴다. ([3-2-DESIGN-DB-SCHEMA.md](3-2-DESIGN-DB-SCHEMA.md)) 그래서 공지 API가 다른 게시판의 글을 읽거나 바꾸지 않도록 아래를 지킨다.
 
 - 공지 API의 모든 조회, 수정, 삭제 쿼리는 조건에 `board_type = 'NOTICE'`를 넣는다. `id`만으로 글을 읽은 뒤 애플리케이션에서 종류를 비교하지 않는다. 비교를 빠뜨리면 공개 API로 동아리원 전용 글이 열리기 때문이다.
 - `board_type`은 요청에서 받지 않는다. 컨트롤러가 정한 값을 서비스에 넘긴다.
@@ -75,9 +75,9 @@ API 경로는 계약 문서를 따른다. ([4-2-INTERACTION-CONTRACT.md](4-2-INT
 
 ### 5-1-5. 입력 검증
 
-- 요청 DTO는 `title`과 `body`만 가진다. `id`, `authorId`, `boardType`, `createdAt`, `updatedAt`이 없다. (CWE-915)
+- 요청 DTO는 `title`과 `content`만 가진다. `id`, `authorId`, `boardType`, `createdAt`, `updatedAt`이 없다. (CWE-915)
 - `title`은 앞뒤 공백을 지운 뒤 길이를 검사한다. 제어 문자와 양방향 텍스트 제어 문자(U+202A~U+202E, U+2066~U+2069)를 거부한다. 제목은 목록에서 다른 글과 나란히 보이므로 글자 방향을 뒤집어 다른 글처럼 보이게 하는 것을 막는다.
-- `body`는 줄바꿈(`\n`)과 탭을 뺀 제어 문자를 거부한다. 특히 NUL(U+0000)은 PostgreSQL `TEXT`에 저장할 수 없어서 검사하지 않으면 500이 난다.
+- `content`는 줄바꿈(`\n`)과 탭을 뺀 제어 문자를 거부한다. 특히 NUL(U+0000)은 PostgreSQL `TEXT`에 저장할 수 없어서 검사하지 않으면 500이 난다.
 - 길이는 코드 포인트 단위로 센다. (3-2-DESIGN-DB-SCHEMA.md 3-2-2)
 - 길이 검사를 통과하지 못하면 400 `INVALID_INPUT`과 필드별 사유를 준다. 사유에 입력값을 다시 넣지 않는다.
 - 요청 본문 전체 크기는 64KB까지 받는다. 본문 10,000자가 UTF-8로 최대 40KB이므로 정상 요청은 넉넉히 들어간다. 큰 본문을 보내 서버 메모리를 쓰게 하는 것을 막는다.

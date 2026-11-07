@@ -31,9 +31,9 @@
 
 **본문**
 
-- `body`는 받은 글자를 그대로 저장하고 그대로 준다. 서버는 HTML 태그를 지우거나 바꾸지 않는다.
+- `content`는 받은 글자를 그대로 저장하고 그대로 준다. 서버는 HTML 태그를 지우거나 바꾸지 않는다.
 - 줄바꿈은 `\r\n`과 `\r`을 `\n`으로 바꿔 저장한다.
-- 프론트엔드는 `body`를 글자로 출력한다. HTML로 해석하는 출력(`dangerouslySetInnerHTML` 등)을 쓰지 않는다. 줄바꿈은 CSS(`white-space: pre-wrap`)로 보여 준다. ([secure-coding.md](../../../security/secure-coding.md) 4절)
+- 프론트엔드는 `content`를 글자로 출력한다. HTML로 해석하는 출력(`dangerouslySetInnerHTML` 등)을 쓰지 않는다. 줄바꿈은 CSS(`white-space: pre-wrap`)로 보여 준다. ([secure-coding.md](../../../security/secure-coding.md) 4절)
 
 **프론트엔드가 분기하는 실패**
 
@@ -114,7 +114,7 @@
 {
   "id": 42,
   "title": "11월 정기 세미나 안내",
-  "body": "일시: 11월 14일 19시\n장소: 동아리방\n\n발표 주제는 단톡방에 올립니다.",
+  "content": "일시: 11월 14일 19시\n장소: 동아리방\n\n발표 주제는 단톡방에 올립니다.",
   "author": { "id": 7, "name": "홍길동" },
   "createdAt": "2026-11-07T09:30:00Z",
   "updatedAt": "2026-11-07T10:05:00Z"
@@ -137,14 +137,14 @@
 ```json
 {
   "title": "11월 정기 세미나 안내",
-  "body": "일시: 11월 14일 19시\n장소: 동아리방"
+  "content": "일시: 11월 14일 19시\n장소: 동아리방"
 }
 ```
 
 | 필드 | 필수 | 규칙 |
 |---|---|---|
 | `title` | 필수 | 앞뒤 공백을 지운 뒤 1자 이상 100자 이하 |
-| `body` | 필수 | 1자 이상 10,000자 이하, 공백만으로 된 값은 받지 않음 |
+| `content` | 필수 | 1자 이상 10,000자 이하, 공백만으로 된 값은 받지 않음 |
 
 길이 규칙은 요구사항 문서를 따른다. ([2-REQUIREMENTS.md](2-REQUIREMENTS.md) 2-1)
 
