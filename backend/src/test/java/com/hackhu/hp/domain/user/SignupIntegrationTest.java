@@ -22,9 +22,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -34,6 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 /** 가입을 실제 DB로 확인한다. Docker가 필요하다. */
+@ExtendWith(OutputCaptureExtension.class)
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -124,7 +128,7 @@ class SignupIntegrationTest {
     }
 
     @Test
-    void 확인과_저장_사이에_같은_이메일이_먼저_저장되어도_500이_아니라_409() throws Exception {
+    void 확인과_저장_사이에_같은_이메일이_먼저_저장되어도_500이_아니라_409(CapturedOutput output) throws Exception {
         signup("newbie@example.com", "홍길동").andExpect(status().isCreated());
         // 사전 확인을 통과한 것처럼 만들어 DB 유니크 인덱스(uk_users_email)가 막는 경로를 밟는다.
         doReturn(false).when(userRepository).existsByEmail(anyString());
@@ -136,6 +140,8 @@ class SignupIntegrationTest {
         // 사전 확인이 아니라 저장 시도에서 막혔는지 확인한다. 두 요청 모두 INSERT까지 갔다.
         verify(userRepository, times(2)).saveAndFlush(any(User.class));
         assertThat(userRepository.count()).isEqualTo(1);
+        // 유니크 위반의 Detail에 이메일이 들어 있다. 로그에 남지 않아야 한다 (5-1-9, CWE-532).
+        assertThat(output).contains("uk_users_email").doesNotContain("newbie@example.com");
     }
 
     // 6-RELEASE-TEST-CASES.md CC10
