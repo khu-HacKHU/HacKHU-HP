@@ -7,8 +7,8 @@ CREATE TABLE upload_record (
     content_type VARCHAR(50) NOT NULL,
     size_bytes BIGINT NOT NULL,
     status VARCHAR(10) NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 -- 만료된 ISSUED 기록을 찾아 지우는 정리 배치가 쓸 인덱스.
