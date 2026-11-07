@@ -74,7 +74,7 @@ class SignupRequestValidationTest {
 
         // 6-RELEASE-TEST-CASES.md I1
         @ParameterizedTest
-        @ValueSource(strings = {"홍길동@example.com", "newbie@exämple.com", "Kim@example.com"})
+        @ValueSource(strings = {"홍길동@example.com", "newbie@exämple.com", "\u212Aim@example.com"})
         void ASCII가_아닌_문자가_있으면_거부한다(String email) {
             SignupRequest request = new SignupRequest(email, PASSWORD, NAME);
 
@@ -83,10 +83,10 @@ class SignupRequestValidationTest {
 
         @Test
         void 켈빈_기호를_소문자_k로_바꿔_통과시키지_않는다() {
-            // "K".toLowerCase(Locale.ROOT)는 ASCII "k"다. 바꾼 뒤 검사하면 통과해 버린다.
-            SignupRequest request = new SignupRequest("Kim@example.com", PASSWORD, NAME);
+            // "\u212A".toLowerCase(Locale.ROOT)는 ASCII "k"다. 바꾼 뒤 검사하면 통과해 버린다.
+            SignupRequest request = new SignupRequest("\u212Aim@example.com", PASSWORD, NAME);
 
-            assertThat(request.email()).isEqualTo("Kim@example.com");
+            assertThat(request.email()).isEqualTo("\u212Aim@example.com");
         }
 
         @Test
@@ -201,7 +201,7 @@ class SignupRequestValidationTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"홍\u0000길동", "홍\n길동", "홍\t길동", "홍\u007F길동", "홍 길동"})
+        @ValueSource(strings = {"홍\u0000길동", "홍\n길동", "홍\t길동", "홍\u007F길동", "홍\u2028길동"})
         void 제어_문자가_있으면_거부한다(String name) {
             assertThat(invalidFields(new SignupRequest(EMAIL, PASSWORD, name)))
                     .containsExactly("name");
@@ -209,7 +209,16 @@ class SignupRequestValidationTest {
 
         // 6-RELEASE-TEST-CASES.md I2
         @ParameterizedTest
-        @ValueSource(strings = {"‮동길홍", "홍‪길동", "홍‭길동", "홍⁦길동", "홍⁩길동", "홍‏길동", "홍؜길동"})
+        @ValueSource(
+                strings = {
+                    "\u202E동길홍",
+                    "홍\u202A길동",
+                    "홍\u202D길동",
+                    "홍\u2066길동",
+                    "홍\u2069길동",
+                    "홍\u200F길동",
+                    "홍\u061C길동"
+                })
         void 양방향_텍스트_제어_문자가_있으면_거부한다(String name) {
             assertThat(invalidFields(new SignupRequest(EMAIL, PASSWORD, name)))
                     .containsExactly("name");

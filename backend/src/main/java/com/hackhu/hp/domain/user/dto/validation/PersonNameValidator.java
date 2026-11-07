@@ -26,12 +26,12 @@ public class PersonNameValidator implements ConstraintValidator<PersonName, Stri
     // 뒤집어 다른 사람의 이름처럼 보이게 할 수 있다 (CWE-451). 양방향 제어 문자는 Unicode의 Bidi_Control 전체를 막는다.
     private static boolean isForbidden(int cp) {
         return Character.getType(cp) == Character.CONTROL
-                || cp == ' ' // LINE SEPARATOR
-                || cp == ' ' // PARAGRAPH SEPARATOR
-                || cp == '؜' // ARABIC LETTER MARK
-                || cp == '‎' // LEFT-TO-RIGHT MARK
-                || cp == '‏' // RIGHT-TO-LEFT MARK
-                || (cp >= '‪' && cp <= '‮') // LRE, RLE, PDF, LRO, RLO
-                || (cp >= '⁦' && cp <= '⁩'); // LRI, RLI, FSI, PDI
+                || cp == '\u2028' // LINE SEPARATOR
+                || cp == '\u2029' // PARAGRAPH SEPARATOR
+                || cp == '\u061C' // ARABIC LETTER MARK
+                || cp == '\u200E' // LEFT-TO-RIGHT MARK
+                || cp == '\u200F' // RIGHT-TO-LEFT MARK
+                || (cp >= '\u202A' && cp <= '\u202E') // LRE, RLE, PDF, LRO, RLO
+                || (cp >= '\u2066' && cp <= '\u2069'); // LRI, RLI, FSI, PDI
     }
 }
