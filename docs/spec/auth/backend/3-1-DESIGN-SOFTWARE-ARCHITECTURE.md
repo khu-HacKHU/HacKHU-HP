@@ -78,7 +78,7 @@ if (notice.getAuthorId() != user.id() && !user.isAdmin()) {
 }
 ```
 
-`user.id()`는 `long`이라서 엔티티의 `Long authorId`와 `!=`, `==`로 비교해도 값으로 비교된다. `Long`끼리 `==`로 비교하면 128 이상에서 값이 같아도 다르다고 나오므로, 두 쪽이 모두 `Long`이면 `equals`를 쓴다.
+`user.id()`는 `long`이라서 엔티티의 `Long authorId`와 `!=`, `==`로 비교해도 값으로 비교된다. 단, `authorId`가 `null`이면 언박싱할 때 예외가 나므로 nullable한 값은 `Objects.equals(user.id(), authorId)`로 비교한다. 두 쪽이 모두 `Long`이면 `==`가 참조를 비교하므로 `Objects.equals`를 쓴다.
 
 **승인 대기 회원**
 

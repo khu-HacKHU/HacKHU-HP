@@ -110,6 +110,19 @@ class SecurityConfigTest {
         }
 
         @Test
+        void 갤러리_목록과_상세는_로그인하지_않아도_통과() throws Exception {
+            perform(get("/api/v1/albums"), null).andExpect(status().isOk());
+            perform(get("/api/v1/albums/12"), null).andExpect(status().isOk());
+        }
+
+        @Test
+        void 갤러리라도_조회가_아니거나_상세_아래_경로면_401() throws Exception {
+            expectUnauthorized(perform(post("/api/v1/albums"), null));
+            expectUnauthorized(perform(delete("/api/v1/albums/12"), null));
+            expectUnauthorized(perform(get("/api/v1/albums/12/photos"), null));
+        }
+
+        @Test
         void CSRF_토큰_없이_POST해도_통과() throws Exception {
             perform(post("/api/v1/auth/login"), null)
                     .andExpect(status().isOk())
@@ -243,6 +256,31 @@ class SecurityConfigTest {
         @PreAuthorize("hasRole('MEMBER')")
         @PostMapping("/api/v1/auth/signup")
         String signup() {
+            return "ok";
+        }
+
+        @GetMapping("/api/v1/albums")
+        String albums() {
+            return "ok";
+        }
+
+        @PostMapping("/api/v1/albums")
+        String createAlbum() {
+            return "ok";
+        }
+
+        @GetMapping("/api/v1/albums/{albumId}")
+        String album(@PathVariable long albumId) {
+            return "ok";
+        }
+
+        @DeleteMapping("/api/v1/albums/{albumId}")
+        String deleteAlbum(@PathVariable long albumId) {
+            return "ok";
+        }
+
+        @GetMapping("/api/v1/albums/{albumId}/photos")
+        String albumPhotos(@PathVariable long albumId) {
             return "ok";
         }
 
