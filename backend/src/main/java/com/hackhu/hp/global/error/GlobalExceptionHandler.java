@@ -5,6 +5,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -75,6 +77,14 @@ public class GlobalExceptionHandler {
         return respond(CommonErrorCode.METHOD_NOT_ALLOWED);
     }
 
+    // @PreAuthorize 같은 메서드 보안이 컨트롤러 안에서 던진 예외. 여기서 응답하지 않고 Security 필터로 돌려보낸다.
+    // 필터가 비로그인이면 401, 로그인했으면 403으로 나눠 SecurityConfig의 응답 형식으로 준다.
+    // 아래 Exception 핸들러가 잡으면 500이 된다.
+    @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})
+    void rethrowSecurity(Exception e) throws Exception {
+        throw e;
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleUnexpected(Exception e) {
         // Spring MVC 표준 예외(415, 406, ResponseStatusException 등)는 자기 상태 코드를 그대로 쓴다.
@@ -84,8 +94,6 @@ public class GlobalExceptionHandler {
             log.debug("클라이언트 요청 오류: {}", e.getClass().getSimpleName());
             return respond(CommonErrorCode.from(er.getStatusCode()));
         }
-        // TODO(인증·권한 팀): Spring Security를 붙이면 AccessDeniedException(403),
-        // AuthenticationException(401) 핸들러를 여기 위에 추가한다. 없으면 500이 된다.
         log.error("처리되지 않은 예외", e);
         return respond(CommonErrorCode.INTERNAL_ERROR);
     }
