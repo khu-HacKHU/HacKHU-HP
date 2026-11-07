@@ -24,9 +24,12 @@ jobs:
       # 규칙 자체를 검사한다. 오타 하나로 type-enum이 비어도 모든 제목이 통과하는 일을 막는다.
       - name: 메시지 규칙 테스트
         run: npm run test:commitlint
+      # Dependabot PR은 제목 길이만 검사하지 않는다 (commitlint.config.mjs 주석 참고).
+      # 포크에서 온 PR은 head_ref에 dependabot/을 쓸 수 없으므로 브랜치 이름으로 판단해도 된다.
       - name: PR 제목 검사
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
+          COMMITLINT_SKIP_HEADER_LENGTH: ${{ startsWith(github.head_ref, 'dependabot/') && '1' || '0' }}
         run: printf '%s' "$PR_TITLE" | npx --no -- commitlint
       - name: PR 출발 브랜치 검사
         env:
