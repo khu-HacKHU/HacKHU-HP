@@ -9,7 +9,8 @@ import org.springframework.security.core.AuthenticatedPrincipal;
  * <p>컨트롤러에서 {@link CurrentUser}로 받고, 서비스에는 인자로 넘긴다. 역할은 요청마다 DB에서 읽은 값이라 역할 변경이 바로 반영된다
  * (DECISIONS.md A2).
  *
- * <p>{@code id}는 {@code long}이다. 엔티티의 {@code Long authorId}와 {@code ==}로 비교해도 값으로 비교된다.
+ * <p>{@code id}는 {@code long}이다. 엔티티의 {@code Long authorId}와 {@code ==}로 비교해도 값으로 비교된다. 단,
+ * 비교 대상이 null이면 언박싱할 때 예외가 나므로 nullable한 값은 {@link Objects#equals(Object, Object)}로 비교한다.
  *
  * @param id 사용자 ID ({@code users.id})
  * @param role DB에서 읽은 역할
