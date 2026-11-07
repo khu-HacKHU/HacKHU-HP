@@ -1,4 +1,5 @@
 -- 갤러리 앨범과 사진 (docs/spec/gallery/backend/3-2-DESIGN-DB-SCHEMA.md)
+-- 시각 컬럼은 모두 TIMESTAMPTZ로 저장하고 UTC로 다룬다 (인증권한팀과 같은 기준).
 
 -- uploader_id는 user.id를 가리키지만 user 테이블이 아직 없어 FK를 걸지 않는다.
 -- 인증권한팀 마이그레이션이 머지된 뒤 FK만 추가하는 마이그레이션을 따로 낸다 (3-2 1절).
@@ -7,7 +8,7 @@ CREATE TABLE album (
     title       VARCHAR(100) NOT NULL,
     event_date  DATE         NOT NULL,
     uploader_id BIGINT       NOT NULL,
-    created_at  TIMESTAMP    NOT NULL DEFAULT now()
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 -- 목록은 항상 활동 날짜 최근순으로 조회한다.
@@ -19,6 +20,6 @@ CREATE TABLE photo (
     album_id      BIGINT       NOT NULL REFERENCES album (id) ON DELETE CASCADE,
     object_key    VARCHAR(255) NOT NULL UNIQUE,
     display_order SMALLINT     NOT NULL,
-    created_at    TIMESTAMP    NOT NULL DEFAULT now(),
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CONSTRAINT uq_photo_album_display_order UNIQUE (album_id, display_order)
 );

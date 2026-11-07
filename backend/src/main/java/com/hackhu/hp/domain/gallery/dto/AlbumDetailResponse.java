@@ -4,7 +4,6 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 
 /** 앨범 상세. 작성자 정보는 넣지 않는다 (4-2 2절). */
@@ -22,6 +21,6 @@ public record AlbumDetailResponse(
                 album.getTitle(),
                 album.getEventDate(),
                 photos,
-                album.getCreatedAt().toInstant(ZoneOffset.UTC));
+                album.getCreatedAt());
     }
 }

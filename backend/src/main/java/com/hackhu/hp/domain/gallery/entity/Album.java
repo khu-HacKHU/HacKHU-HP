@@ -6,9 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,15 +33,15 @@ public class Album {
     @Column(name = "uploader_id", nullable = false, updatable = false)
     private Long uploaderId;
 
-    /** UTC 기준 시각. 컬럼이 시간대 없는 TIMESTAMP라서 UTC로 고정해 저장한다. */
+    /** TIMESTAMPTZ 컬럼. 시각은 Instant(UTC 기준 한 시점)로만 다룬다. */
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     private Album(String title, LocalDate eventDate, Long uploaderId) {
         this.title = title;
         this.eventDate = eventDate;
         this.uploaderId = uploaderId;
-        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
+        this.createdAt = Instant.now();
     }
 
     /** 입력 검증(제목 길이, 미래 날짜 금지)은 호출하는 쪽이 먼저 한다 (5-1 2절). */

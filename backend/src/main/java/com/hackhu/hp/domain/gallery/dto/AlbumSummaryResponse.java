@@ -4,7 +4,6 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 
 /** 앨범 목록의 한 줄. 작성자 정보는 넣지 않는다 (4-2 2절). */
 @Schema(description = "앨범 목록 항목")
@@ -22,6 +21,6 @@ public record AlbumSummaryResponse(
                 album.getTitle(),
                 album.getEventDate(),
                 coverPhotoUrl,
-                album.getCreatedAt().toInstant(ZoneOffset.UTC));
+                album.getCreatedAt());
     }
 }

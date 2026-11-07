@@ -9,8 +9,10 @@ import java.util.Base64;
 /** PEM 문자열을 RSA 개인 키로 읽는다. */
 final class PemPrivateKeys {
 
-    private static final String PKCS8_HEADER = "-----BEGIN PRIVATE KEY-----";
-    private static final String PKCS8_FOOTER = "-----END PRIVATE KEY-----";
+    // gitleaks 기본 private-key 규칙이 아래 두 구분자 사이의 코드를 키 본문으로 오인한다.
+    // 키가 아니라 PEM 구분자 상수라서 이 두 줄만 예외로 둔다 (PR #107).
+    private static final String PKCS8_HEADER = "-----BEGIN PRIVATE KEY-----"; // gitleaks:allow
+    private static final String PKCS8_FOOTER = "-----END PRIVATE KEY-----"; // gitleaks:allow
 
     private PemPrivateKeys() {}
 

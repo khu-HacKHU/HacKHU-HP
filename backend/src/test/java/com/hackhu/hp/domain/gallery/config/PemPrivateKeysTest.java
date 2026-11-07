@@ -31,7 +31,9 @@ class PemPrivateKeysTest {
 
     @Test
     void PKCS1_PEM은_변환_방법을_안내하고_거부한다() {
-        String pkcs1 = "-----BEGIN RSA PRIVATE KEY-----\nAAAA\n-----END RSA PRIVATE KEY-----";
+        // 키 본문이 AAAA인 가짜 PEM. 거부 동작 테스트 입력이라 gitleaks 예외로 둔다.
+        String pkcs1 =
+                "-----BEGIN RSA PRIVATE KEY-----\nAAAA\n-----END RSA PRIVATE KEY-----"; // gitleaks:allow
 
         assertThatThrownBy(() -> PemPrivateKeys.parseRsa(pkcs1))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,7 +42,9 @@ class PemPrivateKeysTest {
 
     @Test
     void 깨진_키는_내용을_노출하지_않고_거부한다() {
-        String broken = "-----BEGIN PRIVATE KEY-----\nnot-base64!!\n-----END PRIVATE KEY-----";
+        // 깨진 가짜 PEM. 거부 동작 테스트 입력이라 gitleaks 예외로 둔다.
+        String broken =
+                "-----BEGIN PRIVATE KEY-----\nnot-base64!!\n-----END PRIVATE KEY-----"; // gitleaks:allow
 
         assertThatThrownBy(() -> PemPrivateKeys.parseRsa(broken))
                 .isInstanceOf(IllegalStateException.class)
