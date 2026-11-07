@@ -21,4 +21,9 @@ public interface PostRepository extends Repository<Post, Long> {
     Optional<Post> findByIdAndBoardType(Long id, BoardType boardType);
 
     Page<Post> findByBoardType(BoardType boardType, Pageable pageable);
+
+    void delete(Post post);
+
+    /** 수정 뒤 트리거가 바꾼 {@code updated_at}을 응답에 담으려면 먼저 반영해야 한다. */
+    void flush();
 }

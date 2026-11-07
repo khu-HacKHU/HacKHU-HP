@@ -2,15 +2,26 @@ package com.hackhu.hp.domain.post.controller;
 
 import com.hackhu.hp.domain.post.dto.NoticeDetailResponse;
 import com.hackhu.hp.domain.post.dto.NoticePageResponse;
+import com.hackhu.hp.domain.post.dto.NoticeWriteRequest;
+import com.hackhu.hp.domain.post.service.NoticeCommandService;
 import com.hackhu.hp.domain.post.service.NoticeQueryService;
+import com.hackhu.hp.global.auth.CurrentUser;
+import com.hackhu.hp.global.auth.LoginUser;
 import com.hackhu.hp.global.error.BusinessException;
 import com.hackhu.hp.global.error.CommonErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +40,7 @@ public class NoticeController {
     private static final String ALLOWED_SORT = "createdAt,desc";
 
     private final NoticeQueryService noticeQueryService;
+    private final NoticeCommandService noticeCommandService;
 
     @Operation(
             summary = "공지 목록",
@@ -51,5 +63,31 @@ public class NoticeController {
     @GetMapping("/{noticeId}")
     public NoticeDetailResponse getNotice(@PathVariable @Positive Long noticeId) {
         return noticeQueryService.getNotice(noticeId);
+    }
+
+    @Operation(summary = "공지 작성", description = "운영진. 작성자는 로그인한 사람이다")
+    @PostMapping
+    public ResponseEntity<NoticeDetailResponse> createNotice(
+            @CurrentUser LoginUser user, @Valid @RequestBody NoticeWriteRequest request) {
+        NoticeDetailResponse response = noticeCommandService.create(user, request);
+        return ResponseEntity.created(URI.create("/api/v1/notices/" + response.id()))
+                .body(response);
+    }
+
+    @Operation(summary = "공지 수정", description = "운영진이면서 작성자, 또는 관리자. 제목과 본문을 모두 보낸다")
+    @PutMapping("/{noticeId}")
+    public NoticeDetailResponse updateNotice(
+            @CurrentUser LoginUser user,
+            @PathVariable @Positive Long noticeId,
+            @Valid @RequestBody NoticeWriteRequest request) {
+        return noticeCommandService.update(user, noticeId, request);
+    }
+
+    @Operation(summary = "공지 삭제", description = "운영진이면서 작성자, 또는 관리자. 복구할 수 없다")
+    @DeleteMapping("/{noticeId}")
+    public ResponseEntity<Void> deleteNotice(
+            @CurrentUser LoginUser user, @PathVariable @Positive Long noticeId) {
+        noticeCommandService.delete(user, noticeId);
+        return ResponseEntity.noContent().build();
     }
 }

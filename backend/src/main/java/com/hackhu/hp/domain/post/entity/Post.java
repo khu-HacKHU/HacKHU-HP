@@ -69,4 +69,14 @@ public class Post {
     public static Post create(BoardType boardType, String title, String content, Long authorId) {
         return new Post(boardType, title, content, authorId);
     }
+
+    /**
+     * 제목과 본문을 바꾼다. 게시판 종류, 작성자, 작성 시각은 바꾸지 않는다 (3-2-4). {@code updated_at}은 트리거가 갱신한다.
+     *
+     * <p>권한 검사는 호출하는 쪽이 먼저 한다 (5-1-3).
+     */
+    public void edit(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }
