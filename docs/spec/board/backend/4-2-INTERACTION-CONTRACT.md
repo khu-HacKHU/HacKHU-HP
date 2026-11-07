@@ -79,7 +79,7 @@
 
 - 공지 목록 화면은 `size`를 보내지 않는다. 메인 화면의 최근 공지는 `size=5`로 부른다. (홈 USER-STORIES.md 1절, PR #102)
 - `page`가 음수이거나, `size`가 1보다 작거나, 둘 중 하나가 숫자가 아니면 400 `INVALID_INPUT`을 준다.
-- `sort`가 `createdAt,desc`가 아니면 쿼리를 실행하기 전에 400 `INVALID_INPUT`을 준다. 받은 값을 쿼리에 넘기지 않고, 실제 정렬은 서버가 고정값으로 건다. 갤러리 목록과 같은 방식이다. (gallery 5-3-QUALITY-ERROR-HANDLING.md 5-3-1, PR #107)
+- `sort`가 `createdAt,desc`가 아니면 쿼리를 실행하기 전에 400 `INVALID_INPUT`을 준다. 받은 값을 쿼리에 넘기지 않고, 실제 정렬은 서버가 `created_at DESC, id DESC`로 고정해 건다. `id DESC`가 있어야 작성 시각이 같은 글이 페이지를 넘길 때 겹치거나 빠지지 않는다. 한 트랜잭션에서 넣은 글은 `now()`가 같아 작성 시각이 같아진다. 갤러리 목록과 같은 방식이다. (gallery 5-3-QUALITY-ERROR-HANDLING.md 5-3-1, PR #107)
 - 마지막 페이지를 넘으면 `content`가 빈 배열인 200을 준다.
 - 응답의 `size`는 실제로 적용한 페이지 크기다.
 
