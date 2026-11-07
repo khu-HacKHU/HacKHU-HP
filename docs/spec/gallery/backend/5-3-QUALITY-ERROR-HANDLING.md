@@ -13,9 +13,12 @@
 | `GALLERY_FILE_TOO_LARGE` | 400 | 발급 요청의 `size`가 10MB를 넘음 |
 | `GALLERY_TOO_MANY_REQUESTS` | 429 | 발급 rate limit(분당 5회, 시간당 100장) 초과 |
 | `GALLERY_INVALID_UPLOAD` | 400 | 확정 단계 검증 실패. 항목별 사유는 2절 |
+| `GALLERY_FUTURE_EVENT_DATE` | 400 | 활동 날짜가 미래 |
 | `GALLERY_FORBIDDEN` | 403 | 작성자도 관리자도 아닌 사람이 앨범을 지우려 함 |
 
-공통 코드도 그대로 쓴다. `title` 길이, `eventDate` 형식, 사진 개수(1~20) 위반은 Bean Validation이 걸러서 `INVALID_INPUT`(400)이 된다. 비로그인은 `UNAUTHORIZED`(401)다.
+공통 코드도 그대로 쓴다. `title` 길이, `eventDate` 누락, 사진 개수(1~20) 위반은 Bean Validation이 걸러서 `INVALID_INPUT`(400)이 된다. 비로그인은 `UNAUTHORIZED`(401)다.
+
+**활동 날짜의 "오늘"은 한국 시간(`Asia/Seoul`) 기준이다.** `@PastOrPresent` 애너테이션을 쓰지 않고 서비스에서 검사하는 이유가 여기 있다. 그 애너테이션은 JVM 기본 시간대로 판단하는데, 서버가 UTC로 돌면 한국 시간 자정부터 오전 9시 사이에는 UTC로 아직 어제라서, 사용자가 자기 기준 오늘 날짜를 골랐는데 미래로 거부당한다. 행사 끝나고 밤에 사진을 올리는 경우가 흔해서 그냥 넘기면 안 되는 구간이다.
 
 <br>
 
