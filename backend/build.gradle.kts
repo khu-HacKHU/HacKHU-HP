@@ -31,6 +31,8 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
+    // 갤러리 사진 조회 주소(CloudFront 서명 URL). 버전은 #40의 s3 모듈과 같게 맞춘다.
+    implementation("software.amazon.awssdk:cloudfront:2.46.7")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
