@@ -47,7 +47,10 @@ public class SecurityConfig {
     };
 
     // 공개 API. 명세에 "공개"라고 적힌 API만 메서드별로 넣는다 (5-1-1, api.md 4절).
-    // 공지, 갤러리 조회처럼 GET 공개 API가 생기면 PUBLIC_GET_PATHS 배열과 아래 규칙을 추가한다.
+    // 갤러리 조회는 gallery/backend/4-2 1, 2절에 "공개"로 적혀 있다.
+    // *는 한 세그먼트만 맞으므로 /api/v1/albums/12는 열리고 그 아래 경로는 열리지 않는다.
+    private static final String[] PUBLIC_GET_PATHS = {"/api/v1/albums", "/api/v1/albums/*"};
+
     // refresh와 로그아웃은 access 토큰 대신 refresh 쿠키로 확인하므로 여기 둔다.
     // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사는 그 API가 한다 (5-1-5).
     private static final String[] PUBLIC_POST_PATHS = {
@@ -71,6 +74,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth ->
                                 auth.requestMatchers(INFRA_PATHS)
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
                                         .permitAll()
                                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
                                         .permitAll()

@@ -135,3 +135,5 @@ Security 설정(#21)의 경로 규칙과 401, 403 응답 형식을 본다. 실�
 | S11 | `@PreAuthorize`에서 거부됨 | 로그인하지 않았으면 401, 역할이 부족하면 403 <br> 500이 아님 | 통과 |
 | S12 | 프론트엔드 주소에서 CORS 사전 요청 | 허용, `Access-Control-Allow-Credentials: true` | 통과 |
 | S13 | 다른 주소에서, 또는 허용하지 않은 메서드(`PATCH`)로 CORS 사전 요청 | 403 | 통과 |
+| S14 | 로그인하지 않고 갤러리 목록(`GET /api/v1/albums`)과 상세(`GET /api/v1/albums/{albumId}`)를 부름 | 200 <br> 갤러리 4-2 1, 2절의 공개 API | 통과 |
+| S15 | 로그인하지 않고 갤러리 올리기, 삭제, 상세 아래의 다른 경로를 부름 | 401 `UNAUTHORIZED` <br> 공개는 GET 두 경로뿐임 | 통과 |
