@@ -24,6 +24,7 @@
 - `files`/`photoKeys` 개수: 1~20개, 서버가 강제 (DB가 아니라 서비스 레이어).
 - `contentType`: jpg/png/webp의 MIME 화이트리스트만 허용.
 - 파일 크기: 업로드 주소 발급 요청에 `size`를 받는다. **발급 시점에 10MB를 넘으면 그 자리에서 400으로 거부한다.** 통과한 `size`는 presigned PUT 서명에 정확한 `Content-Length`로 포함시킨다. 실제 업로드 바이트 수가 그 값과 다르면 S3가 서명 불일치로 업로드 자체를 거부하므로, 신고한 크기보다 큰 파일은 올라갈 수 없다. (PUT은 `content-length-range` 같은 범위 조건은 못 걸지만, 정확한 값 하나는 서명에 넣을 수 있다.)
+  - 이 설계는 `content-length`가 실제로 SigV4 서명 대상에 들어가야만 성립한다. **AWS SDK 2.46.7에서 `X-Amz-SignedHeaders`가 `[content-length, content-type, host]`로 나오는 것, 크기만 바꾸면 `X-Amz-Signature`도 달라지는 것을 테스트로 확인했다** (`PresignedUrlServiceTest`). 실제 버킷에 신고보다 큰 파일을 PUT해서 403이 나는지는 인프라가 올라간 뒤 한 번 더 확인한다. 거기서 막히지 않으면 presigned POST로 바꾸고 이 절을 고친다.
 
 <br>
 
