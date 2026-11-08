@@ -38,5 +38,12 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 | `DATABASE_USERNAME` | DB 계정 |
 | `DATABASE_PASSWORD` | DB 비밀번호 |
 | `FRONTEND_ORIGIN` | CORS로 허용할 프론트엔드 주소 하나 (예: `https://hackhu.example`). `*`는 받지 않는다 |
+| `GALLERY_CDN_BASE_URL` | 갤러리 사진 CloudFront 배포 주소 (`https://...`) |
+| `GALLERY_CDN_KEY_PAIR_ID` | CloudFront 공개 키 ID |
+| `GALLERY_CDN_PRIVATE_KEY` | CloudFront 서명용 RSA 개인 키 (PKCS#8 PEM) |
+| `S3_BUCKET` | 사진을 올리는 S3 버킷 이름 |
+| `AWS_REGION` | S3 리전 (기본값 `ap-northeast-2`) |
+
+`GALLERY_CDN_*`가 하나라도 없으면 서버가 뜨지 않는다. `local`에서는 없어도 임시 키로 뜬다 (사진 주소는 실제로 열리지 않음).
 
 값은 GitHub Secrets 또는 AWS 파라미터 스토어에만 둔다.
