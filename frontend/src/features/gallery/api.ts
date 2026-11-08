@@ -12,7 +12,7 @@ export class ApiError extends Error {
 }
 
 //API 호출 실패 시, 응답을 ApiError로 변환
-async function toApiError(res: Response): Promise<ApiError> {
+export async function toApiError(res: Response): Promise<ApiError> {
   try {
     const body = await res.json()
     return new ApiError(res.status, body.code ?? 'UNKNOWN', body.message ?? '')

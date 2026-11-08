@@ -46,8 +46,23 @@ export function validateTitle(title: string): string | null {
   return null
 }
 
-// 활동 날짜 검사 (비어 있으면 안 됨)
-export function validateEventDate(eventDate: string): string | null {
+// 오늘 날짜를 YYYY-MM-DD로 (사용자 기기 시간 기준)
+export function todayString(now: Date = new Date()): string {
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// 활동 날짜 검사 (비어 있으면 안 됨, 미래 날짜 안 됨)
+// 미래 날짜는 서버도 GALLERY_FUTURE_EVENT_DATE로 거부한다. 여기서는 미리 안내만 한다
+export function validateEventDate(
+  eventDate: string,
+  now: Date = new Date(),
+): string | null {
   if (eventDate === '') return '활동 날짜를 골라 주세요.'
+  if (eventDate > todayString(now)) {
+    return '활동 날짜는 오늘까지만 고를 수 있어요.'
+  }
   return null
 }
