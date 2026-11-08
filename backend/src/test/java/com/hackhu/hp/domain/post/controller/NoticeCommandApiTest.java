@@ -21,8 +21,11 @@ import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -40,6 +43,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+@ExtendWith(OutputCaptureExtension.class)
 class NoticeCommandApiTest {
 
     private static final long AUTHOR = 9101L;
@@ -294,6 +298,59 @@ class NoticeCommandApiTest {
         mockMvc.perform(delete("/api/v1/notices/{id}", id).with(as(ADMIN, Role.ADMIN)))
                 .andExpect(status().isNoContent());
         assertThat(postCount()).isZero();
+    }
+
+    // 관리자 작업 기록
+
+    @Test
+    void 관리자가_남의_공지를_고치거나_지우면_기록을_남긴다(CapturedOutput output) throws Exception {
+        long id = saveNotice(AUTHOR);
+
+        mockMvc.perform(json(put("/api/v1/notices/{id}", id), BODY).with(as(ADMIN, Role.ADMIN)))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/v1/notices/{id}", id).with(as(ADMIN, Role.ADMIN)))
+                .andExpect(status().isNoContent());
+
+        assertThat(output.getOut())
+                .contains("관리자가 남의 공지를 수정함 adminId=" + ADMIN + " postId=" + id)
+                .contains("관리자가 남의 공지를 삭제함 adminId=" + ADMIN + " postId=" + id)
+                // 제목과 본문은 남기지 않는다 (CWE-532)
+                .doesNotContain("세미나 안내");
+    }
+
+    @Test
+    void 거부된_요청과_자기_공지는_관리자_기록을_남기지_않는다(CapturedOutput output) throws Exception {
+        long id = saveNotice(AUTHOR);
+
+        mockMvc.perform(
+                        json(put("/api/v1/notices/{id}", id), BODY)
+                                .with(as(OTHER_STAFF, Role.STAFF)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(json(put("/api/v1/notices/{id}", id), BODY).with(as(AUTHOR, Role.STAFF)))
+                .andExpect(status().isOk());
+
+        assertThat(output.getOut()).doesNotContain("관리자가 남의 공지를");
+    }
+
+    @Test
+    void 반영에_실패한_관리자_수정은_기록하지_않는다(CapturedOutput output) throws Exception {
+        long id = saveNotice(AUTHOR);
+        // 애플리케이션 검사를 지나도 DB 제약에 걸리게 만든다. 반영에 실패하면 기록이 없어야 한다 (PR #114 리뷰).
+        jdbcTemplate.execute(
+                "ALTER TABLE post ADD CONSTRAINT ck_test_title CHECK (title <> '막힐 제목')");
+        try {
+            mockMvc.perform(
+                            json(
+                                            put("/api/v1/notices/{id}", id),
+                                            "{\"title\":\"막힐 제목\",\"content\":\"본문\"}")
+                                    .with(as(ADMIN, Role.ADMIN)))
+                    .andExpect(status().is5xxServerError());
+        } finally {
+            jdbcTemplate.execute("ALTER TABLE post DROP CONSTRAINT ck_test_title");
+        }
+
+        assertThat(output.getOut()).doesNotContain("관리자가 남의 공지를 수정함");
+        assertThat(titleOf(id)).isEqualTo("원래 제목");
     }
 
     private MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder builder, String body) {

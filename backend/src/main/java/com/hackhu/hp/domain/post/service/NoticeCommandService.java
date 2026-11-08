@@ -45,38 +45,54 @@ public class NoticeCommandService {
     }
 
     public NoticeDetailResponse update(LoginUser user, Long noticeId, NoticeWriteRequest request) {
-        Post notice = findModifiable(user, noticeId, "수정");
+        Post notice = findModifiable(user, noticeId);
         notice.edit(request.title(), request.content());
+        // DB 제약 위반은 여기서 드러난다. 관리자 기록은 반영이 끝난 뒤에 남긴다 (PR #114 리뷰).
         postRepository.flush();
+        logAdminAction(user, notice, "수정");
         return toResponse(notice);
     }
 
     public void delete(LoginUser user, Long noticeId) {
-        Post notice = findModifiable(user, noticeId, "삭제");
+        Post notice = findModifiable(user, noticeId);
         postRepository.delete(notice);
+        postRepository.flush();
+        logAdminAction(user, notice, "삭제");
     }
 
-    private Post findModifiable(LoginUser user, Long noticeId, String action) {
+    private Post findModifiable(LoginUser user, Long noticeId) {
         // 공지 조건으로만 찾는다. 다른 게시판 글 ID면 없는 글과 같게 404 (5-1-4).
         Post notice =
                 postRepository
                         .findByIdAndBoardType(noticeId, BoardType.NOTICE)
                         .orElseThrow(() -> new BusinessException(PostErrorCode.POST_NOT_FOUND));
-        boolean author = Objects.equals(notice.getAuthorId(), user.id());
         // 작성자 확인은 DB의 author_id와 로그인한 사람을 비교한다 (CWE-639).
-        if (!author && !user.isAdmin()) {
+        if (!isAuthor(user, notice) && !user.isAdmin()) {
             throw new BusinessException(PostErrorCode.POST_FORBIDDEN);
         }
-        if (!author) {
-            // 관리자가 남의 공지를 고치거나 지운 기록 (5-1-8, secure-coding.md 1절). 제목과 본문은 남기지 않는다.
-            log.info(
-                    "관리자가 남의 공지를 {}함 adminId={} postId={} authorId={}",
-                    action,
-                    user.id(),
-                    notice.getId(),
-                    notice.getAuthorId());
-        }
         return notice;
+    }
+
+    /**
+     * 관리자가 남의 공지를 고치거나 지운 기록 (5-1-8, secure-coding.md 1절). 제목과 본문은 남기지 않는다.
+     *
+     * <p>DB에 반영(flush)한 뒤에 부른다. 거부되거나 반영에 실패한 요청은 기록하지 않는다. 커밋은 메서드가 끝날 때 일어나므로 커밋 실패까지 가려내지는 못한다.
+     * 그것까지 하려면 커밋 뒤 콜백이 필요한데 지금 규모에는 과하다 (PR #114 리뷰).
+     */
+    private void logAdminAction(LoginUser user, Post notice, String action) {
+        if (isAuthor(user, notice)) {
+            return;
+        }
+        log.info(
+                "관리자가 남의 공지를 {}함 adminId={} postId={} authorId={}",
+                action,
+                user.id(),
+                notice.getId(),
+                notice.getAuthorId());
+    }
+
+    private static boolean isAuthor(LoginUser user, Post notice) {
+        return Objects.equals(notice.getAuthorId(), user.id());
     }
 
     private NoticeDetailResponse toResponse(Post notice) {
