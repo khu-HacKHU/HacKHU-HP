@@ -37,6 +37,7 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 | `DATABASE_URL` | `jdbc:postgresql://호스트:5432/DB이름` |
 | `DATABASE_USERNAME` | DB 계정 |
 | `DATABASE_PASSWORD` | DB 비밀번호 |
+| `FRONTEND_ORIGIN` | CORS로 허용할 프론트엔드 주소 하나 (예: `https://hackhu.example`). `*`는 받지 않는다 |
 | `GALLERY_CDN_BASE_URL` | 갤러리 사진 CloudFront 배포 주소 (`https://...`) |
 | `GALLERY_CDN_KEY_PAIR_ID` | CloudFront 공개 키 ID |
 | `GALLERY_CDN_PRIVATE_KEY` | CloudFront 서명용 RSA 개인 키 (PKCS#8 PEM) |

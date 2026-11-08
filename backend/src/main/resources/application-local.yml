@@ -25,3 +25,7 @@ gallery:
     base-url: ${GALLERY_CDN_BASE_URL:https://cdn.local.invalid}
     key-pair-id: ${GALLERY_CDN_KEY_PAIR_ID:LOCAL_KEY_PAIR_ID}
     allow-ephemeral-key: true
+# 프론트엔드 개발 서버 (Vite 기본 포트)
+app:
+  cors:
+    allowed-origins: http://localhost:5173
