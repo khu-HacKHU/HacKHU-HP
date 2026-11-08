@@ -42,7 +42,7 @@ public class S3ObjectStore {
     /**
      * 객체를 지운다.
      *
-     * <p>ponytail: 한 번에 최대 20장이라 하나씩 지운다. 더 많아지면 DeleteObjects로 묶는다.
+     * <p>한 번에 최대 20장이라 하나씩 지운다. 더 많아지면 DeleteObjects로 묶는다.
      */
     public void deleteAll(List<String> objectKeys) {
         for (String objectKey : objectKeys) {

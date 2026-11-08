@@ -1,12 +1,12 @@
 package com.hackhu.hp.global.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +38,9 @@ class UploadConfirmServiceTest {
         service = new UploadConfirmService(repository, imageFormatValidator, objectStore);
 
         when(imageFormatValidator.isSupportedImage(anyString())).thenReturn(true);
+        // 기본은 요청한 수만큼 갱신에 성공한 상황으로 둔다.
+        when(repository.claim(anyList(), any(), any(Instant.class)))
+                .thenAnswer(i -> ((List<?>) i.getArgument(0)).size());
     }
 
     private UploadRecord issued(Long userId) {
@@ -64,8 +67,9 @@ class UploadConfirmServiceTest {
                         OWNER, UploadPurpose.GALLERY, List.of(first.getId(), second.getId()));
 
         assertEquals(List.of(first.getObjectKey(), second.getObjectKey()), keys);
-        assertFalse(first.isPending());
-        assertFalse(second.isPending());
+        // 사용 처리는 엔티티를 고쳐 저장하는 게 아니라 조건부 갱신으로 한다 (board 5-1-8).
+        verify(repository)
+                .claim(eq(List.of(first.getId(), second.getId())), eq(OWNER), any(Instant.class));
         verify(objectStore, never()).deleteAll(anyList());
     }
 
@@ -194,6 +198,42 @@ class UploadConfirmServiceTest {
                 () ->
                         service.confirmImages(
                                 OWNER, UploadPurpose.GALLERY, List.of(attachment.getId())));
+    }
+
+    @Test
+    void 조건부_갱신이_요청_수보다_적게_되면_전체를_거부한다() {
+        UploadRecord mine = issued(OWNER);
+        givenRecords(mine);
+        // 다른 요청이 먼저 가져간 상황. 갱신된 행이 0개이고, 다시 읽으면 이미 USED다.
+        when(repository.claim(anyList(), any(), any(Instant.class))).thenReturn(0);
+        mine.markUsed();
+
+        UploadConfirmException thrown =
+                assertThrows(
+                        UploadConfirmException.class,
+                        () ->
+                                service.confirmImages(
+                                        OWNER, UploadPurpose.GALLERY, List.of(mine.getId())));
+
+        assertEquals(1, thrown.getFailures().size());
+        assertEquals("이미 사용했거나 만료된 업로드 주소입니다.", thrown.getFailures().get(0).reason());
+    }
+
+    @Test
+    void 경합에서_밀리면_앨범에_쓸_키를_돌려주지_않는다() {
+        UploadRecord first = issued(OWNER);
+        UploadRecord second = issued(OWNER);
+        givenRecords(first, second);
+        // 두 장 중 한 장만 가져갔다.
+        when(repository.claim(anyList(), any(), any(Instant.class))).thenReturn(1);
+
+        assertThrows(
+                UploadConfirmException.class,
+                () ->
+                        service.confirmImages(
+                                OWNER,
+                                UploadPurpose.GALLERY,
+                                List.of(first.getId(), second.getId())));
     }
 
     @Test

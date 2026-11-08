@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /**
  * 업로드 주소 발급 횟수 제한. 사용자당 분당 5회 호출, 시간당 발급 파일 100장 (docs/spec/gallery/backend/5-1 4절).
  *
- * <p>ponytail: 인스턴스가 하나뿐이라(DECISIONS D3) in-memory 카운터로 충분하다. 여러 인스턴스로 늘리면 Redis 같은 공용 저장소로 바꿔야 한다.
+ * <p>인스턴스가 하나뿐이라(DECISIONS D3) in-memory 카운터로 충분하다. 여러 인스턴스로 늘리면 Redis 같은 공용 저장소로 바꿔야 한다.
  */
 @Component
 public class UploadRateLimiter {
