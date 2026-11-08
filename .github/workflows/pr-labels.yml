@@ -21,6 +21,11 @@ concurrency:
 
 jobs:
   pr-labels:
+    # Dependabot PR은 dependabot.yml의 labels로 이미 붙어 있고 토큰이 읽기 전용이라 바꿀 수도 없다.
+    # 게다가 그 labeled 이벤트가 cancel-in-progress로 먼저 돌던 실행을 취소해서, 모든 Dependabot
+    # PR에 취소된 검사가 남았다 (#95~#99). 할 일이 없으므로 아예 돌리지 않는다.
+    # 브랜치 이름이 아니라 작성자로 판별한다. 브랜치 이름은 포크 소유자가 정할 수 있다.
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
