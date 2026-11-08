@@ -36,7 +36,7 @@ final class ApiAccessDeniedHandler implements AccessDeniedHandler {
         String userId = authentication == null ? null : authentication.getName();
         log.info(
                 "권한 거부: userId={}, method={}, path={}",
-                userId,
+                forLog(userId),
                 forLog(request.getMethod()),
                 forLog(request.getRequestURI()));
         errorWriter.write(response, CommonErrorCode.FORBIDDEN);
@@ -44,6 +44,7 @@ final class ApiAccessDeniedHandler implements AccessDeniedHandler {
 
     // 메서드와 경로는 클라이언트가 정하는 값이다. 출력 가능한 ASCII만 남겨 줄바꿈이나 제어 문자로 로그 줄을
     // 위조하지 못하게 하고, 긴 경로로 로그를 부풀리지 못하게 자른다 (CWE-117).
+    // 사용자 ID는 서버가 넣는 값이지만, principal 이름이 바뀌어도 로그가 길어지거나 깨지지 않게 같이 거친다.
     // getRequestURI()는 퍼센트 인코딩된 원문이라 정상 경로는 바뀌지 않는다.
     static String forLog(String value) {
         if (value == null) {
