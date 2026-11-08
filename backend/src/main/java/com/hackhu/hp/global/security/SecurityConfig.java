@@ -1,5 +1,11 @@
 package com.hackhu.hp.global.security;
 
+import static com.hackhu.hp.global.auth.Role.ADMIN;
+import static com.hackhu.hp.global.auth.Role.MEMBER;
+import static com.hackhu.hp.global.auth.Role.PENDING;
+import static com.hackhu.hp.global.auth.Role.STAFF;
+
+import com.hackhu.hp.global.auth.Role;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,12 +39,6 @@ import tools.jackson.databind.ObjectMapper;
 @EnableMethodSecurity
 @EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
-
-    // 역할 이름. 순서는 PENDING < MEMBER < STAFF < ADMIN이고 높은 역할은 낮은 역할을 포함한다 (5-1-1).
-    static final String PENDING = "PENDING";
-    static final String MEMBER = "MEMBER";
-    static final String STAFF = "STAFF";
-    static final String ADMIN = "ADMIN";
 
     // 헬스체크와 API 문서. API 문서는 local 프로파일에서만 켜진다 (application.yml).
     // /error는 서블릿 오류 응답 경로라 막으면 원래 오류가 401로 바뀌어 보인다.
@@ -81,19 +81,19 @@ public class SecurityConfig {
                                         .permitAll()
                                         // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
                                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
-                                        .hasRole(PENDING)
+                                        .hasRole(PENDING.name())
                                         .requestMatchers(
                                                 HttpMethod.PUT, "/api/v1/users/me/password")
-                                        .hasRole(PENDING)
+                                        .hasRole(PENDING.name())
                                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
-                                        .hasRole(PENDING)
+                                        .hasRole(PENDING.name())
                                         .requestMatchers(
                                                 HttpMethod.PUT, "/api/v1/admin/users/*/role")
-                                        .hasRole(ADMIN)
+                                        .hasRole(ADMIN.name())
                                         .requestMatchers("/api/v1/admin/**")
-                                        .hasRole(STAFF)
+                                        .hasRole(STAFF.name())
                                         .anyRequest()
-                                        .hasRole(MEMBER))
+                                        .hasRole(MEMBER.name()))
                 // 인증 없음은 401, 역할 부족은 403을 공통 에러 형식으로 준다 (api.md 3절).
                 .exceptionHandling(
                         e ->
@@ -104,17 +104,15 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // URL 규칙과 @PreAuthorize가 함께 쓰는 역할 순서.
+    // URL 규칙과 @PreAuthorize가 함께 쓰는 역할 순서. Role enum의 선언 순서로 만든다 (ADMIN > STAFF > MEMBER > PENDING).
     @Bean
     static RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.withDefaultRolePrefix()
-                .role(ADMIN)
-                .implies(STAFF)
-                .role(STAFF)
-                .implies(MEMBER)
-                .role(MEMBER)
-                .implies(PENDING)
-                .build();
+        RoleHierarchyImpl.Builder builder = RoleHierarchyImpl.withDefaultRolePrefix();
+        Role[] roles = Role.values();
+        for (int i = roles.length - 1; i > 0; i--) {
+            builder = builder.role(roles[i].name()).implies(roles[i - 1].name());
+        }
+        return builder.build();
     }
 
     // 프론트엔드 주소만 허용한다. *를 쓰지 않는다. 메서드와 헤더도 5-1-5에 적힌 것만 연다.

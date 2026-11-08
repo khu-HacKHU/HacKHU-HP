@@ -49,7 +49,9 @@ com.hackhu.hp
 - 공개 API는 명세에 "공개"라고 적고 `SecurityConfig`의 공개 목록에 메서드와 경로를 추가한다. 이 파일은 PL이 리뷰한다
 - `/api/v1/admin/**`은 운영진 이상이 기본이다. 경로 규칙은 최소 수준일 뿐이므로 작성자 확인 같은 검사는 각 API가 한다
 - 비로그인(토큰 만료 포함)은 `401 UNAUTHORIZED`, 역할 부족은 `403 FORBIDDEN`으로 Security가 응답한다. 컨트롤러에서 직접 만들지 않는다
-- `@WebMvcTest`에서는 `@Import(SecurityConfig.class)`를 붙이고 `with(user("1").roles("MEMBER"))`나 `@WithMockUser(roles = "MEMBER")`로 역할을 준다. 예시는 `SecurityConfigTest`
+- 현재 사용자는 컨트롤러에서 `@CurrentUser LoginUser user`로 받고 서비스에 인자로 넘긴다. 작성자 ID는 `user.id()`에서 꺼낸다. 사용법은 [인증권한 아키텍처 3-1-1](../docs/spec/auth/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md)
+- 역할 비교는 `Role`과 `user.hasRoleAtLeast(Role.STAFF)`로 한다. 역할 이름을 문자열로 비교하지 않는다
+- `@WebMvcTest`에서는 `@Import(SecurityConfig.class)`를 붙이고 `with(loginUser(1L, Role.MEMBER))`나 `@WithLoginUser(role = Role.MEMBER)`로 로그인 사용자를 준다. `with(user(...))`와 `@WithMockUser`로는 `@CurrentUser`가 null이 된다. 예시는 `CurrentUserTest`
 
 ## DB
 
