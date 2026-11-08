@@ -19,7 +19,7 @@
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | BIGINT | PK | |
-| board_type | VARCHAR(20) | NOT NULL | 게시판 종류 <br> `NOTICE`, `FREE`, `ARCHIVE` 중 하나 <br> 바꾸지 않음 |
+| board_type | VARCHAR(20) | NOT NULL | 게시판 종류 <br> `NOTICE`, `FREE`, `ARCHIVE` 중 하나 <br> 바꾸지 않음 <br> 첫 마이그레이션(#29)은 `NOTICE`만 받고 `FREE`, `ARCHIVE`는 #53, #55에서 더함 |
 | title | VARCHAR(100) | NOT NULL | 앞뒤 공백을 지우고 저장함 |
 | content | TEXT | NOT NULL | 받은 그대로 저장함 <br> 줄바꿈은 `\n`으로 맞춰 저장함 |
 | author_id | BIGINT | NOT NULL, FK `users.id` | 작성자 <br> 수정해도 바뀌지 않음 |
