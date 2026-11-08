@@ -41,7 +41,7 @@ chore: 의존성 업데이트
 
 - scope는 팀 영역이다. 모노레포라 어느 팀의 변경인지 제목에서 바로 보이게 한다.
 - 공통 설정, 문서, CI처럼 팀에 속하지 않는 변경은 scope를 생략한다.
-- 제목은 **72자** 안에서 쓴다. squash merge가 ` (#123)`을 덧붙이므로 여유가 필요하다.
+- 제목은 **72자** 안에서 쓴다. squash merge가 ` (#123)`을 덧붙이므로 여유가 필요하다. Dependabot이 올린 PR은 제목을 우리가 만들지 않으므로 길이만 검사하지 않는다 (type과 scope는 그대로 검사한다).
 - 제목에 이슈 번호를 넣지 않는다. 이슈 연결은 브랜치명과 PR 본문이 한다.
 - 본문이 필요하면 빈 줄 하나 띄우고 **왜** 바꿨는지 위주로 쓴다.
 
@@ -94,12 +94,14 @@ Rebase and merge는 쓰지 않는다.
 - **리뷰**: 같은 팀원 1명 이상의 승인이 필요하다. 코드 오너 경로(`infra/`, `.github/` 등)는 코드 오너 승인도 필요하다.
 - **PL 최종 승인**: 인증·파일 업로드·권한 관련 PR.
 - **PR 크기**: 리뷰어가 30분 안에 읽을 수 있는 크기로 만든다. 넘으면 PR을 쪼갠다.
-- **리뷰 반영**: 수정은 새 커밋으로 올린다. force push로 덮어쓰지 않는다. 어차피 squash merge로 합쳐진다.
-- **리뷰 코멘트 머리표** (권장): 코멘트 앞에 강도를 붙인다. `[필수]` 고쳐야 머지 가능, `[제안]` 고려해 볼 만함, `[질문]` 이해가 안 됨.
+- **리뷰 쓰는 법**: 지적에 결함 심각도 등급(`P1` 피해가 간다, `P2` 운영에서 문제가 된다, `P3` 아무 일도 안 생긴다)을 붙인다. P1이 남으면 Request changes, P2만 남으면 Request changes이지만 후속 이슈로 합의하면 Approve, P3만 남으면 Approve다. 본문 구조와 스레드를 누가 닫는지까지 [코드 리뷰 규약](docs/conventions/code-review.md)에 있다.
+- **리뷰 반영**: 수정은 새 커밋으로 올린다. force push로 덮어쓰지 않는다. 어차피 squash merge로 합쳐진다. 반영한 커밋 SHA와 바꾼 내용을 스레드에 적는다.
+- **라운드 상한**: 반영과 재리뷰 3라운드를 마쳤는데도 지적이 남으면 P1만 그 PR에서 고치고, P2와 P3는 리뷰어가 후속 이슈로 넘기고 머지한다. PL 최종 승인 대상 PR의 보안 관련 P2는 넘기지 않는다.
+- **대화 해결**: 미해결 스레드가 하나라도 있으면 머지가 막힌다. 리뷰어의 P1·P2 지적은 리뷰어가 닫고, P3와 보안 도구 봇의 경고는 작성자가 닫는다. P3는 받아들이지 않고 닫아도 되며 그때는 이유를 한 줄 남긴다.
 - **필수 검사**: `CI / ci-ok`, `Lint PR / pr-title`, `Security / gitleaks`.
 - **보안 스캔 결과**: Semgrep·Checkov·CodeQL은 PR을 막지 않지만, 새로 생긴 경고는 PR에서 확인하고 오탐이면 이유를 적는다.
 - **작성자 책임**: PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.
-- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. dependabot과 release 브랜치의 PR은 검사하지 않는다.
+- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. Dependabot이 올린 PR과 이 저장소의 `release/*` 브랜치 PR은 검사하지 않는다. 예외는 PR 작성자와 포크 여부로 판정하므로 브랜치 이름만 흉내 내도 받을 수 없다.
 - **API 변경**: [API 규약](docs/conventions/api.md)을 따르고, API 명세를 같은 PR에서 갱신한다.
 
 ---
@@ -138,7 +140,7 @@ Rebase and merge는 쓰지 않는다.
 - 이슈: 제목 형식이 틀리거나, 기능·버그 이슈(`feature`, `bug`)에 영역 레이블이 하나도 없으면 봇이 이슈에 안내 댓글을 단다. 고치면 댓글이 지워진다.
 
 **그 밖에**
-- Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다.
+- Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다. 그래서 `PR Labels` 워크플로는 Dependabot PR에서 아예 돌지 않는다.
 - 기존 이슈에 한 번에 적용할 때는 PL이 로컬에서 `DRY_RUN=1 bash .github/scripts/backfill-issue-labels.sh`로 미리 본 뒤 `DRY_RUN` 없이 돌린다.
 - 출시 때 GitHub 자동 릴리스 노트가 이 레이블로 항목을 나눈다 ([release.yml](.github/release.yml)).
 - 규칙의 원본은 이 절이고, [`labels.sh`](.github/scripts/labels.sh)가 그것을 옮긴 것이다. 둘은 같은 PR에서 함께 고친다.

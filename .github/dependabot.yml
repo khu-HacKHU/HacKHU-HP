@@ -1,8 +1,14 @@
 # SCA — 의존성 업데이트 PR. 취약점 알림·보안 업데이트는 저장소 설정에서 켠다 (docs/security/tools.md).
 #
+# 항목마다 commit-message.prefix를 반드시 둔다. 없으면 Dependabot이 기본 형식
+# `chore(deps):`를 쓰는데, `deps`가 commitlint scope-enum에 없어서 필수 검사 pr-title이 막는다.
+#
+# 항목마다 cooldown도 둔다. 새로 올라온 버전을 7일 기다린 뒤 PR을 올려서, 탈취된 패키지의
+# 악성 버전이 적발·철회되는 창을 지나치게 한다 (CWE-1357). 보안 업데이트에는 적용되지 않으므로
+# 취약점 알림에서 생성되는 긴급 패치는 그대로 즉시 올라온다.
+#
 # TODO: 스택이 정해지면 ecosystem을 추가한다.
-#   frontend → npm (/frontend)
-#   infra    → terraform (/infra), docker (Dockerfile 위치)
+#   infra → terraform (/infra), docker (Dockerfile 위치)
 version: 2
 updates:
   # Spring Boot BOM이 대부분의 버전을 관리하므로 Boot 자체와 BOM 밖 라이브러리 위주로 올라온다.
@@ -17,6 +23,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
     groups:
       backend-minor:
         update-types: [minor, patch]
@@ -32,6 +40,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: github-actions
     directory: /
@@ -44,9 +54,37 @@ updates:
     labels: [cicd, dependencies]
     commit-message:
       prefix: cicd
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ['*']
+
+  # 프론트엔드 React·Vite 의존성
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Seoul
+    target-branch: develop
+    # 워크플로는 Dependabot PR의 레이블을 바꿀 수 없어 미리 붙인다 (CONTRIBUTING.md 5절)
+    labels: [chore, dependencies]
+    commit-message:
+      prefix: chore
+    cooldown:
+      default-days: 7
+    # @types/node는 Node의 타입 설명서라 런타임 Node major를 따라가야 한다. 레포는 .nvmrc와
+    # package.json engines로 Node 24에 고정돼 있고, tsconfig.node.json의 "types": ["node"]로
+    # 이 설명서가 실제 적용된다. major를 먼저 올리면 런타임에 없는 API를 tsc가 통과시킨다 (#98).
+    # minor·패치는 계속 받는다. Node 24 설명서가 더 정확해지는 변경이라 받는 게 맞다.
+    # Node를 올릴 때는 .nvmrc, engines, 이 타입을 한 PR에서 같이 올린다.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
+    groups:
+      frontend-minor:
+        update-types: [minor, patch]
 
   # 저장소 루트의 commitlint·husky
   - package-ecosystem: npm
@@ -59,6 +97,8 @@ updates:
     labels: [chore, dependencies]
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
     groups:
       tooling:
         patterns: ['*']
