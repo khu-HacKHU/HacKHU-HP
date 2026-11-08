@@ -14,6 +14,7 @@ import com.hackhu.hp.global.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -234,6 +235,9 @@ class SecurityConfigTest {
         }
     }
 
+    // @SpringBootTest의 컴포넌트 스캔에서 빼서 실제 AlbumController와 경로가 겹치지 않게 한다.
+    // 이 테스트는 @WebMvcTest(controllers = ...)로 직접 등록해서 쓴다.
+    @TestComponent
     @RestController
     static class TestController {
 
