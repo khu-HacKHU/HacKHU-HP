@@ -17,3 +17,8 @@ springdoc:
 logging:
   level:
     org.hibernate.SQL: debug
+
+# 프론트엔드 개발 서버 (Vite 기본 포트)
+app:
+  cors:
+    allowed-origins: http://localhost:5173
