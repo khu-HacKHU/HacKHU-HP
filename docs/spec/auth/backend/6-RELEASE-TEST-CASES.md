@@ -209,7 +209,7 @@ Security 설정(#21)의 경로 규칙과 401, 403 응답 형식을 본다. 실�
 
 필터의 분기와 공통 부품을 DB 없이 본다. 6-8의 C5 부분(`Origin` 허용 목록)도 `SecurityConfigTest`에서 실행한다.
 
-실행: `cd backend && ./gradlew test --tests 'com.hackhu.hp.global.*'` (`AccessTokenAuthenticationFilterTest`, `AccessTokenServiceTest`, `RateLimiterTest`, `ClientIpResolverTest`, `SecurityConfigTest`)
+실행: `cd backend && ./gradlew test --tests 'com.hackhu.hp.global.*' --tests 'com.hackhu.hp.domain.auth.service.*'` (`AccessTokenAuthenticationFilterTest`, `AccessTokenServiceTest`, `RateLimiterTest`, `ClientIpResolverTest`, `SecurityConfigTest`, `LoginFailureMonitorTest`)
 
 | 번호 | 상황 | 기대 | 상태 |
 |---|---|---|---|
@@ -224,6 +224,8 @@ Security 설정(#21)의 경로 규칙과 401, 403 응답 형식을 본다. 실�
 | RL1 | 같은 키로 50개 스레드가 동시에 한도 10인 카운터를 잡음 | 정확히 10개만 허용 | 통과 |
 | RL2 | 10만 개가 넘는 서로 다른 키로 요청 | 카운터 수가 상한을 넘지 않음 | 통과 |
 | RL3 | 거부를 여러 번 받음 | 창마다 처음 거부만 로그 대상 | 통과 |
+| MF1 | 같은 계정으로 60번의 로그인 실패가 동시에 들어옴 (20회 반복) | 경고가 매번 정확히 한 번 남음 <br> 51번째와 52번째가 겹쳐도 놓치지 않음 (`LoginFailureMonitorTest`) | 통과 |
 | CI1 | `X-Forwarded-For` 항목이 신뢰 홉보다 적음, IP가 아님, zone이 붙은 IPv6 | 연결 상대의 주소를 씀 | 통과 |
 | CI2 | 잘못된 신뢰 대역이나 홉 수 0으로 시작 | 시작하지 않음 | 통과 |
 | CI3 | 연결 상대의 주소가 IP 형식이 아님(줄바꿈이 든 값, 소켓 경로) | IP 표기 문자 밖은 `_`로 바뀌어 로그 줄을 위조하지 못함 <br> IP 형식의 값은 그대로 | 통과 |
+| CI4 | 스테이징: 로드밸런서(와 그 앞의 CDN) 뒤에서 서로 다른 두 네트워크가 같은 이메일로 로그인을 실패시킴 | 요청 제한이 네트워크마다 따로 셈 <br> 시작 로그 `클라이언트 IP 판별`의 `trustedProxies`, `trustedHops`가 배포 구성과 맞음 <br> 홉 수가 적으면 모두 프록시 IP 하나로 묶이고, 많으면 클라이언트가 보낸 값을 고름 (CWE-348) | 미실행 <br> 단위 테스트로는 잡히지 않아 배포 뒤 확인함 |

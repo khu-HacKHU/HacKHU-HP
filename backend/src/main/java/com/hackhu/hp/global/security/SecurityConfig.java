@@ -9,6 +9,7 @@ import com.hackhu.hp.global.auth.AccessTokenAuthenticator;
 import com.hackhu.hp.global.auth.Role;
 import java.time.Duration;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +38,7 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>여기서는 경로 단위의 최소 수준만 건다. 작성자 확인 같은 리소스별 검사는 각 API가 한다 (CWE-639).
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -75,11 +77,17 @@ public class SecurityConfig {
         // access 토큰 검증 필터 (5-1-4). 구현이 domain/auth에 있어 @WebMvcTest 슬라이스에는 없다.
         // 그때는 필터 없이 테스트 도우미(LoginUserRequests, @WithLoginUser)로 사용자를 넣는다.
         // 빈이 없으면 모든 요청이 방문자로 다뤄져 기본 규칙(동아리원 이상)에서 401이 된다.
-        accessTokenAuthenticator.ifAvailable(
-                authenticator ->
-                        http.addFilterBefore(
-                                new AccessTokenAuthenticationFilter(authenticator, errorWriter),
-                                AnonymousAuthenticationFilter.class));
+        // 안전한 쪽으로 실패하지만 서버는 정상으로 떠서 알아채기 어려우므로 경고를 남긴다.
+        AccessTokenAuthenticator authenticator = accessTokenAuthenticator.getIfAvailable();
+        if (authenticator != null) {
+            http.addFilterBefore(
+                    new AccessTokenAuthenticationFilter(authenticator, errorWriter),
+                    AnonymousAuthenticationFilter.class);
+        } else {
+            log.warn(
+                    "AccessTokenAuthenticator 빈이 없어 access 토큰 검증 필터를 붙이지 않았습니다. "
+                            + "@WebMvcTest 슬라이스가 아니라면 인증이 필요한 모든 API가 401이 됩니다.");
+        }
 
         http
                 // access 토큰은 Authorization 헤더로만 받으므로 쿠키 기반 CSRF 토큰이 필요 없다 (5-1-5).

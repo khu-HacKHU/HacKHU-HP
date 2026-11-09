@@ -47,6 +47,13 @@ public class ClientIpResolver {
         this.trustedProxies =
                 properties.trustedProxies().stream().map(IpAddressMatcher::new).toList();
         this.trustedHops = properties.trustedHops();
+        // 홉 수가 한 칸 틀리면 값은 멀쩡한 IP라 요청 로그로는 드러나지 않는다. 적으면 모든 사용자가 프록시 IP 하나로 묶이고,
+        // 많으면 클라이언트가 보낸 값을 고른다. 배포한 뒤 이 로그로 실효 설정을 확인한다 (6-11 CI4).
+        // 대역과 홉 수는 비밀값이 아니다.
+        log.info(
+                "클라이언트 IP 판별: trustedProxies={}, trustedHops={}",
+                properties.trustedProxies(),
+                trustedHops);
     }
 
     /**

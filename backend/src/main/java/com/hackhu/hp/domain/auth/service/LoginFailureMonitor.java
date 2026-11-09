@@ -37,31 +37,45 @@ class LoginFailureMonitor {
                 Caffeine.newBuilder().maximumSize(MAX_ACCOUNTS).expireAfterWrite(WINDOW).build();
     }
 
-    void recordFailure(long userId, String clientIp) {
+    /**
+     * 실패 한 번을 센다.
+     *
+     * @return 이번 실패로 경고 기준을 넘어 경고 로그를 남겼는지
+     */
+    boolean recordFailure(long userId, String clientIp) {
         Instant now = clock.instant();
-        Failures updated =
-                failures.asMap()
-                        .compute(
-                                userId,
-                                (id, current) -> {
-                                    Failures window =
-                                            current == null || current.isOver(now)
-                                                    ? new Failures(now)
-                                                    : current;
-                                    window.add(clientIp);
-                                    return window;
-                                });
-        // 넘는 순간 한 번만 남긴다. 실패할 때마다 남기면 누구나 경고 로그를 쌓을 수 있다 (CWE-779).
-        if (updated.count() == ALERT_THRESHOLD + 1) {
-            log.warn(
-                    "한 계정에 로그인 실패가 많음: userId={}, failures={}, distinctIps={}",
-                    userId,
-                    updated.count(),
-                    updated.distinctIps());
+        // 판정과 값 읽기는 compute 안에서 끝낸다. Failures는 맵에 든 가변 객체라, compute 밖에서 읽으면
+        // 같은 계정의 다른 실패가 먼저 count를 올려 경고 기준(51번째)을 놓친다. 로그만 밖에서 남긴다.
+        Alert[] alert = new Alert[1];
+        failures.asMap()
+                .compute(
+                        userId,
+                        (id, current) -> {
+                            Failures window =
+                                    current == null || current.isOver(now)
+                                            ? new Failures(now)
+                                            : current;
+                            window.add(clientIp);
+                            // 넘는 순간 한 번만 남긴다. 실패할 때마다 남기면 누구나 경고 로그를 쌓을 수 있다 (CWE-779).
+                            if (window.count() == ALERT_THRESHOLD + 1) {
+                                alert[0] = new Alert(window.count(), window.distinctIps());
+                            }
+                            return window;
+                        });
+        if (alert[0] == null) {
+            return false;
         }
+        log.warn(
+                "한 계정에 로그인 실패가 많음: userId={}, failures={}, distinctIps={}",
+                userId,
+                alert[0].failures(),
+                alert[0].distinctIps());
+        return true;
     }
 
-    // compute 안에서만 바꾼다. 같은 키의 compute는 한 번에 하나씩 돈다.
+    private record Alert(int failures, int distinctIps) {}
+
+    // compute 안에서만 바꾸고 읽는다. 같은 키의 compute는 한 번에 하나씩 돈다.
     private static final class Failures {
 
         private final Instant start;
