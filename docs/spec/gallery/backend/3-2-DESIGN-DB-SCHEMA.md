@@ -12,7 +12,7 @@
 | title | VARCHAR(100) | NOT NULL | |
 | event_date | DATE | NOT NULL | 활동 날짜. 목록 정렬 기준 |
 | uploader_id | BIGINT | NOT NULL, FK → `user.id` | 올린 사람. 탈퇴해도 행은 남김 (USER-STORIES) |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() | UTC로 다룸 |
 
 인덱스: `(event_date DESC)`. 목록이 항상 이 순서로 조회된다.
 
@@ -28,7 +28,7 @@
 | album_id | BIGINT | NOT NULL, FK → `album.id` ON DELETE CASCADE | |
 | object_key | VARCHAR(255) | NOT NULL, UNIQUE | S3 객체 키. 형식 `{용도}/{uuid}.{확장자}`, 확장자는 매직바이트 검증 후 확정된 실제 형식 기준 |
 | display_order | SMALLINT | NOT NULL | 0부터 시작. 0번이 대표 사진 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() | UTC로 다룸 |
 
 제약: `UNIQUE (album_id, display_order)`. 같은 앨범 안에서 순서 중복을 방지한다.
 
