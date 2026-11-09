@@ -9,7 +9,7 @@
 - 시각 컬럼은 모두 `TIMESTAMPTZ`로 저장하고 UTC로 다룬다.
 - `users`와 `refresh_tokens`의 기본 키는 `BIGINT GENERATED ALWAYS AS IDENTITY`로 만든다. `login_sessions`의 기본 키는 access 토큰에 실리므로 추측할 수 없는 UUID로 만든다.
 - 테이블 이름은 `users`다. `user`는 PostgreSQL 예약어라서 쓰지 않는다.
-- 스키마는 Flyway 마이그레이션으로만 만든다. `users`는 `V1__create_users.sql`(#24)이 만든다.
+- 스키마는 Flyway 마이그레이션으로만 만든다. `users`는 `V1__create_users.sql`(#24)이, `login_sessions`와 `refresh_tokens`는 `V4__create_login_sessions_and_refresh_tokens.sql`(#25)이 만든다.
 - `updated_at`은 행이 바뀔 때마다 트리거 `set_updated_at()`이 갱신한다. ([DECISIONS.md](DECISIONS.md) A19)
 
 <br>
@@ -62,6 +62,13 @@
 | revoke_reason | VARCHAR(30) | NULL 허용 | `LOGOUT`, `PASSWORD_CHANGED`, `PASSWORD_RESET`, `REUSE_DETECTED` 중 하나 |
 | created_at | TIMESTAMPTZ | NOT NULL, 기본 now() | 로그인 시각 |
 
+**제약**
+
+| 이름 | 내용 | 이유 |
+|---|---|---|
+| `ck_login_sessions_revoke_reason` | `revoke_reason`이 위 네 값 중 하나 | 정의되지 않은 사유를 막음 |
+| `ck_login_sessions_revoked_fields` | `revoked_at`과 `revoke_reason`이 함께 있거나 함께 없음 | 사유 없이 폐기되거나 폐기 없이 사유가 남지 않음 |
+
 **인덱스**
 
 | 인덱스 | 쓰는 곳 |
@@ -92,6 +99,7 @@
 |---|---|
 | `token_hash` 유니크 | refresh 요청에서 토큰 찾기 |
 | `(session_id)` | 세션의 현재 토큰 찾기 |
+| `uk_refresh_tokens_current`: `(session_id)` 유니크, `WHERE replaced_at IS NULL AND revoked_at IS NULL` | 세션의 현재 토큰이 둘 생기지 않게 DB가 한 번 더 막음 <br> 회전할 때는 앞 토큰을 먼저 회전 처리한 뒤 새 토큰을 넣음 |
 | `(expires_at)` | 오래된 기록 정리 |
 
 - 한 세션에서 `replaced_at`과 `revoked_at`이 모두 NULL인 토큰은 많아야 하나다. 이 토큰을 세션의 현재 토큰이라 부른다.

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -15,8 +16,10 @@ import com.hackhu.hp.domain.user.dto.SignupResponse;
 import com.hackhu.hp.domain.user.exception.UserErrorCode;
 import com.hackhu.hp.domain.user.service.SignupService;
 import com.hackhu.hp.global.auth.Role;
+import com.hackhu.hp.global.config.ClockConfig;
 import com.hackhu.hp.global.error.BusinessException;
 import com.hackhu.hp.global.error.GlobalExceptionHandler;
+import com.hackhu.hp.global.security.RequestLimitConfig;
 import com.hackhu.hp.global.security.SecurityConfig;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -30,7 +33,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(controllers = SignupController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({
+    GlobalExceptionHandler.class,
+    SecurityConfig.class,
+    RequestLimitConfig.class,
+    ClockConfig.class
+})
 class SignupControllerTest {
 
     private static final String URL = "/api/v1/auth/signup";
@@ -133,5 +141,45 @@ class SignupControllerTest {
     @Test
     void 깨진_JSON이면_400() throws Exception {
         signup("{\"email\": ").andExpect(status().isBadRequest());
+    }
+
+    // 6-RELEASE-TEST-CASES.md SU18. IP 하나로 1시간에 50번까지 받는다 (5-1-7).
+    @Test
+    void 같은_IP의_51번째_가입_요청은_429와_Retry_After() throws Exception {
+        given(signupService.signup(any()))
+                .willReturn(
+                        new SignupResponse(
+                                17L, "newbie@example.com", "홍길동", Role.PENDING, Instant.now()));
+        String ip = "198.51.100.51";
+
+        for (int i = 0; i < 50; i++) {
+            signupFrom(ip).andExpect(status().isCreated());
+        }
+
+        signupFrom(ip)
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("TOO_MANY_REQUESTS"))
+                .andExpect(
+                        result ->
+                                assertThat(
+                                                Long.parseLong(
+                                                        result.getResponse()
+                                                                .getHeader("Retry-After")))
+                                        .isBetween(3500L, 3600L));
+        // 다른 IP는 막히지 않는다.
+        signupFrom("198.51.100.52").andExpect(status().isCreated());
+        verify(signupService, times(51)).signup(any());
+    }
+
+    private ResultActions signupFrom(String ip) throws Exception {
+        return mockMvc.perform(
+                post(URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(BODY)
+                        .with(
+                                request -> {
+                                    request.setRemoteAddr(ip);
+                                    return request;
+                                }));
     }
 }

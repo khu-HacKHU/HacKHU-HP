@@ -4,7 +4,7 @@
 
 본 문서는 인증권한 백엔드의 구성 요소와 의존 방향을 정한다.
 
-지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1)과 회원과 가입(3-1-2)을 정했다. 토큰 발급, 가입 승인의 구성 요소는 구현 이슈(#25, #45)에서 채운다.
+지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1), 회원과 가입(3-1-2), 로그인과 토큰(3-1-3), 요청 횟수 제한(3-1-4)을 정했다. 가입 승인의 구성 요소는 구현 이슈(#45)에서 채운다.
 
 <br>
 
@@ -32,7 +32,7 @@
 
 역할을 토큰이 아니라 DB에서 읽으므로 역할 변경과 탈퇴가 다음 요청부터 반영된다. ([DECISIONS.md](DECISIONS.md) A2)
 
-> access 토큰 검증 필터(1, 2단계)는 로그인 API(#25)에서 만든다. 그 전에는 실제 요청에 로그인 사용자가 실리지 않는다. 다른 기능은 아래 테스트 도우미로 개발하고 테스트한다.
+access 토큰 검증 필터(1, 2단계)의 구성은 3-1-3에 있다. 다른 기능의 컨트롤러 테스트(`@WebMvcTest`)에는 이 필터가 없으므로 아래 테스트 도우미로 사용자를 넣는다.
 
 **컨트롤러에서 받기**
 
@@ -145,4 +145,75 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 
 **요청 횟수 제한**
 
-가입의 IP 기준 제한(1시간에 50회)은 아직 없다. 로그인 API(#25)에서 클라이언트 IP 판별과 제한 카운터를 만들 때 가입에도 붙인다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-7)
+`SignupController`가 서비스를 부르기 전에 IP 기준 제한(1시간에 50회)을 확인한다. 한도를 넘으면 bcrypt를 계산하지 않고 `429`와 `Retry-After`로 끝난다. 본문 검증(400)을 통과한 요청만 센다. 검증에서 끝나는 요청은 bcrypt를 계산하지 않기 때문이다. 카운터와 클라이언트 IP 판별은 3-1-4를 따른다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-7)
+
+<br>
+
+### 3-1-3. 로그인과 토큰
+
+로그인, refresh, 로그아웃 API와 요청마다 하는 인증의 구성 요소다. 요청과 응답은 계약 문서가, 회전 규칙은 4-2-5가, 잠금과 쿼리는 동시성 문서가 정한다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md), [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md))
+
+**구성 요소**
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `AccessTokenService` | `global/auth` | access 토큰(JWT) 발급과 서명, 발급자, 만료 검증 <br> `HS256` 고정, 서명 키가 없거나 32바이트보다 짧으면 서버가 시작하지 않음 |
+| `AccessTokenAuthenticator` | `global/auth` | 토큰으로 현재 사용자를 정하는 인터페이스 <br> 필터가 도메인 패키지에 기대지 않게 인터페이스만 둠 |
+| `LoginSessionAuthenticator` | `domain/auth/service` | 위 인터페이스의 구현 <br> `sid`의 로그인 세션과 계정을 한 번에 읽어 폐기, 만료, 사용자 불일치, 탈퇴를 거부함 |
+| `AccessTokenAuthenticationFilter` | `global/security` | `Authorization: Bearer`에서 토큰을 꺼내 위 구현을 부르고 `LoginUserAuthentication`을 SecurityContext에 넣음 <br> 비밀번호 변경 필요 상태의 403도 여기서 줌 |
+| `AuthOriginFilter` | `global/security` | 로그인, refresh, 로그아웃의 `Origin` 허용 목록 검사 <br> 허용 목록은 CORS와 같은 `app.cors.allowed-origins` |
+| `AuthController` | `domain/auth/controller` | `POST /api/v1/auth/login`, `/refresh`, `/logout` |
+| `LoginService` | `domain/auth/service` | 요청 횟수 제한, bcrypt 검증, 일반과 임시 비밀번호 경로, 같은 브라우저의 기존 세션 폐기 |
+| `TokenRefreshService` | `domain/auth/service` | 세션 행을 잠그고 4-2-5의 회전 규칙을 적용함 |
+| `LogoutService` | `domain/auth/service` | refresh 쿠키의 세션 하나를 폐기함 |
+| `SessionIssuer` | `domain/auth/service` | 로그인 세션, refresh 토큰, access 토큰을 만듦 <br> 부르는 쪽의 트랜잭션 안에서만 돎 |
+| `LoginFailureMonitor` | `domain/auth/service` | 한 계정에 1시간 50회 넘는 로그인 실패를 경고 로그로 남김 |
+| `LoginSessionCleanup` | `domain/auth/service` | 매일 04:30(UTC)에 끝난 지 하루가 지난 세션을 지움 (3-2-7) |
+| `LoginSession`, `RefreshToken` | `domain/auth/entity` | `login_sessions`, `refresh_tokens` 테이블 |
+| `AuthErrorCode` | `domain/auth/exception` | `AUTH_INVALID_CREDENTIALS` ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md)) |
+
+- `global/security`의 필터가 `domain/auth`를 직접 부르지 않는다. `SecurityConfig`는 `AccessTokenAuthenticator` 빈이 있을 때만 필터를 붙인다. 다른 기능의 `@WebMvcTest`에는 이 빈이 없어 필터 없이 테스트 도우미(3-1-1)로 사용자를 넣는다.
+- 서버 시각은 `Clock` 빈(`global/config/ClockConfig`, UTC)에서 읽는다. 토큰 만료, 세션 수명, 회전 시각, 요청 제한 창이 모두 이 시계를 쓴다. 임시 비밀번호 만료(`temp_password_expires_at`)는 5-2-3의 쿼리대로 DB의 `now()`와 비교한다.
+
+**로그인 처리 순서**
+
+1. `AuthOriginFilter`가 `Origin`을 확인한다. 다르면 403으로 끝난다.
+2. 본문이 JSON이 아니면 415, 비었으면 400으로 끝난다. 이메일은 가입과 같은 `Emails.normalize`로 정규화한다.
+3. `LoginService`가 IP 기준 제한(모든 시도)을 세고, IP와 이메일 조합 제한(실패만)에서 한 번을 잡는다. 한도면 429로 끝난다. (3-1-4)
+4. 활성 계정을 이메일로 찾고 bcrypt로 비밀번호를 검증한다. 계정이 없으면 미리 만든 더미 해시와 비교한다. 72바이트가 넘는 비밀번호는 저장될 수 없으므로 틀린 것으로 보고 계산은 그대로 한다.
+5. 한 트랜잭션에서 5-2-3대로 해시를 다시 확인한다. 임시 비밀번호가 있는 계정은 조건부 갱신, 아니면 `users` 행 잠금이다. 통과하면 요청에 실려 온 refresh 쿠키의 세션을 폐기하고 새 세션을 만든다.
+6. 실패면 401 `AUTH_INVALID_CREDENTIALS`이고 잡아 둔 한 번은 실패로 남는다. 성공이면 잡아 둔 한 번을 돌려준다.
+
+**요청마다 하는 인증**
+
+| 요청 | 처리 |
+|---|---|
+| `Authorization` 헤더 없음 | 방문자. 아무것도 넣지 않음 |
+| `/api/v1/auth/**` | 헤더를 보지 않음 ([DECISIONS.md](DECISIONS.md) A22) |
+| `Bearer`가 아니거나, 토큰이 비었거나, 받아 줄 수 없는 토큰 | 공개 API여도 401 `UNAUTHORIZED` <br> 이유는 DEBUG 로그에만 남김 |
+| 비밀번호 변경 필요 상태 | 내 정보 조회, 비밀번호 변경만 통과 <br> 나머지는 403 `AUTH_PASSWORD_CHANGE_REQUIRED` |
+| 그 밖 | `LoginUserAuthentication`을 넣고 경로 규칙(3-1-1 3단계)으로 넘김 |
+
+<br>
+
+### 3-1-4. 요청 횟수 제한
+
+로그인, 가입, 비밀번호 변경과 탈퇴의 요청 횟수 제한을 하는 공통 구성 요소다. 규칙의 값은 보안 문서가 정한다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-7)
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `RateLimiter` | `global/security` | 고정 창 카운터 <br> Caffeine 캐시, 항목 수 상한 10만 개, 창이 끝나면 지워짐 <br> 키마다 원자적으로 늘리고 확인함 |
+| `AuthRateLimits` | `global/security` | 5-1-7의 규칙 네 개 |
+| `ClientIpResolver` | `global/security` | 믿는 프록시에서 온 연결만 `X-Forwarded-For`의 오른쪽 값을 씀 (CWE-348) <br> 설정은 `app.client-ip.trusted-proxies`, `trusted-hops` |
+| `TooManyRequestsException` | `global/error` | `429 TOO_MANY_REQUESTS`와 `Retry-After`(초) |
+
+| 규칙 | 붙인 곳 | 세는 것 |
+|---|---|---|
+| `LOGIN_ATTEMPTS_PER_IP` | `LoginService` | 모든 시도 |
+| `LOGIN_FAILURES_PER_IP_AND_EMAIL` | `LoginService` | 실패 <br> 확인 전에 `tryAcquire`로 잡고 성공하면 `release`로 돌려줌 |
+| `SIGNUP_ATTEMPTS_PER_IP` | `SignupController` | 본문 검증을 통과한 모든 시도 |
+| `PASSWORD_CONFIRM_FAILURES_PER_USER` | 비밀번호 변경, 탈퇴(#49) | 지금 비밀번호가 틀린 시도 <br> 로그인과 같이 확인 전에 잡고 맞으면 돌려줌 |
+
+- 실패만 세는 규칙을 시도한 뒤에 세면 동시에 들어온 시도가 모두 확인을 통과해 한도를 넘는다. 그래서 확인 전에 한 번을 잡는다. ([DECISIONS.md](DECISIONS.md) A21, 5-2-5)
+- 거부 로그는 창마다 처음 거부할 때만 남긴다. 거부할 때마다 남기면 누구나 로그를 쌓을 수 있다. (CWE-779)
+- 카운터는 서버 메모리에 있다. 재배포하면 초기화되고 인스턴스를 늘리면 느슨해진다. ([DECISIONS.md](DECISIONS.md) A11)

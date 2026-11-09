@@ -14,6 +14,7 @@ import com.hackhu.hp.global.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -101,7 +102,8 @@ class SecurityConfigTest {
 
         @Test
         void 로그인하지_않아도_통과() throws Exception {
-            perform(post("/api/v1/auth/login"), null).andExpect(status().isOk());
+            perform(post("/api/v1/auth/login").header(HttpHeaders.ORIGIN, FRONTEND), null)
+                    .andExpect(status().isOk());
         }
 
         @Test
@@ -124,10 +126,67 @@ class SecurityConfigTest {
 
         @Test
         void CSRF_토큰_없이_POST해도_통과() throws Exception {
-            perform(post("/api/v1/auth/login"), null)
+            perform(post("/api/v1/auth/login").header(HttpHeaders.ORIGIN, FRONTEND), null)
                     .andExpect(status().isOk())
                     // 서버 세션을 만들지 않는다
                     .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+        }
+    }
+
+    // CSRF 토큰을 끈 것을 보완하는 검사다. 빠지면 다른 사이트가 피해자의 브라우저로 refresh를 불러 강제 로그아웃시킬 수 있다 (5-1-5).
+    @Nested
+    class 로그인_refresh_로그아웃은_Origin_허용_목록만_받는다_C5 {
+
+        private static final String[] PATHS = {
+            "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout"
+        };
+
+        @Test
+        void 프론트엔드_주소면_통과() throws Exception {
+            for (String path : PATHS) {
+                perform(post(path).header(HttpHeaders.ORIGIN, FRONTEND), null)
+                        .andExpect(status().isOk());
+            }
+        }
+
+        @Test
+        void Origin이_없으면_403() throws Exception {
+            for (String path : PATHS) {
+                expectForbidden(perform(post(path), null));
+            }
+        }
+
+        // 같은 출처 요청은 CORS 필터가 그냥 통과시키므로 이 검사가 막아야 한다.
+        @Test
+        void API와_같은_출처여도_허용_목록에_없으면_403() throws Exception {
+            for (String path : PATHS) {
+                expectForbidden(
+                        perform(post(path).header(HttpHeaders.ORIGIN, "http://localhost"), null));
+            }
+        }
+
+        @Test
+        void 다른_사이트면_403() throws Exception {
+            for (String path : PATHS) {
+                perform(post(path).header(HttpHeaders.ORIGIN, "https://evil.example"), null)
+                        .andExpect(status().isForbidden());
+            }
+        }
+
+        @Test
+        void Origin_헤더가_여러_개면_모두_허용_목록에_있어야_한다() throws Exception {
+            expectForbidden(
+                    perform(
+                            post("/api/v1/auth/refresh")
+                                    .header(HttpHeaders.ORIGIN, FRONTEND)
+                                    .header(HttpHeaders.ORIGIN, "http://localhost"),
+                            null));
+        }
+
+        @Test
+        void 가입은_검사하지_않는다() throws Exception {
+            // 가입은 쿠키를 주지도 받지도 않는다. 여기서는 메서드 보안 거부(401)까지 가는지만 본다.
+            expectUnauthorized(perform(post("/api/v1/auth/signup"), null));
         }
     }
 
@@ -234,6 +293,9 @@ class SecurityConfigTest {
         }
     }
 
+    // @TestComponent: 다른 @SpringBootTest의 컴포넌트 스캔에 잡히지 않게 한다. 잡히면 실제 AuthController의
+    // refresh, 로그아웃 경로와 겹친다. 이 테스트는 @Import로만 넣는다.
+    @TestComponent
     @RestController
     static class TestController {
 
@@ -249,6 +311,16 @@ class SecurityConfigTest {
 
         @PostMapping("/api/v1/auth/login")
         String login() {
+            return "ok";
+        }
+
+        @PostMapping("/api/v1/auth/refresh")
+        String refresh() {
+            return "ok";
+        }
+
+        @PostMapping("/api/v1/auth/logout")
+        String logout() {
             return "ok";
         }
 
