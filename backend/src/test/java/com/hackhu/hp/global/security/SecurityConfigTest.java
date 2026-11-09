@@ -293,8 +293,8 @@ class SecurityConfigTest {
         }
     }
 
-    // @TestComponent: 다른 @SpringBootTest의 컴포넌트 스캔에 잡히지 않게 한다. 잡히면 실제 AuthController의
-    // refresh, 로그아웃 경로와 겹친다. 이 테스트는 @Import로만 넣는다.
+    // @SpringBootTest의 컴포넌트 스캔에서 뺀다. 잡히면 실제 AlbumController, AuthController(refresh, 로그아웃)와
+    // 경로가 겹친다. 이 테스트는 @WebMvcTest(controllers = ...)와 @Import로 직접 등록해서 쓴다.
     @TestComponent
     @RestController
     static class TestController {

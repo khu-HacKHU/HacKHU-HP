@@ -65,3 +65,11 @@ app:
   client-ip:
     trusted-proxies: []
     trusted-hops: 1
+
+# 갤러리 사진 조회 주소 (CloudFront 서명 URL). 값은 환경변수로만 받는다. 비어 있으면 서버가 뜨지 않는다.
+gallery:
+  cdn:
+    base-url: ${GALLERY_CDN_BASE_URL:}
+    key-pair-id: ${GALLERY_CDN_KEY_PAIR_ID:}
+    private-key: ${GALLERY_CDN_PRIVATE_KEY:}
+    url-ttl: 1h

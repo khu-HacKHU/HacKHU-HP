@@ -41,6 +41,11 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 | `JWT_SECRET` | access 토큰 서명 키. 32바이트 이상의 무작위 값을 Base64로 인코딩한 값 (예: `openssl rand -base64 32`의 출력). 없거나 짧으면 서버가 시작하지 않는다. 바꾸면 기존 access 토큰은 401이고 프론트엔드가 refresh로 이어 간다 |
 | `TRUSTED_PROXY_CIDRS` | 로드밸런서 서브넷의 CIDR. 쉼표로 여러 개. 이 대역에서 온 연결만 `X-Forwarded-For`를 보고 클라이언트 IP를 정한다. 로드밸런서의 `X-Forwarded-For` 처리는 기본값(append)이어야 한다 |
 | `TRUSTED_PROXY_HOPS` | 믿는 프록시 수. 기본 1(로드밸런서만 있을 때) |
+| `GALLERY_CDN_BASE_URL` | 갤러리 사진 CloudFront 배포 주소 (`https://...`) |
+| `GALLERY_CDN_KEY_PAIR_ID` | CloudFront 공개 키 ID |
+| `GALLERY_CDN_PRIVATE_KEY` | CloudFront 서명용 RSA 개인 키 (PKCS#8 PEM) |
+
+`GALLERY_CDN_*`가 하나라도 없으면 서버가 뜨지 않는다. `local`에서는 없어도 임시 키로 뜬다 (사진 주소는 실제로 열리지 않음).
 
 `local` 프로파일은 `JWT_SECRET` 없이도 실행된다. 실행할 때마다 무작위 서명 키를 만든다.
 
