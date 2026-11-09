@@ -89,7 +89,7 @@
 | 401 | 인증 없음, 토큰 만료·위조 | `UNAUTHORIZED` |
 | 403 | 인증은 됐지만 권한 없음 | `FORBIDDEN`, `POST_FORBIDDEN` |
 | 404 | 리소스 없음 | `POST_NOT_FOUND` |
-| 409 | 상태 충돌 (중복 가입 등) | `DUPLICATE_EMAIL` |
+| 409 | 상태 충돌 (중복 가입 등) | `AUTH_DUPLICATE_EMAIL` |
 | 413 | 업로드 크기 초과 | `FILE_TOO_LARGE` |
 | 429 | 요청 과다 | `TOO_MANY_REQUESTS` |
 | 500 | 서버 오류 | `INTERNAL_ERROR` |

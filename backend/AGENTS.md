@@ -58,6 +58,7 @@ com.hackhu.hp
 - 스키마 변경은 Flyway 마이그레이션(`src/main/resources/db/migration/V{번호}__{설명}.sql`)으로만 한다. `ddl-auto`는 `validate`로 고정한다
 - 머지된 마이그레이션 파일은 고치지 않는다. 바꿔야 하면 새 버전을 추가한다
 - 마이그레이션 번호가 다른 PR과 겹치면 늦게 머지하는 쪽이 번호를 올린다
+- `updated_at` 컬럼이 있는 테이블은 `set_updated_at()` 트리거를 건다 (`V1__create_users.sql`). 코드에서 `updated_at`을 직접 쓰지 않는다
 
 ### 시각 컬럼
 

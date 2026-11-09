@@ -3,6 +3,13 @@ spring:
     name: hackhu-hp
   profiles:
     default: local
+  datasource:
+    hikari:
+      data-source-properties:
+        # PostgreSQL 오류의 Detail(예: "Key (email)=(...) already exists", "Failing row contains (...)")을
+        # 예외 메시지와 로그에 싣지 않는다. 행 값에 이메일, 이름, 비밀번호 해시가 들어 있다 (5-1-9, CWE-532).
+        # 제약 이름은 메시지 본문에 남으므로 유니크 위반을 409로 바꾸는 처리는 그대로 동작한다.
+        logServerErrorDetail: false
   jpa:
     # 스키마는 Flyway 마이그레이션만 바꾼다. Hibernate는 검증만 한다.
     hibernate:
