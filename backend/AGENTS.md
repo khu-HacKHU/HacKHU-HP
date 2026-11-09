@@ -60,6 +60,22 @@ com.hackhu.hp
 - 마이그레이션 번호가 다른 PR과 겹치면 늦게 머지하는 쪽이 번호를 올린다
 - `updated_at` 컬럼이 있는 테이블은 `set_updated_at()` 트리거를 건다 (`V1__create_users.sql`). 코드에서 `updated_at`을 직접 쓰지 않는다
 
+### 시각 컬럼
+
+- **시점을 담는 컬럼은 `TIMESTAMPTZ`로 만든다.** `TIMESTAMP`는 쓰지 않는다. 날짜만 필요하면(활동 날짜, 생일) `DATE`를 쓴다
+- **엔티티는 `Instant`로 매핑한다.** 오프셋을 그대로 다뤄야 하면 `OffsetDateTime`도 된다. `LocalDateTime`은 쓰지 않는다
+- 비교와 계산은 UTC로 한다. KST로 바꾸는 것은 화면뿐이다 ([API 규약](../docs/conventions/api.md) 2절)
+
+`TIMESTAMP`는 시계에 적힌 값을, `TIMESTAMPTZ`는 시점을 저장한다. `created_at`이나 `expires_at`이 뜻하는 것은 시점이다. `TIMESTAMP`를 쓰면 그 값이 어느 시점인지 알아내는 정보를 버리고 코드 쪽 약속으로만 보관하게 된다. 그러면 세 가지가 따라온다.
+
+- `DEFAULT now()`가 **접속한 세션의 시간대**로 잘려 저장된다. UTC 세션과 KST 세션이 같은 문장으로 다른 값을 넣고, 어느 쪽이었는지 스키마에 남지 않는다
+- 도메인을 넘는 시각 비교에 캐스팅이 끼고, 그 캐스팅도 세션 시간대를 쓴다
+- 토큰 만료·폐기 판정(`expires_at`, `revoked_at`)이 DB 세션 설정에 걸린다
+
+Postgres에서 둘 다 8바이트라 `TIMESTAMPTZ`가 더 크거나 느리지 않다.
+
+엔티티 타입을 함께 정하는 이유가 있다. 컬럼이 `TIMESTAMPTZ`여도 엔티티가 `LocalDateTime`이면 Hibernate가 변환에 시간대를 써서 같은 문제가 자바 쪽으로 옮겨 간다. `Instant`는 그 변환이 없고, Jackson이 API 규약이 요구하는 `"2026-10-12T09:30:00Z"` 형식으로 바로 직렬화한다. 안전망으로 `application.yml`에 `hibernate.jdbc.time_zone: UTC`도 둔다.
+
 ## 설정과 시크릿
 
 - 프로파일: `local`(기본, docker compose로 DB 자동 실행), `prod`(환경변수로 주입)

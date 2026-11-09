@@ -15,6 +15,11 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        # 시각은 UTC로만 주고받는다. 엔티티에 LocalDateTime을 쓰더라도 JVM 기본 시간대에
+        # 끌려가지 않게 고정한다 (backend/AGENTS.md "시각 컬럼").
+        jdbc.time_zone: UTC
   flyway:
     locations: classpath:db/migration
   # 목록 API의 size 상한 (docs/conventions/api.md 2절). 넘으면 100으로 잘린다.
