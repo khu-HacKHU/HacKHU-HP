@@ -204,7 +204,7 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 |---|---|---|
 | `RateLimiter` | `global/security` | 고정 창 카운터 <br> Caffeine 캐시, 항목 수 상한 10만 개, 창이 끝나면 지워짐 <br> 키마다 원자적으로 늘리고 확인함 |
 | `AuthRateLimits` | `global/security` | 5-1-7의 규칙 네 개 |
-| `ClientIpResolver` | `global/security` | 믿는 프록시에서 온 연결만 `X-Forwarded-For`의 오른쪽 값을 씀 (CWE-348) <br> 설정은 `app.client-ip.trusted-proxies`, `trusted-hops` |
+| `ClientIpResolver` | `global/security` | 믿는 프록시에서 온 연결만 `X-Forwarded-For`의 오른쪽 값을 씀 (CWE-348) <br> 돌려주는 값은 IP 표기 문자만 남기고 45자로 묶어 로그에 그대로 쓸 수 있음 (CWE-117) <br> 설정은 `app.client-ip.trusted-proxies`, `trusted-hops` |
 | `TooManyRequestsException` | `global/error` | `429 TOO_MANY_REQUESTS`와 `Retry-After`(초) |
 
 | 규칙 | 붙인 곳 | 세는 것 |

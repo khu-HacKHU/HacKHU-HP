@@ -87,4 +87,20 @@ class ClientIpResolverTest {
         assertThatThrownBy(() -> new ClientIpProperties(List.of(), 0))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void IP_형식이_아닌_연결_주소도_로그에_쓸_수_있는_값으로_바꾼다() {
+        assertThat(resolver.resolve(request("1.2.3.4\nINFO 위조된 로그 줄")))
+                .doesNotContain("\n")
+                .matches("[0-9A-Fa-f:._]{1,45}");
+        assertThat(resolver.resolve(request("/var/run/app.sock"))).doesNotContain("/");
+        assertThat(ClientIpResolver.forKeyAndLog(null)).isEqualTo("unknown");
+    }
+
+    @Test
+    void IP_형식은_그대로_둔다() {
+        assertThat(ClientIpResolver.forKeyAndLog("203.0.113.7")).isEqualTo("203.0.113.7");
+        assertThat(ClientIpResolver.forKeyAndLog("2001:db8:0:0:0:0:0:1"))
+                .isEqualTo("2001:db8:0:0:0:0:0:1");
+    }
 }

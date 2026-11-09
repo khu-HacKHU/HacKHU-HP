@@ -28,6 +28,9 @@ import org.springframework.security.web.util.matcher.IpAddressMatcher;
 public class ClientIpResolver {
 
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
+    private static final String UNKNOWN = "unknown";
+    // IPv6 표기의 최대 길이
+    private static final int MAX_LENGTH = 45;
 
     // 각 칸 0~255, 앞에 0을 붙이지 않은 IPv4.
     private static final Pattern IPV4 =
@@ -46,7 +49,17 @@ public class ClientIpResolver {
         this.trustedHops = properties.trustedHops();
     }
 
+    /**
+     * 클라이언트 IP. 요청 횟수 제한의 키와 로그에 그대로 쓸 수 있는 값만 돌려준다.
+     *
+     * <p>연결 상대의 주소가 IP 형식이 아닌 경우(예: 유닉스 소켓 경로)도 IP 표기에 쓰는 문자만 남기고 길이를 묶는다. 이 값은 로그에 남으므로 줄바꿈이나 제어
+     * 문자로 로그 줄을 위조하지 못하게 한다 (CWE-117).
+     */
     public String resolve(HttpServletRequest request) {
+        return forKeyAndLog(resolveRaw(request));
+    }
+
+    private String resolveRaw(HttpServletRequest request) {
         String remote = request.getRemoteAddr();
         String remoteIp = parseIp(remote).orElse(remote);
         if (!isTrustedProxy(remoteIp)) {
@@ -68,6 +81,17 @@ public class ClientIpResolver {
             return remoteIp;
         }
         return client.get();
+    }
+
+    // 출력 가능한 ASCII만 남긴 뒤 IP 표기에 쓰는 문자(16진수, 콜론, 점) 밖은 _로 바꾸고 길이를 묶는다.
+    // IP 형식의 값은 바뀌지 않는다.
+    static String forKeyAndLog(String value) {
+        if (value == null) {
+            return UNKNOWN;
+        }
+        String printable = value.replaceAll("[^\\x20-\\x7E]", "_");
+        String ipChars = printable.replaceAll("[^0-9A-Fa-f:.]", "_");
+        return ipChars.length() > MAX_LENGTH ? ipChars.substring(0, MAX_LENGTH) : ipChars;
     }
 
     private boolean isTrustedProxy(String ip) {
