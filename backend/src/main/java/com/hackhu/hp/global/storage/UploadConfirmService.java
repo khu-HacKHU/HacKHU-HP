@@ -42,8 +42,8 @@ public class UploadConfirmService {
      * 전부 통과하면 요청 순서대로 object key를 돌려주고, 기록을 USED로 바꾼다. 하나라도 실패하면 이번 요청에서 아직 안 쓰인 객체를 모두 지우고 그 기록들을
      * 소비 처리한 뒤 {@link UploadConfirmException}을 던진다.
      *
-     * <p>같은 uploadId로 동시에 두 번 확정하면 둘 다 통과할 수 있다. 사진 하나가 두 앨범에 들어가는 정도의 영향이라 지금은 둔다. 문제가 되면 기록에 낙관적
-     * 락(@Version)을 붙인다.
+     * <p>소유자·만료·중복·매직바이트 검사를 전부 통과해도, 사용 처리는 {@link UploadRecordRepository#claim}의 조건부 갱신으로 한다. 같은
+     * uploadId를 두 요청이 동시에 확정해도 갱신은 하나만 성공하므로, 다른 하나는 갱신된 행 수가 모자라 거부된다 (board 5-1-8, CWE-362).
      */
     public List<String> confirmImages(Long userId, UploadPurpose purpose, List<UUID> uploadIds) {
         Map<UUID, UploadRecord> found =
