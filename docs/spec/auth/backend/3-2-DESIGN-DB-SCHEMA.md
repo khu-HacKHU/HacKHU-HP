@@ -9,7 +9,8 @@
 - 시각 컬럼은 모두 `TIMESTAMPTZ`로 저장하고 UTC로 다룬다.
 - `users`와 `refresh_tokens`의 기본 키는 `BIGINT GENERATED ALWAYS AS IDENTITY`로 만든다. `login_sessions`의 기본 키는 access 토큰에 실리므로 추측할 수 없는 UUID로 만든다.
 - 테이블 이름은 `users`다. `user`는 PostgreSQL 예약어라서 쓰지 않는다.
-- 스키마는 Flyway 마이그레이션으로만 만든다. 첫 마이그레이션은 가입 API 이슈(#24)에서 낸다.
+- 스키마는 Flyway 마이그레이션으로만 만든다. `users`는 `V1__create_users.sql`(#24)이 만든다.
+- `updated_at`은 행이 바뀔 때마다 트리거 `set_updated_at()`이 갱신한다. ([DECISIONS.md](DECISIONS.md) A19)
 
 <br>
 

@@ -235,9 +235,8 @@ class SecurityConfigTest {
         }
     }
 
-    // @TestComponent가 붙으면 전체 컨텍스트의 컴포넌트 스캔에서 빠진다. 이 가짜 컨트롤러가
-    // /api/v1/albums를 매핑하고 있어서, 스캔에 잡히면 진짜 AlbumController와 충돌해 다른 테스트의
-    // 컨텍스트가 뜨지 않는다. @WebMvcTest(controllers = ...)로 명시 등록하는 이 테스트는 그대로 동작한다.
+    // @SpringBootTest의 컴포넌트 스캔에서 빼서 실제 AlbumController와 경로가 겹치지 않게 한다.
+    // 이 테스트는 @WebMvcTest(controllers = ...)로 직접 등록해서 쓴다.
     @TestComponent
     @RestController
     static class TestController {
