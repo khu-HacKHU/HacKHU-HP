@@ -40,11 +40,44 @@ com.hackhu.hp
 - 정렬·검색 필드는 허용 목록으로 검사한다
 - 목록 API는 `Pageable`을 받고 `size` 최대 100으로 제한한다
 
+## 인증·권한
+
+규칙의 기준은 [인증권한 보안 명세](../docs/spec/auth/backend/5-1-QUALITY-SECURITY.md)이고, 설정은 `global/security/SecurityConfig`에 있다.
+
+- 기본은 **동아리원(`MEMBER`) 이상**이다. 승인 대기 회원(`PENDING`)은 방문자와 같으므로 "로그인만 하면 통과"로 열지 않는다. 승인 대기 회원도 부르는 API는 인증권한의 내 정보 API 세 개(조회, 비밀번호 변경, 탈퇴)뿐이다
+- 역할 순서는 `PENDING` < `MEMBER` < `STAFF` < `ADMIN`이다. `hasRole('MEMBER')`는 운영진과 관리자도 통과한다
+- 공개 API는 명세에 "공개"라고 적고 `SecurityConfig`의 공개 목록에 메서드와 경로를 추가한다. 이 파일은 PL이 리뷰한다
+- `/api/v1/admin/**`은 운영진 이상이 기본이다. 경로 규칙은 최소 수준일 뿐이므로 작성자 확인 같은 검사는 각 API가 한다
+- 비로그인(토큰 만료 포함)은 `401 UNAUTHORIZED`, 역할 부족은 `403 FORBIDDEN`으로 Security가 응답한다. 컨트롤러에서 직접 만들지 않는다
+- access 토큰은 요청마다 `AccessTokenAuthenticationFilter`가 검증하고 역할을 DB에서 읽는다. 구성은 [인증권한 아키텍처 3-1-3](../docs/spec/auth/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md)
+- 요청 횟수 제한은 `RateLimiter`와 `AuthRateLimits`를, 클라이언트 IP는 `ClientIpResolver`를 쓴다. `X-Forwarded-For`를 직접 읽지 않는다 (CWE-348). 사용법은 [3-1-4](../docs/spec/auth/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md)
+- 서버 시각은 `Clock` 빈(`global/config/ClockConfig`)에서 읽는다. 테스트에서 시간을 옮길 수 있다
+- 현재 사용자는 컨트롤러에서 `@CurrentUser LoginUser user`로 받고 서비스에 인자로 넘긴다. 작성자 ID는 `user.id()`에서 꺼낸다. 사용법은 [인증권한 아키텍처 3-1-1](../docs/spec/auth/backend/3-1-DESIGN-SOFTWARE-ARCHITECTURE.md)
+- 역할 비교는 `Role`과 `user.hasRoleAtLeast(Role.STAFF)`로 한다. 역할 이름을 문자열로 비교하지 않는다
+- `@WebMvcTest`에서는 `@Import(SecurityConfig.class)`를 붙이고 `with(loginUser(1L, Role.MEMBER))`나 `@WithLoginUser(role = Role.MEMBER)`로 로그인 사용자를 준다. `with(user(...))`와 `@WithMockUser`로는 `@CurrentUser`가 null이 된다. 예시는 `CurrentUserTest`
+
 ## DB
 
 - 스키마 변경은 Flyway 마이그레이션(`src/main/resources/db/migration/V{번호}__{설명}.sql`)으로만 한다. `ddl-auto`는 `validate`로 고정한다
 - 머지된 마이그레이션 파일은 고치지 않는다. 바꿔야 하면 새 버전을 추가한다
 - 마이그레이션 번호가 다른 PR과 겹치면 늦게 머지하는 쪽이 번호를 올린다
+- `updated_at` 컬럼이 있는 테이블은 `set_updated_at()` 트리거를 건다 (`V1__create_users.sql`). 코드에서 `updated_at`을 직접 쓰지 않는다
+
+### 시각 컬럼
+
+- **시점을 담는 컬럼은 `TIMESTAMPTZ`로 만든다.** `TIMESTAMP`는 쓰지 않는다. 날짜만 필요하면(활동 날짜, 생일) `DATE`를 쓴다
+- **엔티티는 `Instant`로 매핑한다.** 오프셋을 그대로 다뤄야 하면 `OffsetDateTime`도 된다. `LocalDateTime`은 쓰지 않는다
+- 비교와 계산은 UTC로 한다. KST로 바꾸는 것은 화면뿐이다 ([API 규약](../docs/conventions/api.md) 2절)
+
+`TIMESTAMP`는 시계에 적힌 값을, `TIMESTAMPTZ`는 시점을 저장한다. `created_at`이나 `expires_at`이 뜻하는 것은 시점이다. `TIMESTAMP`를 쓰면 그 값이 어느 시점인지 알아내는 정보를 버리고 코드 쪽 약속으로만 보관하게 된다. 그러면 세 가지가 따라온다.
+
+- `DEFAULT now()`가 **접속한 세션의 시간대**로 잘려 저장된다. UTC 세션과 KST 세션이 같은 문장으로 다른 값을 넣고, 어느 쪽이었는지 스키마에 남지 않는다
+- 도메인을 넘는 시각 비교에 캐스팅이 끼고, 그 캐스팅도 세션 시간대를 쓴다
+- 토큰 만료·폐기 판정(`expires_at`, `revoked_at`)이 DB 세션 설정에 걸린다
+
+Postgres에서 둘 다 8바이트라 `TIMESTAMPTZ`가 더 크거나 느리지 않다.
+
+엔티티 타입을 함께 정하는 이유가 있다. 컬럼이 `TIMESTAMPTZ`여도 엔티티가 `LocalDateTime`이면 Hibernate가 변환에 시간대를 써서 같은 문제가 자바 쪽으로 옮겨 간다. `Instant`는 그 변환이 없고, Jackson이 API 규약이 요구하는 `"2026-10-12T09:30:00Z"` 형식으로 바로 직렬화한다. 안전망으로 `application.yml`에 `hibernate.jdbc.time_zone: UTC`도 둔다.
 
 ## 설정과 시크릿
 

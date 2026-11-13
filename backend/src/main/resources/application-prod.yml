@@ -6,3 +6,13 @@ spring:
     password: ${DATABASE_PASSWORD}
 
 # API 문서는 application.yml에서 기본으로 꺼져 있다. 여기서 켜지 않는다.
+
+# 프론트엔드 주소 하나 (예: https://hackhu.example). *를 쓰지 않는다 (docs/spec/auth/backend/5-1-QUALITY-SECURITY.md 5-1-5).
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN}
+  # 로드밸런서 서브넷의 CIDR. 쉼표로 여러 개를 적는다. 이 대역에서 온 연결만 X-Forwarded-For를 본다 (5-1-7, CWE-348).
+  # 로드밸런서의 X-Forwarded-For 처리 방식이 기본값(append)이어야 한다.
+  client-ip:
+    trusted-proxies: ${TRUSTED_PROXY_CIDRS}
+    trusted-hops: ${TRUSTED_PROXY_HOPS:1}

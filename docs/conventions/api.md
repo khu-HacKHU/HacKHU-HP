@@ -23,7 +23,7 @@
 
 - `Content-Type: application/json; charset=utf-8`. 파일은 서버가 받지 않고 presigned URL로 S3에 직접 올린다.
 - 필드명은 camelCase.
-- 시각은 ISO 8601 UTC 문자열: `"2026-10-12T09:30:00Z"`. 화면 표시에서만 KST로 바꾼다.
+- 시각은 ISO 8601 UTC 문자열: `"2026-10-12T09:30:00Z"`. 화면 표시에서만 KST로 바꾼다. DB 저장 타입과 엔티티 매핑은 [backend/AGENTS.md](../../backend/AGENTS.md)의 "시각 컬럼"에서 정한다.
 - ID는 정수(JSON number, 서버에서는 `Long`)로 통일한다. 순차 ID이므로 **ID를 안다고 접근할 수 있어서는 안 된다** — 모든 단건 API에서 권한을 검사한다.
 - 값이 없으면 `null`로 준다. 필드를 빼지 않는다.
 
@@ -89,7 +89,7 @@
 | 401 | 인증 없음, 토큰 만료·위조 | `UNAUTHORIZED` |
 | 403 | 인증은 됐지만 권한 없음 | `FORBIDDEN`, `POST_FORBIDDEN` |
 | 404 | 리소스 없음 | `POST_NOT_FOUND` |
-| 409 | 상태 충돌 (중복 가입 등) | `DUPLICATE_EMAIL` |
+| 409 | 상태 충돌 (중복 가입 등) | `AUTH_DUPLICATE_EMAIL` |
 | 413 | 업로드 크기 초과 | `FILE_TOO_LARGE` |
 | 429 | 요청 과다 | `TOO_MANY_REQUESTS` |
 | 500 | 서버 오류 | `INTERNAL_ERROR` |
