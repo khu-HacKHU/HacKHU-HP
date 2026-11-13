@@ -1,6 +1,8 @@
 package com.hackhu.hp.domain.user.repository;
 
 import com.hackhu.hp.domain.user.entity.User;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,6 +17,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** 이 이메일을 쓰는 활성 계정. 탈퇴한 계정은 email이 NULL이라 나오지 않는다. */
     Optional<User> findByEmail(String email);
+
+    /**
+     * 화면에 보여 줄 회원 이름을 한 번에 읽는다 ({@link
+     * com.hackhu.hp.domain.user.service.UserQueryService#findDisplayNames}).
+     *
+     * <p>{@code id}와 {@code name}만 선택한다. 엔티티를 읽지 않으므로 이메일과 역할이 다른 기능으로 넘어가지 않는다 (auth 5-1-9).
+     *
+     * <p>탈퇴한 계정은 빠진다. 탈퇴하면 {@code name}이 NULL이 되고 {@code ck_users_withdrawn_fields}가 그것을 보장하므로, 돌아온
+     * 이름은 모두 NULL이 아니다.
+     */
+    @Query(
+            """
+            select new com.hackhu.hp.domain.user.repository.UserDisplayName(u.id, u.name)
+            from User u
+            where u.id in :ids and u.withdrawnAt is null
+            """)
+    List<UserDisplayName> findDisplayNames(@Param("ids") Collection<Long> ids);
 
     /**
      * 일반 로그인. 비밀번호를 검증한 뒤 활성 계정의 행을 잠그고 지금 해시를 읽는다 (5-2-3).
