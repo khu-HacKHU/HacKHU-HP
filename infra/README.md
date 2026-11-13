@@ -2,6 +2,8 @@
 
 AWS 인프라 Terraform. S3부터 PM과 PL이 기본 구성을 작성하고, 지원한 팀원이 함께 작성한다. 코드 오너는 [CODEOWNERS](../.github/CODEOWNERS)에 있다.
 
+무엇을 만들지와 적용 방법은 배포 설계에서 정한다. 이 디렉터리에 Terraform을 쓰기 전에 읽는다. ([docs/spec/DEPLOYMENT.md](../docs/spec/DEPLOYMENT.md))
+
 ## 규칙
 
 - AWS 변경은 **이 디렉터리의 PR로만** 한다. 콘솔에서 직접 바꾸지 않는다.
