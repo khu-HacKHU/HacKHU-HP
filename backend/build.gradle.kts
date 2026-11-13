@@ -25,6 +25,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    // access 토큰(JWT) 발급과 검증. Spring Security 모듈이라 버전은 Spring Boot가 맞춘다 (auth DECISIONS.md A20).
+    implementation("org.springframework.security:spring-security-oauth2-jose")
+    // 로그인, 가입 요청 횟수 제한 카운터. 만료와 항목 수 상한이 있는 메모리 캐시 (5-1-7, A21).
+    implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.flywaydb:flyway-database-postgresql")
