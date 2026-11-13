@@ -53,6 +53,27 @@ expect_fail 'feat: 공지 조회 API 구현 #110'
 expect_fail 'fix: 세션 갱신 수정 (#91)'
 expect_fail "docs: $(printf '가%.0s' $(seq 1 80))"
 
+# --- Dependabot 제목 길이 예외 ------------------------------------------------
+# 길이 규칙은 COMMITLINT_SKIP_HEADER_LENGTH=1일 때만 열린다. 켜도 다른 규칙은 그대로 막아야 한다.
+long_title='chore: bump org.springdoc:springdoc-openapi-starter-webmvc-ui from 3.1.1 to 3.2.0 in /backend in the backend-minor group'
+
+# 평소에는 막힌다 (#95가 실제로 이걸로 막혔다).
+expect_fail "$long_title"
+
+# 예외를 켜면 통과한다.
+if ! COMMITLINT_SKIP_HEADER_LENGTH=1 lint "$long_title"; then
+  echo "Dependabot 예외를 켰는데 긴 제목이 막혔습니다" >&2
+  failures=$((failures + 1))
+fi
+
+# 예외를 켜도 길이 외의 규칙은 느슨해지지 않는다.
+for bad in 'wip: 대충 저장' 'feat(web): 공지 화면 추가' 'feat: 공지 조회 API 구현 #110'; do
+  if COMMITLINT_SKIP_HEADER_LENGTH=1 lint "$bad"; then
+    echo "Dependabot 예외가 길이 외의 규칙까지 열었습니다: $bad" >&2
+    failures=$((failures + 1))
+  fi
+done
+
 if [ "$failures" -ne 0 ]; then
   echo "commitlint 규칙 검사 실패: $failures건" >&2
   exit 1

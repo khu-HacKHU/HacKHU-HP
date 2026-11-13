@@ -3,11 +3,23 @@ spring:
     name: hackhu-hp
   profiles:
     default: local
+  datasource:
+    hikari:
+      data-source-properties:
+        # PostgreSQL 오류의 Detail(예: "Key (email)=(...) already exists", "Failing row contains (...)")을
+        # 예외 메시지와 로그에 싣지 않는다. 행 값에 이메일, 이름, 비밀번호 해시가 들어 있다 (5-1-9, CWE-532).
+        # 제약 이름은 메시지 본문에 남으므로 유니크 위반을 409로 바꾸는 처리는 그대로 동작한다.
+        logServerErrorDetail: false
   jpa:
     # 스키마는 Flyway 마이그레이션만 바꾼다. Hibernate는 검증만 한다.
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        # 시각은 UTC로만 주고받는다. 엔티티에 LocalDateTime을 쓰더라도 JVM 기본 시간대에
+        # 끌려가지 않게 고정한다 (backend/AGENTS.md "시각 컬럼").
+        jdbc.time_zone: UTC
   flyway:
     locations: classpath:db/migration
   # 목록 API의 size 상한 (docs/conventions/api.md 2절). 넘으면 100으로 잘린다.
@@ -24,6 +36,11 @@ server:
     include-binding-errors: never
     whitelabel:
       enabled: false
+
+storage:
+  s3:
+    bucket: ${S3_BUCKET:}
+    region: ${AWS_REGION:ap-northeast-2}
 
 management:
   endpoints:
@@ -42,3 +59,22 @@ springdoc:
   swagger-ui:
     enabled: false
     path: /swagger-ui.html
+
+app:
+  # access 토큰 서명 키. Base64로 인코딩한 32바이트 이상의 무작위 값이다 (docs/spec/auth/backend/5-1-QUALITY-SECURITY.md 5-1-5).
+  # 값은 환경변수로만 주입한다. 없으면 서버가 시작하지 않는다. local 프로파일에서만 실행할 때마다 무작위 키를 만든다.
+  jwt:
+    secret: ${JWT_SECRET:}
+    allow-generated-secret: false
+  # 클라이언트 IP를 정할 때 믿는 프록시 (5-1-7). 기본은 아무 프록시도 믿지 않고 연결 상대의 주소를 쓴다.
+  client-ip:
+    trusted-proxies: []
+    trusted-hops: 1
+
+# 갤러리 사진 조회 주소 (CloudFront 서명 URL). 값은 환경변수로만 받는다. 비어 있으면 서버가 뜨지 않는다.
+gallery:
+  cdn:
+    base-url: ${GALLERY_CDN_BASE_URL:}
+    key-pair-id: ${GALLERY_CDN_KEY_PAIR_ID:}
+    private-key: ${GALLERY_CDN_PRIVATE_KEY:}
+    url-ttl: 1h

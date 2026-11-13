@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.hackhu.hp.global.security.SecurityConfig;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -14,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.TestController.class)
-@Import({GlobalExceptionHandlerTest.TestController.class, GlobalExceptionHandler.class})
+@Import({
+    GlobalExceptionHandlerTest.TestController.class,
+    GlobalExceptionHandler.class,
+    SecurityConfig.class
+})
+// 에러 변환만 본다. 테스트 경로는 동아리원 수준이라 동아리원으로 부른다.
+@WithMockUser(roles = "MEMBER")
 class GlobalExceptionHandlerTest {
 
     @Autowired MockMvc mockMvc;

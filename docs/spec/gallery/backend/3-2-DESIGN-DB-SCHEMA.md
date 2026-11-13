@@ -1,6 +1,6 @@
 # 3-2 DB 스키마
 
-본 문서는 갤러리 기능이 정하는 테이블만 다룬다. 사용자 테이블은 인증권한팀 소유이며 FK로만 참조한다 ([auth](../../auth/BACKGROUND.md)).
+본 문서는 갤러리 기능이 정하는 테이블만 다룬다. 사용자 테이블(`users`)은 인증권한팀 소유이며 FK로만 참조한다 ([auth](../../auth/BACKGROUND.md)). 이름이 복수형인 이유는 `user`가 PostgreSQL 예약어라서다 (인증권한팀 3-2-1).
 
 <br>
 
@@ -11,12 +11,12 @@
 | id | BIGINT | PK | |
 | title | VARCHAR(100) | NOT NULL | |
 | event_date | DATE | NOT NULL | 활동 날짜. 목록 정렬 기준 |
-| uploader_id | BIGINT | NOT NULL, FK → `user.id` | 올린 사람. 탈퇴해도 행은 남김 (USER-STORIES) |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | |
+| uploader_id | BIGINT | NOT NULL, FK → `users.id` | 올린 사람. 탈퇴해도 행은 남김 (USER-STORIES) |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() | UTC로 다룸 |
 
 인덱스: `(event_date DESC)`. 목록이 항상 이 순서로 조회된다.
 
-**확정**: `user` 테이블이 아직 마이그레이션되지 않아서(인증권한팀 진행 중), 지금은 FK 없이 `uploader_id`만 둔다. 인증권한팀 마이그레이션이 끝난 뒤 FK만 추가하는 마이그레이션을 별도로 낸다. 번호는 그때 순서 맞춰서 정한다.
+**확정**: `users` 테이블이 아직 마이그레이션되지 않아서(인증권한팀 진행 중), 지금은 FK 없이 `uploader_id`만 둔다. 인증권한팀 마이그레이션이 끝난 뒤 `REFERENCES users(id)`로 FK만 추가하는 마이그레이션을 별도로 낸다. 번호는 그때 순서 맞춰서 정한다.
 
 <br>
 
@@ -28,7 +28,7 @@
 | album_id | BIGINT | NOT NULL, FK → `album.id` ON DELETE CASCADE | |
 | object_key | VARCHAR(255) | NOT NULL, UNIQUE | S3 객체 키. 형식 `{용도}/{uuid}.{확장자}`, 확장자는 매직바이트 검증 후 확정된 실제 형식 기준 |
 | display_order | SMALLINT | NOT NULL | 0부터 시작. 0번이 대표 사진 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT now() | |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() | UTC로 다룸 |
 
 제약: `UNIQUE (album_id, display_order)`. 같은 앨범 안에서 순서 중복을 방지한다.
 
