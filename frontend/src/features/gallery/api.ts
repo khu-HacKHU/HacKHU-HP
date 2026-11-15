@@ -41,3 +41,9 @@ export async function fetchAlbum(id: number): Promise<AlbumDetail> {
   if (!res.ok) throw await toApiError(res)
   return res.json()
 }
+
+//앨범 삭제: DELETE /api/v1/albums/{id}
+export async function deleteAlbum(id: number): Promise<void> {
+  const res = await fetch(`/api/v1/albums/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw await toApiError(res)
+}

@@ -28,6 +28,8 @@ export type AlbumDetail = {
   id: number
   title: string
   eventDate: string
+  //삭제 버튼을 보여줄지 서버가 판단한 결과 (backend 4-2 2절)
+  canDelete?: boolean
   photos: Photo[]
   createdAt: string
 }

@@ -132,3 +132,52 @@ test('상세를 불러오는 동안 안내가 보이고 다른 앨범을 누를 
   resolveDetail(jsonResponse(detailBody))
   expect(await screen.findByRole('button', { name: '목록으로' })).toBeDefined()
 })
+
+test('앨범을 지우면 목록에서 바로 사라진다', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(jsonResponse(listBody))
+    .mockResolvedValueOnce(jsonResponse({ ...detailBody, canDelete: true }))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }))
+  vi.stubGlobal('fetch', fetchMock)
+
+  render(<GalleryPage />)
+  fireEvent.click(
+    await screen.findByRole('button', { name: /10월 정기 세미나/ }),
+  )
+  fireEvent.click(await screen.findByRole('button', { name: '앨범 삭제' }))
+  fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+  expect(await screen.findByText('아직 올라온 앨범이 없어요.')).toBeDefined()
+  expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/v1/albums/12', {
+    method: 'DELETE',
+  })
+})
+
+test('권한이 없으면 안내가 보이고 상세에 남는다', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(listBody))
+      .mockResolvedValueOnce(jsonResponse({ ...detailBody, canDelete: true }))
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { status: 403, code: 'GALLERY_FORBIDDEN', message: '', errors: [] },
+          403,
+        ),
+      ),
+  )
+
+  render(<GalleryPage />)
+  fireEvent.click(
+    await screen.findByRole('button', { name: /10월 정기 세미나/ }),
+  )
+  fireEvent.click(await screen.findByRole('button', { name: '앨범 삭제' }))
+  fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe(
+    '이 앨범을 지울 권한이 없어요.',
+  )
+  expect(screen.getByRole('button', { name: '목록으로' })).toBeDefined()
+})
