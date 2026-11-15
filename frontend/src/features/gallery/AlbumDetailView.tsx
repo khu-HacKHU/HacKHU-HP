@@ -24,40 +24,43 @@ export function AlbumDetailView({
         목록으로
       </button>
       <h2>{album.title}</h2>
-      <time dateTime={album.eventDate}>{album.eventDate}</time>
-      {/* canDelete는 화면 표시용이고 권한 검사는 서버가 한다 (backend 4-2 2절) */}
-      {album.canDelete &&
-        (confirming ? (
-          <div>
-            <p>앨범과 안의 사진이 모두 지워져요. 삭제할까요?</p>
-            <div className="confirm-actions">
-              <button
-                type="button"
-                className="button button--danger"
-                onClick={onDelete}
-                disabled={deleting}
-              >
-                삭제
-              </button>
-              <button
-                type="button"
-                className="button"
-                onClick={() => setConfirming(false)}
-                disabled={deleting}
-              >
-                취소
-              </button>
+      {/* 날짜는 왼쪽, 삭제는 오른쪽 끝. 좁은 화면에서는 줄이 나뉜다 */}
+      <div className="album-meta">
+        <time dateTime={album.eventDate}>{album.eventDate}</time>
+        {/* canDelete는 화면 표시용이고 권한 검사는 서버가 한다 (backend 4-2 2절) */}
+        {album.canDelete &&
+          (confirming ? (
+            <div className="album-confirm">
+              <p>앨범과 안의 사진이 모두 지워져요. 삭제할까요?</p>
+              <div className="confirm-actions">
+                <button
+                  type="button"
+                  className="button button--danger"
+                  onClick={onDelete}
+                  disabled={deleting}
+                >
+                  삭제
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => setConfirming(false)}
+                  disabled={deleting}
+                >
+                  취소
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="button button--danger"
-            onClick={() => setConfirming(true)}
-          >
-            앨범 삭제
-          </button>
-        ))}
+          ) : (
+            <button
+              type="button"
+              className="button button--danger"
+              onClick={() => setConfirming(true)}
+            >
+              앨범 삭제
+            </button>
+          ))}
+      </div>
       <ul className="album-photos">
         {photos.map((photo) => (
           <li key={photo.id}>

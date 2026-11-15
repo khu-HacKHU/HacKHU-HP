@@ -70,3 +70,34 @@
   display: flex;
   gap: var(--space-2);
 }
+
+/* 상세 화면의 날짜와 삭제 버튼 줄. 날짜는 왼쪽, 삭제는 오른쪽 끝에 둔다.
+   간격은 tokens.css의 단계만 쓴다 (UI-DESIGN-SYSTEM.md 4절) */
+.album-meta {
+  display: flex;
+  flex-wrap: wrap; /* 좁은 화면에서는 버튼이 다음 줄로 내려간다 */
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-6); /* 아래는 사진 그리드와의 간격 */
+}
+
+/* 삭제 확인은 문구 아래 버튼 두 개를 오른쪽에 붙여 둔다 */
+.album-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.album-confirm p {
+  margin: 0;
+}
+
+/* 좁은 화면에서는 확인 문구가 한 줄을 다 쓰고 버튼이 왼쪽으로 온다 */
+@media (max-width: 760px) {
+  .album-confirm {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
