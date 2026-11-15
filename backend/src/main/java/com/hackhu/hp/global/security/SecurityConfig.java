@@ -5,9 +5,12 @@ import static com.hackhu.hp.global.auth.Role.MEMBER;
 import static com.hackhu.hp.global.auth.Role.PENDING;
 import static com.hackhu.hp.global.auth.Role.STAFF;
 
+import com.hackhu.hp.global.auth.AccessTokenAuthenticator;
 import com.hackhu.hp.global.auth.Role;
 import java.time.Duration;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +24,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,6 +38,7 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>여기서는 경로 단위의 최소 수준만 건다. 작성자 확인 같은 리소스별 검사는 각 API가 한다 (CWE-639).
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -52,14 +57,37 @@ public class SecurityConfig {
     private static final String[] PUBLIC_GET_PATHS = {"/api/v1/albums", "/api/v1/albums/*"};
 
     // refresh와 로그아웃은 access 토큰 대신 refresh 쿠키로 확인하므로 여기 둔다.
-    // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사는 그 API가 한다 (5-1-5).
+    // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사는 AuthOriginFilter가 한다 (5-1-5).
     private static final String[] PUBLIC_POST_PATHS = {
         "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout"
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            ObjectMapper objectMapper,
+            CorsProperties corsProperties,
+            ObjectProvider<AccessTokenAuthenticator> accessTokenAuthenticator) {
         SecurityErrorResponseWriter errorWriter = new SecurityErrorResponseWriter(objectMapper);
+
+        // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사. CSRF 토큰을 끈 것을 보완한다 (5-1-5).
+        http.addFilterBefore(
+                new AuthOriginFilter(corsProperties.allowedOrigins(), errorWriter),
+                AnonymousAuthenticationFilter.class);
+        // access 토큰 검증 필터 (5-1-4). 구현이 domain/auth에 있어 @WebMvcTest 슬라이스에는 없다.
+        // 그때는 필터 없이 테스트 도우미(LoginUserRequests, @WithLoginUser)로 사용자를 넣는다.
+        // 빈이 없으면 모든 요청이 방문자로 다뤄져 기본 규칙(동아리원 이상)에서 401이 된다.
+        // 안전한 쪽으로 실패하지만 서버는 정상으로 떠서 알아채기 어려우므로 경고를 남긴다.
+        AccessTokenAuthenticator authenticator = accessTokenAuthenticator.getIfAvailable();
+        if (authenticator != null) {
+            http.addFilterBefore(
+                    new AccessTokenAuthenticationFilter(authenticator, errorWriter),
+                    AnonymousAuthenticationFilter.class);
+        } else {
+            log.warn(
+                    "AccessTokenAuthenticator 빈이 없어 access 토큰 검증 필터를 붙이지 않았습니다. "
+                            + "@WebMvcTest 슬라이스가 아니라면 인증이 필요한 모든 API가 401이 됩니다.");
+        }
 
         http
                 // access 토큰은 Authorization 헤더로만 받으므로 쿠키 기반 CSRF 토큰이 필요 없다 (5-1-5).
