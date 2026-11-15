@@ -2,18 +2,8 @@ import { useEffect, useState } from 'react'
 import { AlbumDetailView } from './AlbumDetailView'
 import { AlbumList } from './AlbumList'
 import { ApiError, deleteAlbum, fetchAlbum, fetchAlbums } from './api'
-import type { CSSProperties } from 'react'
 import type { AlbumDetail, AlbumSummary } from './types'
-
-// 경고 안내 상자: panel 배경, 왼쪽 3px coral 선 (UI-DESIGN-SYSTEM.md 6-3)
-// 값만 문서에서 가져온 임시 인라인 스타일이다
-const warningBoxStyle: CSSProperties = {
-  background: '#181a33',
-  borderLeft: '3px solid #f0727a',
-  color: '#ece8f4',
-  borderRadius: 6,
-  padding: '0.75rem 1rem',
-}
+import './gallery.css'
 
 // 갤러리 화면: 목록을 보여 주고, 앨범을 고르면 상세로 바꾼다
 export function GalleryPage() {
@@ -95,8 +85,10 @@ export function GalleryPage() {
   if (listError) {
     return (
       <div>
-        <p role="alert">{listError}</p>
-        <button type="button" onClick={retryAlbums}>
+        <p role="alert" className="notice notice--warning">
+          {listError}
+        </p>
+        <button type="button" className="button" onClick={retryAlbums}>
           다시 시도
         </button>
       </div>
@@ -106,7 +98,7 @@ export function GalleryPage() {
     return (
       <div>
         {albumError && (
-          <p role="alert" style={warningBoxStyle}>
+          <p role="alert" className="notice notice--warning">
             {albumError}
           </p>
         )}
@@ -128,7 +120,7 @@ export function GalleryPage() {
   return (
     <div>
       {albumError && (
-        <p role="alert" style={warningBoxStyle}>
+        <p role="alert" className="notice notice--warning">
           {albumError}
         </p>
       )}

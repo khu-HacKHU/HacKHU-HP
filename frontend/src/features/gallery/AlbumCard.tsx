@@ -17,6 +17,7 @@ export function AlbumCard({
     <li>
       <button
         type="button"
+        className="album-card"
         onClick={() => onSelect(album.id)}
         disabled={disabled}
       >

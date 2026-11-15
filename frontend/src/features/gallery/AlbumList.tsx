@@ -18,7 +18,7 @@ export function AlbumList({
     return <p>아직 올라온 앨범이 없어요.</p>
   }
   return (
-    <ul>
+    <ul className="album-grid">
       {albums.map((album) => (
         <AlbumCard
           key={album.id}
