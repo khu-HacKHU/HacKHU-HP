@@ -2,7 +2,10 @@ package com.hackhu.hp.domain.gallery.controller;
 
 import com.hackhu.hp.domain.gallery.dto.AlbumDetailResponse;
 import com.hackhu.hp.domain.gallery.dto.AlbumPageResponse;
+import com.hackhu.hp.domain.gallery.service.AlbumCommandService;
 import com.hackhu.hp.domain.gallery.service.AlbumQueryService;
+import com.hackhu.hp.global.auth.CurrentUser;
+import com.hackhu.hp.global.auth.LoginUser;
 import com.hackhu.hp.global.error.BusinessException;
 import com.hackhu.hp.global.error.CommonErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,12 +15,17 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "갤러리", description = "앨범 조회. 공개 API")
+/**
+ * 앨범 조회와 삭제. 조회는 공개 API이고, 삭제는 SecurityConfig 기본값(동아리원 이상)을 통과한 뒤 서비스가 작성자 또는 관리자인지 검사한다 (5-1 1절).
+ */
+@Tag(name = "갤러리", description = "앨범 조회는 공개, 삭제는 작성자 또는 관리자")
 @RestController
 @RequestMapping("/api/v1/albums")
 @RequiredArgsConstructor
@@ -27,6 +35,7 @@ public class AlbumController {
     private static final Sort ALLOWED_SORT = Sort.by(Sort.Direction.DESC, "eventDate");
 
     private final AlbumQueryService albumQueryService;
+    private final AlbumCommandService albumCommandService;
 
     @Operation(
             summary = "앨범 목록",
@@ -45,9 +54,22 @@ public class AlbumController {
         return albumQueryService.getAlbums(pageable.getPageNumber(), pageable.getPageSize());
     }
 
-    @Operation(summary = "앨범 상세", description = "공개. 사진은 order 오름차순. 없는 앨범은 404")
+    @Operation(
+            summary = "앨범 상세",
+            description = "공개. 사진은 order 오름차순. 없는 앨범은 404. canDelete는 현재 사용자 기준이고 비로그인이면 false")
     @GetMapping("/{albumId}")
-    public AlbumDetailResponse getAlbum(@PathVariable Long albumId) {
-        return albumQueryService.getAlbum(albumId);
+    public AlbumDetailResponse getAlbum(@PathVariable Long albumId, @CurrentUser LoginUser user) {
+        // 공개 API라 비로그인이면 user가 null이다.
+        return albumQueryService.getAlbum(albumId, user);
+    }
+
+    @Operation(
+            summary = "앨범 삭제",
+            description = "작성자 본인 또는 관리자. 사진 파일도 함께 지운다. 없는 앨범은 404, 권한이 없으면 403")
+    @DeleteMapping("/{albumId}")
+    public ResponseEntity<Void> deleteAlbum(
+            @PathVariable Long albumId, @CurrentUser LoginUser user) {
+        albumCommandService.delete(albumId, user);
+        return ResponseEntity.noContent().build();
     }
 }
