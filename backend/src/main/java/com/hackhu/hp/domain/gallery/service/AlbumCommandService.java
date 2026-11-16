@@ -8,17 +8,21 @@ import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.exception.GalleryErrorCode;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.global.auth.LoginUser;
 import com.hackhu.hp.global.error.BusinessException;
+import com.hackhu.hp.global.storage.S3ObjectStore;
 import com.hackhu.hp.global.storage.UploadConfirmService;
 import com.hackhu.hp.global.storage.UploadPurpose;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 앨범 올리기 (docs/spec/gallery/backend/4-2 4절). */
+/** 앨범 올리기와 삭제 (docs/spec/gallery/backend/4-2 4, 5절). */
+@Slf4j
 @Service
 public class AlbumCommandService {
 
@@ -32,16 +36,19 @@ public class AlbumCommandService {
     private final AlbumRepository albumRepository;
     private final PhotoRepository photoRepository;
     private final PhotoUrlResolver photoUrlResolver;
+    private final S3ObjectStore objectStore;
 
     public AlbumCommandService(
             UploadConfirmService uploadConfirmService,
             AlbumRepository albumRepository,
             PhotoRepository photoRepository,
-            PhotoUrlResolver photoUrlResolver) {
+            PhotoUrlResolver photoUrlResolver,
+            S3ObjectStore objectStore) {
         this.uploadConfirmService = uploadConfirmService;
         this.albumRepository = albumRepository;
         this.photoRepository = photoRepository;
         this.photoUrlResolver = photoUrlResolver;
+        this.objectStore = objectStore;
     }
 
     /**
@@ -77,7 +84,49 @@ public class AlbumCommandService {
                                                 photoUrlResolver.resolve(photo.getObjectKey()),
                                                 photo.getDisplayOrder()))
                         .toList();
-        return AlbumDetailResponse.of(album, photoResponses);
+        // 방금 올린 사람이 보는 응답이라 지울 수 있다 (동아리원 이상만 이 API에 들어온다).
+        return AlbumDetailResponse.of(album, true, photoResponses);
+    }
+
+    /**
+     * 앨범과 사진을 지운다 (4-2 5절). 사진 행은 DB의 ON DELETE CASCADE로 같이 지워진다 (3-2 3절).
+     *
+     * <p>순서는 DB 삭제와 flush, S3 삭제, 커밋이다 (5-2 5-2-2). S3 삭제가 실패하면 예외로 트랜잭션이 롤백되어 앨범이 남고, 사용자는 다시 지울 수
+     * 있다. 반대로 DB를 커밋한 뒤 S3가 실패하면, 화면에서는 사라졌는데 받아 둔 사진 주소가 계속 열린다 (USER-STORIES 3절 위반). S3 삭제는 없는
+     * 키에도 성공하므로 재시도가 안전하다.
+     *
+     * <p>권한은 요청마다 여기서 검사한다. 상세 응답의 {@code canDelete}는 화면 표시용이라 믿지 않는다 (CWE-639).
+     */
+    @Transactional
+    public void delete(long albumId, LoginUser user) {
+        Album album =
+                albumRepository
+                        .findById(albumId)
+                        .orElseThrow(() -> new BusinessException(GalleryErrorCode.ALBUM_NOT_FOUND));
+        // 앨범은 공개 리소스라 존재를 숨기지 않는다. 없으면 404, 있는데 권한이 없으면 403 (4-2 5절).
+        if (!AlbumPermission.canDelete(album, user)) {
+            throw new BusinessException(GalleryErrorCode.FORBIDDEN);
+        }
+
+        List<String> objectKeys =
+                photoRepository.findByAlbumIdOrderByDisplayOrderAsc(albumId).stream()
+                        .map(Photo::getObjectKey)
+                        .toList();
+
+        albumRepository.delete(album);
+        // DB 쪽 실패(제약 위반 등)를 S3를 지우기 전에 드러낸다.
+        albumRepository.flush();
+        objectStore.deleteAll(objectKeys);
+
+        // 관리자가 남의 앨범을 지우면 누가 무엇을 지웠는지 남긴다 (5-1 5절, secure-coding 1절).
+        if (album.getUploaderId() != user.id()) {
+            log.info(
+                    "관리자가 다른 사람의 앨범을 삭제: adminId={}, albumId={}, uploaderId={}, photoCount={}",
+                    user.id(),
+                    albumId,
+                    album.getUploaderId(),
+                    objectKeys.size());
+        }
     }
 
     private void validateEventDate(LocalDate eventDate) {
