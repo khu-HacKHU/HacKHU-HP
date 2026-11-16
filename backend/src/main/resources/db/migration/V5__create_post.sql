@@ -2,7 +2,7 @@
 -- 세 게시판이 테이블 하나를 같이 쓰고 board_type으로 구분한다 (DECISIONS.md B1). 지금은 공지(NOTICE)만 있다.
 -- 시각 컬럼은 TIMESTAMPTZ로 저장하고 UTC로 다룬다 (backend/AGENTS.md "시각 컬럼").
 -- users 테이블과 set_updated_at() 함수가 V1__create_users.sql에 있으므로 그 뒤에 낸다 (3-2-4).
--- V2는 갤러리(#107)가 쓰고 있다. 번호가 겹치면 늦게 머지하는 쪽이 올린다 (backend/AGENTS.md).
+-- V2~V4는 갤러리(#107, #116)와 로그인(#118)이 먼저 머지되어 V5로 둔다. 번호가 겹치면 늦게 머지하는 쪽이 올린다 (backend/AGENTS.md).
 CREATE TABLE post
 (
     id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
