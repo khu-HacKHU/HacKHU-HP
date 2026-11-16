@@ -41,7 +41,7 @@ chore: 의존성 업데이트
 
 - scope는 팀 영역이다. 모노레포라 어느 팀의 변경인지 제목에서 바로 보이게 한다.
 - 공통 설정, 문서, CI처럼 팀에 속하지 않는 변경은 scope를 생략한다.
-- 제목은 **72자** 안에서 쓴다. squash merge가 ` (#123)`을 덧붙이므로 여유가 필요하다.
+- 제목은 **72자** 안에서 쓴다. squash merge가 ` (#123)`을 덧붙이므로 여유가 필요하다. Dependabot이 올린 PR은 제목을 우리가 만들지 않으므로 길이만 검사하지 않는다 (type과 scope는 그대로 검사한다).
 - 제목에 이슈 번호를 넣지 않는다. 이슈 연결은 브랜치명과 PR 본문이 한다.
 - 본문이 필요하면 빈 줄 하나 띄우고 **왜** 바꿨는지 위주로 쓴다.
 
@@ -101,7 +101,9 @@ Rebase and merge는 쓰지 않는다.
 - **필수 검사**: `CI / ci-ok`, `Lint PR / pr-title`, `Security / gitleaks`.
 - **보안 스캔 결과**: Semgrep·Checkov·CodeQL은 PR을 막지 않지만, 새로 생긴 경고는 PR에서 확인하고 오탐이면 이유를 적는다.
 - **작성자 책임**: PR 작성자는 모든 변경을 본인이 설명할 수 있어야 한다.
-- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. dependabot과 release 브랜치의 PR은 검사하지 않는다.
+- **이슈 연결**: 본문에 `Closes #12`를 적는다. 빠지면 CI가 막는다. 검사가 받는 키워드는 `Closes`, `Fixes`, `Resolves`와 그 변형(`close`, `closed`, `fix`, `fixed`, `resolve`, `resolved`)뿐이다. GitHub이 머지할 때 이슈를 닫는 키워드와 같은 목록이고, `Ref`와 `See`는 받지 않는다. 이슈 하나는 PR 하나가 끝낸다. Dependabot이 올린 PR과 이 저장소의 `release/*` 브랜치 PR은 검사하지 않는다. 예외는 PR 작성자와 포크 여부로 판정하므로 브랜치 이름만 흉내 내도 받을 수 없다. `hotfix/*`는 예외가 아니다. 고치는 버그의 이슈를 만들고 그 번호를 적는다.
+- **쪼갠 PR의 이슈**: 이슈 하나를 PR 여러 개로 쪼개면 **쪼갠 쪽에도 이슈를 만들고** 그 번호로 브랜치와 `Closes #`를 쓴다. 원래 이슈를 `Closes`로 닫으면 남은 작업이 있는데 이슈가 닫히고, `Ref`로 걸어 두면 CI가 막는다.
+- **쪼갠 이슈의 뒷정리**: 쪼갤 때 **원래 이슈 본문에 쪼갠 이슈 번호를 체크리스트로 적는다.** 쪼갠 이슈 본문에도 원래 이슈에서 쪼갰다고 적는다. **마지막 쪼갠 이슈를 닫는 PR이 원래 이슈까지 닫는다.** `Closes #쪼갠번호`와 `Closes #원래번호`를 두 줄로 적으면 둘 다 닫힌다. 체크리스트를 보면 자기가 마지막인지 알 수 있다. 이것이 없으면 작업이 다 끝나도 원래 이슈가 열린 채 남는다.
 - **API 변경**: [API 규약](docs/conventions/api.md)을 따르고, API 명세를 같은 PR에서 갱신한다.
 
 ---
@@ -140,7 +142,7 @@ Rebase and merge는 쓰지 않는다.
 - 이슈: 제목 형식이 틀리거나, 기능·버그 이슈(`feature`, `bug`)에 영역 레이블이 하나도 없으면 봇이 이슈에 안내 댓글을 단다. 고치면 댓글이 지워진다.
 
 **그 밖에**
-- Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다.
+- Dependabot PR은 워크플로가 레이블을 바꿀 수 없어서 [dependabot.yml](.github/dependabot.yml)의 `labels`로 미리 붙인다. 그래서 `PR Labels` 워크플로는 Dependabot PR에서 아예 돌지 않는다.
 - 기존 이슈에 한 번에 적용할 때는 PL이 로컬에서 `DRY_RUN=1 bash .github/scripts/backfill-issue-labels.sh`로 미리 본 뒤 `DRY_RUN` 없이 돌린다.
 - 출시 때 GitHub 자동 릴리스 노트가 이 레이블로 항목을 나눈다 ([release.yml](.github/release.yml)).
 - 규칙의 원본은 이 절이고, [`labels.sh`](.github/scripts/labels.sh)가 그것을 옮긴 것이다. 둘은 같은 PR에서 함께 고친다.

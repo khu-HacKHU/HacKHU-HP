@@ -31,6 +31,19 @@ const noIssueNumber = {
   },
 }
 
+/**
+ * Dependabot PR은 제목 길이 검사를 끈다.
+ *
+ * 제목이 Dependabot이 만드는 것이라 우리가 줄일 수 없다. 긴 Gradle 좌표가 단독으로 그룹
+ * 업데이트될 때 `chore: bump org.springdoc:springdoc-openapi-starter-webmvc-ui from 3.1.1 to
+ * 3.2.0 in /backend in the backend-minor group`처럼 120자가 되어 막혔다 (#95).
+ *
+ * 길이 규칙만 끈다. type-enum, scope-enum, 이슈 번호 금지는 그대로 적용된다.
+ * 이슈 연결 검사가 이미 dependabot 브랜치를 예외로 두고 있어(CONTRIBUTING.md 3절) 같은 선례다.
+ * 판단은 `Lint PR` 워크플로가 head 브랜치 이름으로 하고 여기에 이 환경변수로 넘긴다.
+ */
+const isDependabot = process.env.COMMITLINT_SKIP_HEADER_LENGTH === '1'
+
 export default {
   extends: ['@commitlint/config-conventional'],
   plugins: [noIssueNumber],
@@ -41,7 +54,7 @@ export default {
     // 한글에는 대소문자가 없어 subject-case가 의미가 없다.
     'subject-case': [0],
     // squash merge가 " (#123)"을 덧붙이므로 기본값 100보다 낮춘다.
-    'header-max-length': [2, 'always', 72],
+    'header-max-length': isDependabot ? [0] : [2, 'always', 72],
     'subject-no-issue-number': [2, 'always'],
   },
 }

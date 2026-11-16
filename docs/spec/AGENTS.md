@@ -17,7 +17,7 @@ HacKHU 홈페이지 명세를 읽고 수정할 때 필요한 문서와 작성 �
 | [auth/](auth/AGENTS.md) | 가입, 로그인, 가입 승인, 역할 변경, 내 정보 | 인증권한팀 |
 | [board/](board/AGENTS.md) | 공지, 자유게시판, 자료게시판, 첨부파일 | 게시판팀 |
 | [gallery/](gallery/AGENTS.md) | 앨범과 사진의 업로드, 조회, 삭제 | 갤러리팀 |
-| [home/](home/AGENTS.md) | 메인 화면과 동아리 소개 | 게시판팀 |
+| [home/](home/AGENTS.md) | 메인 화면과 동아리 소개 | 갤러리팀 |
 
 - 처음에는 `PRODUCT.md`를 읽고, 작업할 기능 폴더의 `BACKGROUND.md`와 `USER-STORIES.md`를 읽는다. 그다음 `backend/`나 `frontend/` 세트를 1번부터 읽는다.
 - 기능 폴더의 `BACKGROUND.md`와 `USER-STORIES.md`는 무엇을 만드는지 정하고 PM이 작성한다. `backend/`와 `frontend/` 세트는 어떻게 만드는지 정하고 각 팀이 작성한다.

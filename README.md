@@ -17,8 +17,8 @@ HacKHU 동아리 홈페이지. 기능을 개발하면서 보안 도구를 스프
 | 팀 | 팀원 | 담당 |
 |---|---|---|
 | 인증권한 | BE 권승원, 김유석 · FE 박지은 | [인증권한](docs/spec/auth/BACKGROUND.md) |
-| 게시판 | BE 양수환, 이나은 · FE 이소연, 윤예진 | [게시판](docs/spec/board/BACKGROUND.md), [홈](docs/spec/home/BACKGROUND.md) |
-| 갤러리 | BE 우새봄, 서영채 · FE 소광현 | [갤러리](docs/spec/gallery/BACKGROUND.md) |
+| 게시판 | BE 양수환, 이나은 · FE 이소연, 윤예진 | [게시판](docs/spec/board/BACKGROUND.md) |
+| 갤러리 | BE 우새봄, 서영채 · FE 소광현 | [갤러리](docs/spec/gallery/BACKGROUND.md), [홈](docs/spec/home/BACKGROUND.md) |
 | PM, PL | 강경현, 손수민 | [배포와 인프라](docs/spec/DEPLOYMENT.md) |
 
 같은 기능의 API 담당(BE)과 화면 담당(FE)이 한 팀에서 함께 작업한다. 팀 안에서 맡을 기능은 팀이 정하고, 할 일은 [GitHub 보드](https://github.com/orgs/khu-HacKHU/projects/1)의 이슈로 관리한다. 기능별 범위는 각 기능의 배경 문서와 [제품 명세](docs/spec/PRODUCT.md)에 있다.
