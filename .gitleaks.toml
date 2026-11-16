@@ -4,10 +4,24 @@
 [extend]
 useDefault = true
 
-[allowlist]
+# [allowlist](단수)는 [[allowlists]]와 함께 쓸 수 없어 같은 내용을 새 문법으로 옮겼다 (PR #107).
+[[allowlists]]
 description = "예시 파일과 잠금 파일"
 paths = [
   '''(^|/)\.env\.example$''',
   '''(^|/)terraform\.tfvars\.example$''',
   '''(^|/)package-lock\.json$''',
 ]
+
+# PEM 구분자 상수와 거부 동작 테스트 입력. 키 본문이 없는데 기본 private-key 규칙이
+# BEGIN~END 사이의 코드를 키로 오인한다 (PR #107).
+# 인라인 gitleaks:allow로는 막을 수 없다. 워크플로가 커밋 히스토리를 검사하므로
+# 주석이 없던 이전 커밋의 변경 내역이 계속 걸린다.
+[[allowlists]]
+description = "갤러리 PEM 파서의 구분자 상수와 테스트 입력"
+paths = [
+  '''backend/src/main/java/com/hackhu/hp/domain/gallery/config/PemPrivateKeys\.java$''',
+  '''backend/src/test/java/com/hackhu/hp/domain/gallery/config/PemPrivateKeysTest\.java$''',
+]
+regexes = ['''-----BEGIN[ A-Z]*PRIVATE KEY-----''']
+matchCondition = "AND"
