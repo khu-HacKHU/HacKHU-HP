@@ -7,6 +7,7 @@ const album: AlbumDetail = {
   id: 12,
   title: '10월 정기 세미나',
   eventDate: '2026-10-18',
+  canDelete: false,
   photos: [
     { id: 102, url: 'https://example.com/102.jpg', order: 1 },
     { id: 101, url: 'https://example.com/101.jpg', order: 0 },
@@ -36,7 +37,7 @@ test('목록으로 버튼을 누르면 onBack이 불린다', () => {
   expect(onBack).toHaveBeenCalled()
 })
 
-test('canDelete가 없으면 삭제 버튼이 보이지 않는다', () => {
+test('canDelete가 false면 삭제 버튼이 보이지 않는다', () => {
   render(<AlbumDetailView album={album} onBack={() => {}} />)
 
   expect(screen.queryByRole('button', { name: '앨범 삭제' })).toBeNull()

@@ -4,6 +4,8 @@ export type AlbumSummary = {
   title: string
   eventDate: string
   coverPhotoUrl: string
+  //앨범의 사진 수 (backend 4-2 1절). 카드에 보여 준다 (UI-DESIGN-SYSTEM.md 6-6)
+  photoCount: number
   createdAt: string
 }
 
@@ -28,8 +30,8 @@ export type AlbumDetail = {
   id: number
   title: string
   eventDate: string
-  //삭제 버튼을 보여줄지 서버가 판단한 결과 (backend 4-2 2절)
-  canDelete?: boolean
+  //삭제 버튼을 보여줄지 서버가 판단한 결과 (backend 4-2 2절). 비로그인이면 false다
+  canDelete: boolean
   photos: Photo[]
   createdAt: string
 }

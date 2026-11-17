@@ -23,7 +23,10 @@ export function AlbumCard({
       >
         <img src={album.coverPhotoUrl} alt={`${album.title} 대표 사진`} />
         <strong>{album.title}</strong>
-        <time dateTime={album.eventDate}>{album.eventDate}</time>
+        <p className="album-card-meta">
+          <time dateTime={album.eventDate}>{album.eventDate}</time>
+          <span>사진 {album.photoCount}장</span>
+        </p>
       </button>
     </li>
   )

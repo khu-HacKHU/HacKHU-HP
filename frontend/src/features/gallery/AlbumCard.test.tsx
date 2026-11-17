@@ -9,6 +9,7 @@ const album: AlbumSummary = {
   title: '10월 정기 세미나',
   eventDate: '2026-10-18',
   coverPhotoUrl: 'https://example.com/cover.jpg',
+  photoCount: 12,
   createdAt: '2026-10-19T09:00:00Z',
 }
 
@@ -17,6 +18,7 @@ test('제목, 활동 날짜, 대표 사진이 보인다', () => {
 
   expect(screen.getByText('10월 정기 세미나')).toBeDefined()
   expect(screen.getByText('2026-10-18')).toBeDefined()
+  expect(screen.getByText('사진 12장')).toBeDefined()
   expect(
     screen.getByRole('img', { name: '10월 정기 세미나 대표 사진' }),
   ).toBeDefined()

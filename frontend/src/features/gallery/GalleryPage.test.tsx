@@ -17,6 +17,7 @@ const listBody = {
       title: '10월 정기 세미나',
       eventDate: '2026-10-18',
       coverPhotoUrl: 'https://example.com/12.jpg',
+      photoCount: 1,
       createdAt: '2026-10-19T09:00:00Z',
     },
   ],
@@ -30,6 +31,7 @@ const detailBody = {
   id: 12,
   title: '10월 정기 세미나',
   eventDate: '2026-10-18',
+  canDelete: false,
   photos: [{ id: 101, url: 'https://example.com/101.jpg', order: 0 }],
   createdAt: '2026-10-19T09:00:00Z',
 }
