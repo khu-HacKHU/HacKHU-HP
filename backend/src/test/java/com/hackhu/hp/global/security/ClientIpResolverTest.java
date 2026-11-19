@@ -79,10 +79,8 @@ class ClientIpResolverTest {
 
     @Test
     void 잘못된_대역이나_홉_수는_시작할_때_거부한다() {
-        assertThatThrownBy(
-                        () ->
-                                new ClientIpResolver(
-                                        new ClientIpProperties(List.of("not-a-cidr/99"), 1)))
+        assertThatThrownBy(() ->
+                        new ClientIpResolver(new ClientIpProperties(List.of("not-a-cidr/99"), 1)))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new ClientIpProperties(List.of(), 0))
                 .isInstanceOf(IllegalArgumentException.class);

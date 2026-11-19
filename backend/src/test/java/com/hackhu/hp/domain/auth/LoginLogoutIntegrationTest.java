@@ -466,14 +466,13 @@ class LoginLogoutIntegrationTest extends AuthIntegrationTestSupport {
             try (ExecutorService executor = Executors.newFixedThreadPool(requests)) {
                 for (int i = 0; i < requests; i++) {
                     results.add(
-                            executor.submit(
-                                    () -> {
-                                        start.await();
-                                        return login("member@example.com", TEMP)
-                                                .andReturn()
-                                                .getResponse()
-                                                .getStatus();
-                                    }));
+                            executor.submit(() -> {
+                                start.await();
+                                return login("member@example.com", TEMP)
+                                        .andReturn()
+                                        .getResponse()
+                                        .getStatus();
+                            }));
                 }
                 start.countDown();
                 List<Integer> statuses = new ArrayList<>();
