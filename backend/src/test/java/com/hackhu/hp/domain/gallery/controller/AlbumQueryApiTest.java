@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * 앨범 목록·상세 조회 API (#36). 실제 PostgreSQL(Testcontainers)과 Flyway 마이그레이션으로 확인한다.
  *
- * <p>요청에 인증 정보를 하나도 붙이지 않는다. 조회는 공개 API라서 로그인 없이 200이어야 한다 (USER-STORIES 1절).
+ * <p>조회는 공개 API라 인증 정보 없이도 200이어야 한다 (USER-STORIES 1절). 로그인 사용자는 {@code canDelete}를 확인하는 테스트에만 붙인다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc

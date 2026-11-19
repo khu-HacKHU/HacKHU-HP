@@ -91,11 +91,14 @@ public class AlbumCommandService {
     /**
      * 앨범과 사진을 지운다 (4-2 5절). 사진 행은 DB의 ON DELETE CASCADE로 같이 지워진다 (3-2 3절).
      *
-     * <p>순서는 DB 삭제와 flush, S3 삭제, 커밋이다 (5-2 5-2-2). S3 삭제가 실패하면 예외로 트랜잭션이 롤백되어 앨범이 남고, 사용자는 다시 지울 수
-     * 있다. 반대로 DB를 커밋한 뒤 S3가 실패하면, 화면에서는 사라졌는데 받아 둔 사진 주소가 계속 열린다 (USER-STORIES 3절 위반). S3 삭제는 없는
-     * 키에도 성공하므로 재시도가 안전하다.
+     * <p>순서는 DB 삭제, S3 삭제, 커밋이다 (5-2 5-2-2). S3 삭제가 실패하면 예외로 트랜잭션이 롤백되어 앨범이 남고, 사용자는 다시 지울 수 있다.
+     * 반대로 DB를 커밋한 뒤 S3가 실패하면, 화면에서는 사라졌는데 받아 둔 사진 주소가 계속 열린다 (USER-STORIES 3절 위반). S3 삭제는 없는 키에도
+     * 성공하므로 재시도가 안전하다.
      *
      * <p>권한은 요청마다 여기서 검사한다. 상세 응답의 {@code canDelete}는 화면 표시용이라 믿지 않는다 (CWE-639).
+     *
+     * <p>같은 앨범을 동시에 두 번 지우면 두 요청 모두 조회와 권한 검사를 통과할 수 있다. 늦은 요청은 앞 요청이 커밋할 때까지 행 잠금을 기다렸다가 0행을 지우므로,
+     * 그때 404를 준다. 엔티티 삭제를 쓰면 이 경우가 낙관적 잠금 예외로 500이 되고 ERROR 로그가 쌓인다 (CWE-779).
      */
     @Transactional
     public void delete(long albumId, LoginUser user) {
@@ -113,9 +116,11 @@ public class AlbumCommandService {
                         .map(Photo::getObjectKey)
                         .toList();
 
-        albumRepository.delete(album);
-        // DB 쪽 실패(제약 위반 등)를 S3를 지우기 전에 드러낸다.
-        albumRepository.flush();
+        // 조건부 삭제라 바로 실행된다. DB 쪽 실패는 S3를 지우기 전에 드러난다.
+        if (albumRepository.deleteAlbumById(albumId) == 0) {
+            // 다른 요청이 먼저 지웠다. S3는 그 요청이 지운다.
+            throw new BusinessException(GalleryErrorCode.ALBUM_NOT_FOUND);
+        }
         objectStore.deleteAll(objectKeys);
 
         // 관리자가 남의 앨범을 지우면 누가 무엇을 지웠는지 남긴다 (5-1 5절, secure-coding 1절).

@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +24,11 @@ import com.hackhu.hp.global.auth.Role;
 import com.hackhu.hp.global.storage.S3ObjectStore;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +115,51 @@ class AlbumDeleteIntegrationTest {
         // 트랜잭션이 롤백되어 다시 지울 수 있다 (5-2 5-2-2).
         assertTrue(albumRepository.existsById(album.getId()));
         assertEquals(1, photoRepository.findByAlbumIdOrderByDisplayOrderAsc(album.getId()).size());
+    }
+
+    @Test
+    void 같은_앨범을_동시에_두_번_지우면_늦은_쪽은_404다() throws Exception {
+        Album album = saveAlbum(1);
+        CountDownLatch firstInS3 = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        // 앞 요청을 S3 삭제 단계에 붙잡아 둔다. 이때 앨범 행은 지워졌지만 커밋 전이라 행 잠금이 걸려 있다.
+        doAnswer(
+                        invocation -> {
+                            firstInS3.countDown();
+                            releaseFirst.await(10, TimeUnit.SECONDS);
+                            return null;
+                        })
+                .when(objectStore)
+                .deleteAll(anyList());
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Integer> first = executor.submit(() -> deleteStatus(album.getId()));
+            firstInS3.await(10, TimeUnit.SECONDS);
+            // 늦은 요청은 커밋 전이라 앨범을 조회하고 권한 검사를 통과한 뒤, 행 잠금에서 기다린다.
+            Future<Integer> second = executor.submit(() -> deleteStatus(album.getId()));
+            Thread.sleep(500);
+            releaseFirst.countDown();
+
+            assertEquals(204, first.get(10, TimeUnit.SECONDS));
+            // 500이 아니라 문서가 정한 404여야 한다 (5-2 5-2-2, 5-3 5-3-7).
+            assertEquals(404, second.get(10, TimeUnit.SECONDS));
+        } finally {
+            releaseFirst.countDown();
+            executor.shutdownNow();
+        }
+        assertFalse(albumRepository.existsById(album.getId()));
+        // S3 삭제는 먼저 지운 요청만 한다.
+        verify(objectStore, times(1)).deleteAll(anyList());
+    }
+
+    private int deleteStatus(long albumId) throws Exception {
+        return mockMvc.perform(
+                        delete("/api/v1/albums/{albumId}", albumId)
+                                .with(loginUser(UPLOADER, Role.MEMBER)))
+                .andReturn()
+                .getResponse()
+                .getStatus();
     }
 
     private Album saveAlbum(int photoCount) {

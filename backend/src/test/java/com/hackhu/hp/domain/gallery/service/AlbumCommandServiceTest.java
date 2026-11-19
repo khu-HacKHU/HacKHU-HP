@@ -209,26 +209,27 @@ class AlbumCommandServiceTest {
             photos.add(Photo.create(ALBUM_ID, objectKeys[order], (short) order));
         }
         when(photoRepository.findByAlbumIdOrderByDisplayOrderAsc(ALBUM_ID)).thenReturn(photos);
+        when(albumRepository.deleteAlbumById(ALBUM_ID)).thenReturn(1);
         return album;
     }
 
     @Test
     void 작성자는_앨범과_사진_파일을_지운다() {
-        Album album = givenAlbumWithPhotos("gallery/a", "gallery/b");
+        givenAlbumWithPhotos("gallery/a", "gallery/b");
 
         service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER));
 
-        verify(albumRepository).delete(album);
+        verify(albumRepository).deleteAlbumById(ALBUM_ID);
         verify(objectStore).deleteAll(List.of("gallery/a", "gallery/b"));
     }
 
     @Test
     void 관리자는_다른_사람의_앨범을_지운다() {
-        Album album = givenAlbumWithPhotos("gallery/a");
+        givenAlbumWithPhotos("gallery/a");
 
         service.delete(ALBUM_ID, new LoginUser(ADMIN, Role.ADMIN));
 
-        verify(albumRepository).delete(album);
+        verify(albumRepository).deleteAlbumById(ALBUM_ID);
         verify(objectStore).deleteAll(List.of("gallery/a"));
     }
 
@@ -242,7 +243,7 @@ class AlbumCommandServiceTest {
                         () -> service.delete(ALBUM_ID, new LoginUser(OTHER_MEMBER, Role.MEMBER)));
 
         assertEquals("GALLERY_FORBIDDEN", thrown.getErrorCode().code());
-        verify(albumRepository, never()).delete(any(Album.class));
+        verify(albumRepository, never()).deleteAlbumById(anyLong());
         verify(objectStore, never()).deleteAll(anyList());
     }
 
@@ -250,7 +251,7 @@ class AlbumCommandServiceTest {
     void 운영진도_관리자가_아니면_남의_앨범을_지우지_못한다() {
         givenAlbumWithPhotos("gallery/a");
 
-        // 관리자는 ADMIN만이다 (PRODUCT.md 3절). STAFF는 운영진이라 포함하지 않는다.
+        // 관리자는 ADMIN만이다 (PRODUCT.md 4절). STAFF는 운영진이라 포함하지 않는다.
         BusinessException thrown =
                 assertThrows(
                         BusinessException.class,
@@ -274,16 +275,30 @@ class AlbumCommandServiceTest {
     }
 
     @Test
-    void DB를_먼저_지우고_flush한_뒤_S3를_지운다() {
-        Album album = givenAlbumWithPhotos("gallery/a");
+    void DB를_먼저_지운_뒤_S3를_지운다() {
+        givenAlbumWithPhotos("gallery/a");
 
         service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER));
 
         // S3를 먼저 지우면 DB 삭제가 실패했을 때 사진만 사라진 앨범이 남는다 (5-2 5-2-2).
         org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(albumRepository, objectStore);
-        inOrder.verify(albumRepository).delete(album);
-        inOrder.verify(albumRepository).flush();
+        inOrder.verify(albumRepository).deleteAlbumById(ALBUM_ID);
         inOrder.verify(objectStore).deleteAll(anyList());
+    }
+
+    @Test
+    void 다른_요청이_먼저_지웠으면_404이고_S3는_건드리지_않는다() {
+        givenAlbumWithPhotos("gallery/a");
+        // 조회와 권한 검사는 통과했지만, 행 잠금을 기다리는 사이 앞 요청이 지워 0행이 지워진 경우 (5-2 5-2-2).
+        when(albumRepository.deleteAlbumById(ALBUM_ID)).thenReturn(0);
+
+        BusinessException thrown =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER)));
+
+        assertEquals("GALLERY_ALBUM_NOT_FOUND", thrown.getErrorCode().code());
+        verify(objectStore, never()).deleteAll(anyList());
     }
 
     @Test

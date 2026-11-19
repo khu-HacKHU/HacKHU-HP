@@ -103,6 +103,7 @@
 | 승인 대기 회원 | 403 | `FORBIDDEN` | SecurityConfig 기본값(동아리원 이상)이 막음 |
 | 앨범 ID가 숫자가 아님 | 400 | `INVALID_INPUT` | 공통 처리 |
 | 없는 앨범 | 404 | `GALLERY_ALBUM_NOT_FOUND` | 앨범은 공개 리소스라 존재를 숨기지 않음 |
+| 같은 앨범을 동시에 지워 다른 요청이 먼저 지움 | 404 | `GALLERY_ALBUM_NOT_FOUND` | 지운 행 수가 0이면 404 (5-2 5-2-2) |
 | 작성자도 관리자도 아님 | 403 | `GALLERY_FORBIDDEN` | 아무것도 지우지 않음 |
 | S3 삭제가 실패함 | 500 | `INTERNAL_ERROR` | 트랜잭션을 롤백해 앨범을 남김 <br> 다시 지울 수 있음 (5-2 5-2-2) |
 

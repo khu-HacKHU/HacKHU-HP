@@ -13,7 +13,7 @@ final class AlbumPermission {
     private AlbumPermission() {}
 
     /**
-     * 올린 사람이거나 관리자({@link Role#ADMIN})면 지울 수 있다. 관리자는 PRODUCT.md 3절의 "다른 사람의 역할을 바꿀 수 있는 사람"이고 운영진
+     * 올린 사람이거나 관리자({@link Role#ADMIN})면 지울 수 있다. 관리자는 PRODUCT.md 4절의 "다른 사람의 역할을 바꿀 수 있는 사람"이고 운영진
      * ({@link Role#STAFF})은 포함하지 않는다.
      *
      * <p>비로그인({@code null})과 승인 대기 회원은 false다. 삭제 API는 SecurityConfig 기본값(동아리원 이상)이 먼저 막으므로, 역할이 승인
