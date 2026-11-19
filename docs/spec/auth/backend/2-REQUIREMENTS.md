@@ -70,4 +70,4 @@
 
 ### 2-6. 배포 전제
 
-refresh 토큰을 `SameSite=Strict` 쿠키로 주고받으므로, 프론트엔드와 API가 같은 사이트(같은 등록 도메인)에서 제공되어야 한다. 예를 들어 `hackhu.example`과 `api.hackhu.example`은 되고, 서로 다른 도메인은 안 된다. 실제 도메인 구성은 미확인이고 배포 문서에서 정한다. ([DEPLOYMENT.md](../../DEPLOYMENT.md))
+refresh 토큰을 `SameSite=Strict` 쿠키로 주고받으므로, 프론트엔드와 API가 같은 사이트(같은 등록 도메인)에서 제공되어야 한다. 도메인 구성은 배포 문서에서 확정했다. **모든 환경에서 프론트엔드와 API를 한 호스트에 올려 같은 출처로 둔다.** 운영은 구매한 도메인의 apex, 스테이징은 CloudFront 기본 주소다. ([DEPLOYMENT.md](../../DEPLOYMENT.md) 1-3)
