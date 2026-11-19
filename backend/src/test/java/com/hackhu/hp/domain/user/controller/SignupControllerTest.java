@@ -159,13 +159,9 @@ class SignupControllerTest {
         signupFrom(ip)
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value("TOO_MANY_REQUESTS"))
-                .andExpect(
-                        result ->
-                                assertThat(
-                                                Long.parseLong(
-                                                        result.getResponse()
-                                                                .getHeader("Retry-After")))
-                                        .isBetween(3500L, 3600L));
+                .andExpect(result ->
+                        assertThat(Long.parseLong(result.getResponse().getHeader("Retry-After")))
+                                .isBetween(3500L, 3600L));
         // 다른 IP는 막히지 않는다.
         signupFrom("198.51.100.52").andExpect(status().isCreated());
         verify(signupService, times(51)).signup(any());
@@ -176,10 +172,9 @@ class SignupControllerTest {
                 post(URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY)
-                        .with(
-                                request -> {
-                                    request.setRemoteAddr(ip);
-                                    return request;
-                                }));
+                        .with(request -> {
+                            request.setRemoteAddr(ip);
+                            return request;
+                        }));
     }
 }

@@ -19,11 +19,9 @@ public class GalleryExceptionHandler {
     ResponseEntity<ErrorResponse> handleUploadConfirm(UploadConfirmException e) {
         List<ErrorResponse.FieldError> errors =
                 e.getFailures().stream()
-                        .map(
-                                failure ->
-                                        new ErrorResponse.FieldError(
-                                                "uploadIds[" + failure.index() + "]",
-                                                failure.reason()))
+                        .map(failure ->
+                                new ErrorResponse.FieldError(
+                                        "uploadIds[" + failure.index() + "]", failure.reason()))
                         .toList();
         ErrorCode code = GalleryErrorCode.INVALID_UPLOAD;
         return ResponseEntity.status(code.status()).body(ErrorResponse.of(code, errors));
