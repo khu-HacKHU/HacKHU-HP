@@ -1,0 +1,10 @@
+/* 일반 안내 상자: panel 배경, 왼쪽 3px lilac 선 (docs/spec/UI-DESIGN-SYSTEM.md 6-3). */
+.notice {
+  max-width: var(--page-max);
+  margin: var(--space-4) auto 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--panel);
+  border-left: 3px solid var(--lilac);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
