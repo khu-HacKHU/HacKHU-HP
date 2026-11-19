@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '../features/auth/AuthProvider'
@@ -84,8 +84,7 @@ test('로그아웃을 누르면 세션이 비워진다', async () => {
   vi.stubGlobal('fetch', fetchMock)
   renderHeader()
 
-  const button = await screen.findByRole('button', { name: '로그아웃' })
-  button.click()
+  fireEvent.click(await screen.findByRole('button', { name: '로그아웃' }))
 
   await waitFor(() =>
     expect(screen.getByRole('link', { name: '로그인' })).toBeDefined(),
@@ -101,11 +100,12 @@ test('로그아웃 요청이 실패해도 화면은 로그아웃된다', async (
   vi.stubGlobal('fetch', fetchMock)
   renderHeader()
 
-  const button = await screen.findByRole('button', { name: '로그아웃' })
-  button.click()
+  fireEvent.click(await screen.findByRole('button', { name: '로그아웃' }))
 
   // 사용자가 로그아웃을 눌렀는데 로그인 상태로 남아 있는 쪽이 더 나쁘다.
   await waitFor(() =>
     expect(screen.getByRole('link', { name: '로그인' })).toBeDefined(),
   )
+  // 네트워크 실패가 처리되지 않은 Promise 거부로 빠져나가지 않아야 한다.
+  // onLogout이 잡지 않으면 테스트는 통과하지만 vitest가 프로세스를 실패로 끝낸다.
 })

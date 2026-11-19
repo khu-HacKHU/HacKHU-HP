@@ -36,9 +36,12 @@ export function Header() {
     setLeaving(true)
     try {
       await logout()
-      navigate('/')
+    } catch {
+      // logout()이 finally에서 세션을 비우므로 요청이 실패해도 화면은 이미 로그아웃됐다.
+      // 여기서 잡지 않으면 onClick이 돌려받지 않는 Promise가 거부되어 처리되지 않은 오류가 된다.
     } finally {
       setLeaving(false)
+      navigate('/')
     }
   }
 
