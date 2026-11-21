@@ -83,7 +83,7 @@ data "aws_iam_policy_document" "terraform_plan_state" {
   statement {
     sid           = "NoObjectsOutsideState"
     effect        = "Deny"
-    actions       = ["s3:GetObject"]
+    actions       = ["s3:GetObject", "s3:GetObjectVersion"]
     not_resources = ["${aws_s3_bucket.tfstate.arn}/*"]
   }
 }
