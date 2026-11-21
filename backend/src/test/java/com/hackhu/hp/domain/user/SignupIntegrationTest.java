@@ -154,14 +154,13 @@ class SignupIntegrationTest {
             for (int i = 0; i < requests; i++) {
                 String name = "가입자" + i;
                 results.add(
-                        executor.submit(
-                                () -> {
-                                    start.await();
-                                    return signup("race@example.com", name)
-                                            .andReturn()
-                                            .getResponse()
-                                            .getStatus();
-                                }));
+                        executor.submit(() -> {
+                            start.await();
+                            return signup("race@example.com", name)
+                                    .andReturn()
+                                    .getResponse()
+                                    .getStatus();
+                        }));
             }
             start.countDown();
         }

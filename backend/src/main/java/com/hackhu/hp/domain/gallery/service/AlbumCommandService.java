@@ -70,12 +70,11 @@ public class AlbumCommandService {
 
         List<PhotoResponse> photoResponses =
                 photos.stream()
-                        .map(
-                                photo ->
-                                        new PhotoResponse(
-                                                photo.getId(),
-                                                photoUrlResolver.resolve(photo.getObjectKey()),
-                                                photo.getDisplayOrder()))
+                        .map(photo ->
+                                new PhotoResponse(
+                                        photo.getId(),
+                                        photoUrlResolver.resolve(photo.getObjectKey()),
+                                        photo.getDisplayOrder()))
                         .toList();
         return AlbumDetailResponse.of(album, photoResponses);
     }
