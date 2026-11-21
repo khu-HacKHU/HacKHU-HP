@@ -54,4 +54,4 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 
 `local` 프로파일은 `INITIAL_ADMIN_*` 없이도 실행된다. 활성 관리자가 없으면 경고만 남긴다. 로컬에서 관리자가 필요하면 세 값을 환경변수로 넣고 실행한다.
 
-값은 GitHub Secrets 또는 AWS 파라미터 스토어에만 둔다.
+시크릿 값은 GitHub Secrets(CI)나 AWS Secrets Manager(운영)에만 둔다. 어느 값이 시크릿인지는 [배포 문서](../docs/spec/DEPLOYMENT.md) 4절에 있다.
