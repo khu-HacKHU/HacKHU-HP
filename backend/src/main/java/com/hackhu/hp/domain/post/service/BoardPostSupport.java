@@ -41,11 +41,16 @@ class BoardPostSupport {
     private final AuthorNameReader authorNameReader;
 
     PostPageResponse page(BoardType boardType, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), LIST_SORT);
-        Page<Post> posts = postRepository.findByBoardType(boardType, pageRequest);
+        Page<Post> posts = findPage(boardType, page, size);
         Map<Long, String> names = authorNames(posts.getContent());
         return PostPageResponse.from(
                 posts.map(post -> PostSummaryResponse.of(post, names.get(post.getAuthorId()))));
+    }
+
+    /** 최신순 한 페이지. 페이지 크기는 20을 넘지 않는다. */
+    Page<Post> findPage(BoardType boardType, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), LIST_SORT);
+        return postRepository.findByBoardType(boardType, pageRequest);
     }
 
     /** 게시판 종류 조건으로만 찾는다. 다른 게시판 글 ID면 없는 글과 같게 404 (5-1-4). */
@@ -58,10 +63,15 @@ class BoardPostSupport {
     /** 작성자이거나 관리자만 통과한다. 작성자는 DB의 author_id와 로그인한 사람을 비교한다 (5-1-3, CWE-639). */
     Post findModifiable(BoardType boardType, LoginUser user, Long postId) {
         Post post = find(boardType, postId);
+        checkModifiable(user, post);
+        return post;
+    }
+
+    /** 이미 읽은 글(예: 잠그고 읽은 글)에 작성자 규칙을 확인한다. */
+    void checkModifiable(LoginUser user, Post post) {
         if (!isAuthor(user, post) && !user.isAdmin()) {
             throw new BusinessException(PostErrorCode.POST_FORBIDDEN);
         }
-        return post;
     }
 
     /**
@@ -84,7 +94,7 @@ class BoardPostSupport {
         return PostDetailResponse.of(post, authorNames(List.of(post)).get(post.getAuthorId()));
     }
 
-    private Map<Long, String> authorNames(List<Post> posts) {
+    Map<Long, String> authorNames(List<Post> posts) {
         if (posts.isEmpty()) {
             return Map.of();
         }

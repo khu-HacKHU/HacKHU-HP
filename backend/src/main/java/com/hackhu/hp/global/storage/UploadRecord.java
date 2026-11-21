@@ -36,8 +36,12 @@ public class UploadRecord {
     @Column(name = "object_key", nullable = false, unique = true, length = 255)
     private String objectKey;
 
-    @Column(name = "content_type", nullable = false, length = 50)
+    @Column(name = "content_type", nullable = false, length = 100)
     private String contentType;
+
+    /** 사용자가 고른 원래 파일 이름. 자료게시판 첨부만 쓰고 갤러리는 NULL이다. 정리와 검사는 발급하는 쪽이 끝낸 뒤 넘긴다 (board 5-1-6). */
+    @Column(name = "original_file_name", length = 200)
+    private String originalFileName;
 
     @Column(name = "size_bytes", nullable = false)
     private long sizeBytes;
@@ -61,7 +65,8 @@ public class UploadRecord {
             String objectKey,
             String contentType,
             long sizeBytes,
-            Instant expiresAt) {
+            Instant expiresAt,
+            String originalFileName) {
         this.id = id;
         this.userId = userId;
         this.purpose = purpose;
@@ -70,6 +75,7 @@ public class UploadRecord {
         this.sizeBytes = sizeBytes;
         this.status = UploadStatus.ISSUED;
         this.expiresAt = expiresAt;
+        this.originalFileName = originalFileName;
         this.createdAt = Instant.now();
     }
 
@@ -86,9 +92,28 @@ public class UploadRecord {
             String contentType,
             long sizeBytes,
             Instant expiresAt) {
+        return issue(userId, purpose, contentType, sizeBytes, expiresAt, null);
+    }
+
+    /** 원래 파일 이름을 함께 남기는 발급. 자료게시판 첨부가 쓴다 (board 5-1-7 "발급과 확정의 연결"). */
+    public static UploadRecord issue(
+            Long userId,
+            UploadPurpose purpose,
+            String contentType,
+            long sizeBytes,
+            Instant expiresAt,
+            String originalFileName) {
         UUID id = UUID.randomUUID();
         String objectKey = purpose.name().toLowerCase() + "/" + id;
-        return new UploadRecord(id, userId, purpose, objectKey, contentType, sizeBytes, expiresAt);
+        return new UploadRecord(
+                id,
+                userId,
+                purpose,
+                objectKey,
+                contentType,
+                sizeBytes,
+                expiresAt,
+                originalFileName);
     }
 
     public void markUsed() {
@@ -126,5 +151,9 @@ public class UploadRecord {
 
     public long getSizeBytes() {
         return sizeBytes;
+    }
+
+    public String getOriginalFileName() {
+        return originalFileName;
     }
 }

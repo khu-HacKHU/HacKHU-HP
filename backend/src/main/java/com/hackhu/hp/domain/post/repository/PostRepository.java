@@ -2,9 +2,12 @@ package com.hackhu.hp.domain.post.repository;
 
 import com.hackhu.hp.domain.post.entity.BoardType;
 import com.hackhu.hp.domain.post.entity.Post;
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 /**
@@ -19,6 +22,14 @@ public interface PostRepository extends Repository<Post, Long> {
     Post save(Post post);
 
     Optional<Post> findByIdAndBoardType(Long id, BoardType boardType);
+
+    /**
+     * 글 행을 {@code FOR UPDATE}로 잠그고 읽는다. 자료게시판 수정이 첨부 수를 세기 전에 잡아, 두 수정 요청이 동시에 와도 첨부가 5개를 넘지 않게 한다
+     * (5-1-8).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Post p where p.id = :id and p.boardType = :boardType")
+    Optional<Post> findForUpdate(Long id, BoardType boardType);
 
     Page<Post> findByBoardType(BoardType boardType, Pageable pageable);
 
