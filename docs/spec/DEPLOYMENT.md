@@ -148,6 +148,7 @@ ALB를 인터넷에 그냥 열어 두면 **CloudFront를 건너뛰고 ALB로 직
 | `DATABASE_PASSWORD` | **시크릿** | Secrets Manager. RDS 관리형 암호 |
 | `JWT_SECRET` | **시크릿** | Secrets Manager. Base64로 인코딩한 32바이트 이상 |
 | `GALLERY_CDN_PRIVATE_KEY` | **시크릿** | Secrets Manager. 서명용 RSA 개인 키 PEM |
+| `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_NAME`, `INITIAL_ADMIN_PASSWORD` | **시크릿** | Secrets Manager. 처음 관리자의 이메일, 이름, 초기 비밀번호. 빈 DB에 처음 배포할 때만 넘기고, 관리자를 만든 뒤 지움 (아래, #23) |
 | `GALLERY_CDN_BASE_URL`, `GALLERY_CDN_KEY_PAIR_ID` | 설정 | Terraform 출력 |
 | `S3_BUCKET`, `AWS_REGION` | 설정 | Terraform 출력 |
 | `FRONTEND_ORIGIN` | 설정 | CloudFront 주소 하나. `*`를 쓰지 않음 |
@@ -157,6 +158,9 @@ ALB를 인터넷에 그냥 열어 두면 **CloudFront를 건너뛰고 ALB로 직
 - AWS 접근 자격 증명은 환경 변수로 넣지 않는다. ECS 태스크 역할로 받는다.
 - GitHub Secrets에는 OIDC 역할 ARN만 둔다. AWS 액세스 키를 넣지 않는다.
 - `JWT_SECRET`과 `GALLERY_CDN_PRIVATE_KEY`가 없거나 형식이 틀리면 서버가 시작하지 않는다. 배포 실패로 드러나는 것이 맞다.
+- 활성 관리자가 0명인 DB에 `INITIAL_ADMIN_*` 없이 배포하면 서버가 시작하지 않는다. 값이 일부만 있거나 가입 규칙에 맞지 않을 때, 그 이메일로 이미 가입한 계정이 있을 때도 시작하지 않는다. 관리자 없이 뜨면 아무도 가입을 승인할 수 없기 때문이다. ([auth/backend/5-1-QUALITY-SECURITY.md](auth/backend/5-1-QUALITY-SECURITY.md) 5-1-6)
+- 이메일과 이름은 비밀값은 아니지만 개인정보라 Terraform 변수와 레포에 적지 않고 비밀번호와 함께 Secrets Manager에 둔다.
+- 처음 관리자를 만든 뒤에는 관리자가 로그인해 비밀번호를 바꾸고, **배포 스크립트가 `INITIAL_ADMIN_*`를 넘기지 않게 바꾼 다음** Secrets Manager에서 지운다. 지운 시크릿을 스크립트가 계속 읽으면 다음 배포가 실패한다. 활성 관리자가 있으면 서버는 값 없이 시작한다.
 
 <br>
 
