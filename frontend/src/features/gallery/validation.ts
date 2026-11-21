@@ -46,12 +46,15 @@ export function validateTitle(title: string): string | null {
   return null
 }
 
-// 오늘 날짜를 YYYY-MM-DD로 (사용자 기기 시간 기준)
+// 한국 날짜를 YYYY-MM-DD로 만든다. sv-SE 형식이 YYYY-MM-DD다
+const KOREA_DATE = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Seoul',
+})
+
+// 오늘 날짜를 YYYY-MM-DD로 (한국 시간 기준)
+// 서버가 Asia/Seoul 기준으로 미래 날짜를 막으므로 기기 시간대와 관계없이 맞춘다
 export function todayString(now: Date = new Date()): string {
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  return KOREA_DATE.format(now)
 }
 
 // 활동 날짜 검사 (비어 있으면 안 됨, 미래 날짜 안 됨)
