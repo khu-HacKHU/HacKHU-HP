@@ -127,7 +127,8 @@ access 토큰의 무효화는 발급 시각이 아니라 로그인 세션의 폐
 - DB에는 SHA-256 해시만 저장한다. (3-2-DESIGN-DB-SCHEMA.md)
 - 쓸 때마다 회전한다. 동시 요청과 응답 유실은 복구하고, 그 밖의 재사용은 탈취로 보고 로그인 세션을 폐기한다. 판단 규칙은 계약 문서를 따른다. (4-2-INTERACTION-CONTRACT.md 4-2-5)
 - 쿠키 속성은 `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth`다. (4-2-INTERACTION-CONTRACT.md) `Domain` 속성은 두지 않는다. API 호스트에만 실리고 같은 등록 도메인의 다른 서브도메인에는 실리지 않게 하려는 것이다.
-- `SameSite=Strict`는 프론트엔드와 API가 같은 등록 도메인 아래 서브도메인에 있다는 전제에서만 동작한다(예: `www.hackhu.example`과 `api.hackhu.example`). 등록 도메인이 다르면 브라우저가 refresh와 로그아웃 요청에 쿠키를 싣지 않아, 로그인 뒤 15분이 지나면 모두 로그아웃된다. 도메인 구조는 배포 문서에서 확정한다. ([DEPLOYMENT.md](../../DEPLOYMENT.md)) 배포 도메인을 바꾸면 이 절을 다시 본다. 다른 사이트로 가야 하면 `SameSite=None`과 CSRF 토큰을 함께 써야 한다.
+- `SameSite=Strict`는 프론트엔드와 API가 같은 사이트(같은 등록 도메인)에 있다는 전제에서만 동작한다. 등록 도메인이 다르면 브라우저가 refresh와 로그아웃 요청에 쿠키를 싣지 않아, 로그인 뒤 15분이 지나면 모두 로그아웃된다.
+- 배포 문서가 이 전제를 **같은 출처**로 더 좁혀서 확정했다. 프론트엔드와 API를 한 호스트에 올리고 경로로 가른다. ([DEPLOYMENT.md](../../DEPLOYMENT.md) 1-3) 같은 출처면 서브도메인을 나눈 구성에서 생기는 문제도 함께 없어진다. 배포 구조를 바꾸는 PR은 이 절을 같은 PR에서 다시 본다. 다른 사이트로 나눠야 하면 `SameSite=None`과 CSRF 토큰을 함께 써야 하고, 그때는 이 절을 먼저 고친다.
 
 **CSRF**
 
