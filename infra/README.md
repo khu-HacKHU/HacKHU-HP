@@ -16,6 +16,7 @@ AWS 인프라 Terraform. S3부터 PM과 PL이 기본 구성을 작성하고, 지
 
 ```
 infra/
+  bootstrap/      상태 버킷, GitHub OIDC, Terraform 역할. PM이 로컬에서 한 번 적용
   modules/        재사용 모듈
   envs/
     staging/

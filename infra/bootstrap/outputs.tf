@@ -1,0 +1,15 @@
+output "tfstate_bucket" {
+  value = aws_s3_bucket.tfstate.bucket
+}
+
+output "terraform_plan_role_arn" {
+  value = aws_iam_role.terraform_plan.arn
+}
+
+output "terraform_apply_role_arn" {
+  value = aws_iam_role.terraform_apply.arn
+}
+
+output "app_boundary_policy_arn" {
+  value = aws_iam_policy.app_boundary.arn
+}
