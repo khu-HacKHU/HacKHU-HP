@@ -122,7 +122,7 @@ public class InitialAdminService implements SmartInitializingSingleton {
                                     passwordEncoder.encode(request.password())));
             // 이메일과 이름은 로그에 남기지 않는다 (5-1-9, CWE-532).
             log.info("처음 관리자를 만들었습니다: userId={}", admin.getId());
-            log.warn("INITIAL_ADMIN_PASSWORD를 시크릿에서 지우세요. 관리자는 첫 로그인에서 비밀번호를 바꿔야 합니다.");
+            log.warn("관리자가 첫 로그인에서 비밀번호를 바꾼 뒤 INITIAL_ADMIN_* 시크릿을 지우세요.");
             return Outcome.CREATED;
         });
     }
