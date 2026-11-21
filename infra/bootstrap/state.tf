@@ -1,4 +1,4 @@
-# Terraform 상태 저장 버킷. 상태에는 DB 비밀번호 같은 값이 평문으로 들어가므로 공개를 막고 TLS만 받는다.
+# Terraform 상태 저장 버킷. 시크릿 값은 상태에 두지 않는다(#136). 그래도 인프라 구성이 다 담기므로 공개를 막고 TLS만 받는다.
 resource "aws_s3_bucket" "tfstate" {
   bucket = "khu-hackhu-hp-tfstate"
 
@@ -54,7 +54,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   }
 }
 
-data "aws_iam_policy_document" "tfstate_tls_only" {
+data "aws_iam_policy_document" "tfstate" {
   statement {
     sid     = "DenyInsecureTransport"
     effect  = "Deny"
@@ -73,11 +73,40 @@ data "aws_iam_policy_document" "tfstate_tls_only" {
       values   = ["false"]
     }
   }
+
+  # prevent_destroy는 Terraform 안에서만 동작한다. GitHub Actions 역할이 AWS API로 이전 상태를 지우거나,
+  # 버전 관리를 끄거나, 이 정책을 지워 Deny를 풀지 못하게 막는다. PM의 단기 자격 증명은 걸리지 않는다.
+  # Terraform의 상태 쓰기(PutObject, 잠금 파일의 현재 버전 DeleteObject)는 여기에 없다.
+  statement {
+    sid    = "ProtectStateHistory"
+    effect = "Deny"
+    actions = [
+      "s3:DeleteObjectVersion",
+      "s3:PutBucketVersioning",
+      "s3:PutLifecycleConfiguration",
+      "s3:DeleteBucket",
+      "s3:PutBucketPolicy",
+      "s3:DeleteBucketPolicy",
+    ]
+    resources = [
+      aws_s3_bucket.tfstate.arn,
+      "${aws_s3_bucket.tfstate.arn}/*",
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:PrincipalArn"
+      values   = [aws_iam_role.terraform_plan.arn, aws_iam_role.terraform_apply.arn]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
-  policy = data.aws_iam_policy_document.tfstate_tls_only.json
+  policy = data.aws_iam_policy_document.tfstate.json
 
   depends_on = [aws_s3_bucket_public_access_block.tfstate]
 }
