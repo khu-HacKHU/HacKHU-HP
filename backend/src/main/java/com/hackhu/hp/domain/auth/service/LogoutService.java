@@ -33,13 +33,12 @@ public class LogoutService {
         // 회전한 예전 토큰이어도 같은 세션의 토큰이면 그 세션을 폐기한다.
         refreshTokenRepository
                 .findSessionIdByTokenHash(RefreshTokenValues.hash(refreshToken))
-                .ifPresent(
-                        sessionId -> {
-                            if (loginSessionRepository.revoke(
-                                            sessionId, SessionRevokeReason.LOGOUT, clock.instant())
-                                    == 1) {
-                                log.info("로그아웃: sessionId={}", sessionId);
-                            }
-                        });
+                .ifPresent(sessionId -> {
+                    if (loginSessionRepository.revoke(
+                                    sessionId, SessionRevokeReason.LOGOUT, clock.instant())
+                            == 1) {
+                        log.info("로그아웃: sessionId={}", sessionId);
+                    }
+                });
     }
 }

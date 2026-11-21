@@ -68,23 +68,21 @@ class UsersSchemaTest {
 
     @Test
     void 정의되지_않은_역할은_저장되지_않는다() {
-        assertThatThrownBy(
-                        () ->
-                                jdbc.update(
-                                        "INSERT INTO users (email, name, password_hash, role)"
-                                                + " VALUES ('a@example.com', '홍길동', ?, 'ROOT')",
-                                        HASH))
+        assertThatThrownBy(() ->
+                        jdbc.update(
+                                "INSERT INTO users (email, name, password_hash, role)"
+                                        + " VALUES ('a@example.com', '홍길동', ?, 'ROOT')",
+                                HASH))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("ck_users_role");
     }
 
     @Test
     void 활성_계정은_로그인_정보가_비지_않는다() {
-        assertThatThrownBy(
-                        () ->
-                                jdbc.update(
-                                        "INSERT INTO users (email, name, password_hash, role)"
-                                                + " VALUES ('a@example.com', '홍길동', NULL, 'PENDING')"))
+        assertThatThrownBy(() ->
+                        jdbc.update(
+                                "INSERT INTO users (email, name, password_hash, role)"
+                                        + " VALUES ('a@example.com', '홍길동', NULL, 'PENDING')"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("ck_users_active_fields");
     }

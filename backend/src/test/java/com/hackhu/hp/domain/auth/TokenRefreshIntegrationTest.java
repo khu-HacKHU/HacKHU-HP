@@ -75,11 +75,10 @@ class TokenRefreshIntegrationTest extends AuthIntegrationTestSupport {
         try (ExecutorService executor = Executors.newFixedThreadPool(requests)) {
             for (int i = 0; i < requests; i++) {
                 futures.add(
-                        executor.submit(
-                                () -> {
-                                    start.await();
-                                    return refresh(loggedIn.refreshCookie()).andReturn();
-                                }));
+                        executor.submit(() -> {
+                            start.await();
+                            return refresh(loggedIn.refreshCookie()).andReturn();
+                        }));
             }
             start.countDown();
             for (Future<MvcResult> future : futures) {

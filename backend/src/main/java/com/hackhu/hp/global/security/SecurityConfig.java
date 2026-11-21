@@ -102,36 +102,30 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(INFRA_PATHS)
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
-                                        .permitAll()
-                                        // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(
-                                                HttpMethod.PUT, "/api/v1/users/me/password")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(
-                                                HttpMethod.PUT, "/api/v1/admin/users/*/role")
-                                        .hasRole(ADMIN.name())
-                                        .requestMatchers("/api/v1/admin/**")
-                                        .hasRole(STAFF.name())
-                                        .anyRequest()
-                                        .hasRole(MEMBER.name()))
+                .authorizeHttpRequests(auth ->
+                        auth.requestMatchers(INFRA_PATHS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
+                                .permitAll()
+                                // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
+                                .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/me/password")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/admin/users/*/role")
+                                .hasRole(ADMIN.name())
+                                .requestMatchers("/api/v1/admin/**")
+                                .hasRole(STAFF.name())
+                                .anyRequest()
+                                .hasRole(MEMBER.name()))
                 // 인증 없음은 401, 역할 부족은 403을 공통 에러 형식으로 준다 (api.md 3절).
-                .exceptionHandling(
-                        e ->
-                                e.authenticationEntryPoint(
-                                                new ApiAuthenticationEntryPoint(errorWriter))
-                                        .accessDeniedHandler(
-                                                new ApiAccessDeniedHandler(errorWriter)));
+                .exceptionHandling(e ->
+                        e.authenticationEntryPoint(new ApiAuthenticationEntryPoint(errorWriter))
+                                .accessDeniedHandler(new ApiAccessDeniedHandler(errorWriter)));
         return http.build();
     }
 
