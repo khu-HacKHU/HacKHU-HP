@@ -3,7 +3,7 @@ plugins {
     id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
     // 포매팅은 도구가 한다 (docs/conventions/code-style.md). `./gradlew build`가 spotlessCheck를 포함한다.
-    id("com.diffplug.spotless") version "8.10.4"
+    id("com.diffplug.spotless") version "8.11.0"
 }
 
 group = "com.hackhu"
@@ -32,14 +32,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.flywaydb:flyway-database-postgresql")
-    implementation(platform("software.amazon.awssdk:bom:2.46.7"))
+    implementation(platform("software.amazon.awssdk:bom:2.57.11"))
     implementation("software.amazon.awssdk:s3")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
     // AWS SDK 모듈 버전은 BOM 한 줄로 맞춘다. 모듈은 버전 없이 추가한다 (예: s3).
-    implementation(platform("software.amazon.awssdk:bom:2.46.7"))
+    implementation(platform("software.amazon.awssdk:bom:2.57.11"))
     // 갤러리 사진 조회 주소(CloudFront 서명 URL)
     implementation("software.amazon.awssdk:cloudfront")
     annotationProcessor("org.projectlombok:lombok")
