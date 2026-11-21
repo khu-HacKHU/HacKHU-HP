@@ -93,6 +93,33 @@ class PresignedUrlServiceTest {
                 "크기가 서명에 반영되지 않으면 같은 서명이 나온다. 그러면 1MB로 발급받아 20MB를 올릴 수 있다.");
     }
 
+    @Test
+    void 다운로드_주소에_attachment와_저장한_형식을_덮어쓰도록_서명한다() {
+        URL url =
+                service()
+                        .presignGet(
+                                "attachment/abc",
+                                "application/pdf",
+                                "3주차 자료.pdf",
+                                Duration.ofMinutes(10));
+
+        String query = URLDecoder.decode(url.getQuery(), StandardCharsets.UTF_8);
+        assertTrue(query.contains("response-content-type=application/pdf"), query);
+        assertTrue(
+                query.contains(
+                        "response-content-disposition=attachment; filename*=UTF-8''"
+                                + "3%EC%A3%BC%EC%B0%A8%20%EC%9E%90%EB%A3%8C.pdf"),
+                query);
+    }
+
+    @Test
+    void 헤더를_깨뜨릴_수_있는_문자는_파일_이름에_그대로_들어가지_않는다() {
+        String header = PresignedUrlService.contentDisposition("a\"; b=c*\r\n.pdf");
+
+        assertTrue(
+                header.equals("attachment; filename*=UTF-8''a%22%3B%20b%3Dc%2A%0D%0A.pdf"), header);
+    }
+
     private static String signatureOf(URL url) {
         for (String pair : url.getQuery().split("&")) {
             if (pair.startsWith("X-Amz-Signature=")) {

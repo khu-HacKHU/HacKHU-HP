@@ -10,11 +10,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * 발급받은 업로드를 확정한다. 갤러리 앨범과 자료게시판 첨부가 같이 쓴다.
+ * 발급받은 업로드를 확정한다. 갤러리 앨범({@link #confirmImages})과 자료게시판 첨부({@link #confirmAttachments})가 같이 쓴다.
  *
  * <p>검사 순서는 싼 것부터다. 발급 기록 조회(소유자·만료·중복)로 먼저 걸러내고, 통과한 것만 S3에서 실제 바이트를 읽어 매직바이트를 본다
  * (docs/spec/gallery/backend/4-2 4절).
@@ -25,16 +28,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class UploadConfirmService {
 
+    private static final Logger log = LoggerFactory.getLogger(UploadConfirmService.class);
+
+    /** 업로드 종류마다 다른 것: 형식 확인 방법과 사용자에게 보일 사유 문구. */
+    private record Rule(
+            Predicate<UploadRecord> formatCheck, String duplicateReason, String formatReason) {}
+
     private final UploadRecordRepository uploadRecordRepository;
     private final ImageFormatValidator imageFormatValidator;
+    private final AttachmentFormatValidator attachmentFormatValidator;
     private final S3ObjectStore objectStore;
 
     public UploadConfirmService(
             UploadRecordRepository uploadRecordRepository,
             ImageFormatValidator imageFormatValidator,
+            AttachmentFormatValidator attachmentFormatValidator,
             S3ObjectStore objectStore) {
         this.uploadRecordRepository = uploadRecordRepository;
         this.imageFormatValidator = imageFormatValidator;
+        this.attachmentFormatValidator = attachmentFormatValidator;
         this.objectStore = objectStore;
     }
 
@@ -46,6 +58,31 @@ public class UploadConfirmService {
      * uploadId를 두 요청이 동시에 확정해도 갱신은 하나만 성공하므로, 다른 하나는 갱신된 행 수가 모자라 거부된다 (board 5-1-8, CWE-362).
      */
     public List<String> confirmImages(Long userId, UploadPurpose purpose, List<UUID> uploadIds) {
+        Rule rule =
+                new Rule(
+                        record -> imageFormatValidator.isSupportedImage(record.getObjectKey()),
+                        "같은 사진을 두 번 넣을 수 없습니다.",
+                        "실제 파일이 jpg, png, webp 형식이 아닙니다.");
+        return confirm(userId, purpose, uploadIds, rule).stream()
+                .map(UploadRecord::getObjectKey)
+                .toList();
+    }
+
+    /**
+     * 자료게시판 첨부를 확정한다 (board 5-1-8). 검사 순서, 실패 시 정리, 조건부 갱신은 {@link #confirmImages}와 같고 형식 확인만 다르다.
+     * 첨부 행을 만들 때 형식, 크기, 원래 파일 이름을 발급 기록에서 옮겨 적어야 해서 키가 아니라 기록을 요청 순서대로 돌려준다 (board 5-1-7).
+     */
+    public List<UploadRecord> confirmAttachments(Long userId, List<UUID> uploadIds) {
+        Rule rule =
+                new Rule(
+                        attachmentFormatValidator::matchesDeclaredType,
+                        "같은 파일을 두 번 넣을 수 없습니다.",
+                        "실제 파일이 신고한 형식이 아닙니다.");
+        return confirm(userId, UploadPurpose.ATTACHMENT, uploadIds, rule);
+    }
+
+    private List<UploadRecord> confirm(
+            Long userId, UploadPurpose purpose, List<UUID> uploadIds, Rule rule) {
         Map<UUID, UploadRecord> found =
                 uploadRecordRepository.findAllById(uploadIds).stream()
                         .collect(Collectors.toMap(UploadRecord::getId, Function.identity()));
@@ -59,7 +96,7 @@ public class UploadConfirmService {
         for (int i = 0; i < uploadIds.size(); i++) {
             UUID uploadId = uploadIds.get(i);
             if (!seen.add(uploadId)) {
-                failures.add(fail(i, uploadId, "같은 사진을 두 번 넣을 수 없습니다."));
+                failures.add(fail(i, uploadId, rule.duplicateReason()));
                 continue;
             }
 
@@ -85,8 +122,15 @@ public class UploadConfirmService {
             if (record == null) {
                 continue;
             }
-            if (!imageFormatValidator.isSupportedImage(record.getObjectKey())) {
-                failures.add(fail(i, uploadIds.get(i), "실제 파일이 jpg, png, webp 형식이 아닙니다."));
+            if (!rule.formatCheck().test(record)) {
+                // 형식 확인 실패는 경고로 남긴다 (board 5-1-12). 객체 키와 파일 이름은 남기지 않는다.
+                log.warn(
+                        "업로드 형식 확인 실패 userId={} uploadId={} purpose={} declaredType={}",
+                        userId,
+                        record.getId(),
+                        purpose,
+                        record.getContentType());
+                failures.add(fail(i, uploadIds.get(i), rule.formatReason()));
             }
         }
 
@@ -104,7 +148,7 @@ public class UploadConfirmService {
             throw new UploadConfirmException(lostRaceFailures(uploadIds, userId, now));
         }
 
-        return Arrays.stream(usable).map(UploadRecord::getObjectKey).toList();
+        return Arrays.asList(usable);
     }
 
     /** 실패한 요청의 객체를 지우고, 아직 안 쓰인 기록을 사용 처리해 재시도로 S3 읽기를 반복하지 못하게 한다. */
