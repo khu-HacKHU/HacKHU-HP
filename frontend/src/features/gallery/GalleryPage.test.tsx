@@ -183,3 +183,30 @@ test('권한이 없으면 안내가 보이고 상세에 남는다', async () => 
   )
   expect(screen.getByRole('button', { name: '목록으로' })).toBeDefined()
 })
+
+test('승인 대기로 내려가 403 FORBIDDEN이면 권한 안내가 보인다', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(listBody))
+      .mockResolvedValueOnce(jsonResponse({ ...detailBody, canDelete: true }))
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { status: 403, code: 'FORBIDDEN', message: '', errors: [] },
+          403,
+        ),
+      ),
+  )
+
+  render(<GalleryPage />)
+  fireEvent.click(
+    await screen.findByRole('button', { name: /10월 정기 세미나/ }),
+  )
+  fireEvent.click(await screen.findByRole('button', { name: '앨범 삭제' }))
+  fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+  expect((await screen.findByRole('alert')).textContent).toBe(
+    '이 앨범을 지울 권한이 없어요.',
+  )
+})

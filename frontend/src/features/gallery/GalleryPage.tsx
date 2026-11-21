@@ -71,8 +71,12 @@ export function GalleryPage() {
         // 다른 곳에서 이미 지워진 앨범이다. 목록에 남겨 두면 틀린 화면이 된다
         setAlbumError('이미 삭제된 앨범이에요.')
         dropAlbum(id)
-      } else if (code === 'GALLERY_FORBIDDEN') {
+      } else if (code === 'GALLERY_FORBIDDEN' || code === 'FORBIDDEN') {
+        // GALLERY_FORBIDDEN은 남의 앨범, FORBIDDEN은 역할이 승인 대기로 내려간 경우다
+        // (gallery/backend 5-3-7). 둘 다 사용자에게는 같은 이야기다
         setAlbumError('이 앨범을 지울 권한이 없어요.')
+      } else if (code === 'UNAUTHORIZED') {
+        setAlbumError('로그인이 풀렸어요. 다시 로그인한 뒤 지워 주세요.')
       } else {
         setAlbumError('앨범을 삭제하지 못했어요.')
       }
