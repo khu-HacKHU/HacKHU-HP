@@ -66,6 +66,13 @@ app:
   jwt:
     secret: ${JWT_SECRET:}
     allow-generated-secret: false
+  # 처음 관리자 (docs/spec/auth/backend/5-1-QUALITY-SECURITY.md 5-1-6). 활성 관리자가 0명일 때만 이 값으로 관리자를 만든다.
+  # 값은 환경변수로만 주입한다. 활성 관리자가 없는데 값도 없으면 서버가 시작하지 않는다. local에서는 경고만 남긴다.
+  initial-admin:
+    email: ${INITIAL_ADMIN_EMAIL:}
+    name: ${INITIAL_ADMIN_NAME:}
+    password: ${INITIAL_ADMIN_PASSWORD:}
+    required: true
   # 클라이언트 IP를 정할 때 믿는 프록시 (5-1-7). 기본은 아무 프록시도 믿지 않고 연결 상대의 주소를 쓴다.
   client-ip:
     trusted-proxies: []

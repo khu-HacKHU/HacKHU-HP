@@ -73,4 +73,24 @@ public class User {
         user.mustChangePassword = false;
         return user;
     }
+
+    /**
+     * 처음 관리자 (3-2-DESIGN-DB-SCHEMA.md 3-2-5). 비밀번호 변경 필요 상태로 시작해 첫 로그인에서 비밀번호를 바꿔야 한다.
+     *
+     * <p>임시 비밀번호가 아니므로 {@code tempPasswordExpiresAt}은 비워 두고 일반 로그인 경로를 쓴다
+     * (5-2-QUALITY-CONCURRENCY.md 5-2-3). 가입 승인을 거치지 않으므로 {@code approvedAt}도 비워 둔다.
+     *
+     * @param email {@link Emails#normalize}로 정규화한 이메일
+     * @param name 앞뒤 공백을 지운 이름
+     * @param passwordHash 초기 비밀번호의 bcrypt 해시
+     */
+    public static User initialAdmin(String email, String name, String passwordHash) {
+        User user = new User();
+        user.email = email;
+        user.name = name;
+        user.passwordHash = passwordHash;
+        user.role = Role.ADMIN;
+        user.mustChangePassword = true;
+        return user;
+    }
 }

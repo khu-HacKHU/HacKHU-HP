@@ -1,6 +1,7 @@
 package com.hackhu.hp.domain.user.repository;
 
 import com.hackhu.hp.domain.user.entity.User;
+import com.hackhu.hp.global.auth.Role;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** 이 이메일을 쓰는 활성 계정. 탈퇴한 계정은 email이 NULL이라 나오지 않는다. */
     Optional<User> findByEmail(String email);
+
+    /** 이 역할의 활성 계정 수. 탈퇴한 계정은 세지 않는다. */
+    long countByRoleAndWithdrawnAtIsNull(Role role);
 
     /**
      * 일반 로그인. 비밀번호를 검증한 뒤 활성 계정의 행을 잠그고 지금 해시를 읽는다 (5-2-3).
