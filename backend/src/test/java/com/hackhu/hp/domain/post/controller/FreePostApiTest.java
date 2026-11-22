@@ -4,6 +4,7 @@ import static com.hackhu.hp.global.auth.LoginUserRequests.loginUser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -237,7 +238,7 @@ class FreePostApiTest {
     }
 
     @Test
-    void 작성자가_글을_고치면_작성자와_작성_시각은_그대로다() throws Exception {
+    void 작성자가_글을_고치면_작성자와_작성_시각은_그대로고_수정_시각은_늦어진다() throws Exception {
         long id = savePost("FREE", AUTHOR, BASE);
 
         mockMvc.perform(
@@ -246,7 +247,14 @@ class FreePostApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("스터디 후기"))
                 .andExpect(jsonPath("$.author.id").value(AUTHOR))
-                .andExpect(jsonPath("$.createdAt").value("2026-11-16T09:30:00Z"));
+                .andExpect(jsonPath("$.createdAt").value("2026-11-16T09:30:00Z"))
+                // 응답 스키마가 "수정한 적이 없으면 createdAt과 같다"이므로 수정 뒤에는 달라야 한다.
+                .andExpect(jsonPath("$.updatedAt").value(not("2026-11-16T09:30:00Z")));
+
+        Timestamp updatedAt =
+                jdbcTemplate.queryForObject(
+                        "SELECT updated_at FROM post WHERE id = ?", Timestamp.class, id);
+        assertThat(updatedAt.toInstant()).isAfter(BASE);
     }
 
     @Test
