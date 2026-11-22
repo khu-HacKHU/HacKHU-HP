@@ -7,7 +7,8 @@ import java.util.Map;
  * 작성자 ID로 화면에 보여 줄 이름을 읽는다 (4-2-INTERACTION-CONTRACT.md 4-2-1).
  *
  * <p>회원 정보는 인증권한팀 도메인이라 게시판이 {@code users} 테이블이나 {@code User} 엔티티를 직접 읽지 않는다 (backend/AGENTS.md "다른
- * 팀의 domain/* 내부 클래스를 직접 부르지 않는다"). 이 인터페이스 뒤에 두고, 구현은 인증권한팀이 제공하는 조회 방법이 생기면 바꾼다.
+ * 팀의 domain/* 내부 클래스를 직접 부르지 않는다"). 이 인터페이스 뒤에 두고, 구현({@link UserAuthorNameReader})이 인증권한팀의 공개 서비스를
+ * 부른다.
  */
 public interface AuthorNameReader {
 
