@@ -252,6 +252,25 @@ data "aws_iam_policy_document" "app_boundary" {
       "${aws_s3_bucket.tfstate.arn}/*",
     ]
   }
+
+  # apply 역할이 외부 계정을 신뢰하는 앱 역할을 새로 만들어도(CreateRole에는 신뢰 정책을 거르는 조건이 없다) 인스턴스 밖에서 받은 자격 증명으로는 아무것도 못 하게 한다.
+  # 서비스가 대신 부르는 요청(Secrets Manager와 S3가 부르는 KMS)은 예외다.
+  statement {
+    sid       = "OnlyFromAppInstances"
+    effect    = "Deny"
+    actions   = ["*"]
+    resources = ["*"]
+    condition {
+      test     = "Null"
+      variable = "aws:Ec2InstanceSourceVpc"
+      values   = ["true"]
+    }
+    condition {
+      test     = "BoolIfExists"
+      variable = "aws:ViaAWSService"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_iam_policy" "app_boundary" {

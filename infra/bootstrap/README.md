@@ -50,6 +50,7 @@ plan 역할은 `develop`에 있는 재사용 워크플로 `.github/workflows/ter
 apply 역할은 `develop`에서 돈 `.github/workflows/terraform-apply.yml`과 `.github/workflows/deploy.yml`의 잡만 맡을 수 있다(신뢰 정책의 `job_workflow_ref` 조건). `develop`의 다른 워크플로가 `id-token: write`를 요청해도 역할을 받지 못한다.
 
 - Terraform apply와 앱 배포 워크플로는 이 두 파일 이름을 쓴다. 이름을 바꾸거나 파일을 더하면 이 디렉터리를 고쳐 다시 적용해야 한다.
+- 두 워크플로는 직접 실행하는 워크플로여도 된다. 그때 `job_workflow_ref`는 그 파일 자신의 ref다.
 - 운영으로 승격하며 `develop`을 `main`으로 바꿀 때(DEPLOYMENT.md 8-2) apply 역할의 `sub`와 `job_workflow_ref` 조건도 함께 바꾼다.
 
 ## 그 뒤에 바꿀 때
@@ -58,4 +59,6 @@ apply 역할은 `develop`에서 돈 `.github/workflows/terraform-apply.yml`과 `
 
 앱 서버 역할은 `/hackhu-hp/app/` 경로에 만들고 `permissions_boundary`에 `app_boundary_policy_arn`을 넣는다. 빠지면 apply가 권한 오류로 멈춘다. 앱에 경계 밖의 권한이 필요하면 경계 정책을 이 디렉터리에서 PR로 넓힌다.
 
-apply 역할은 앱 역할의 신뢰 정책을 바꿀 수 없다. 바꿔야 하면 PM이 로컬에서 바꾼다.
+apply 역할은 기존 앱 역할의 신뢰 정책을 바꿀 수 없다. 바꿔야 하면 PM이 로컬에서 바꾼다. 새로 만드는 역할의 신뢰 정책은 IAM 조건으로 거를 수 없어서 경계로 막는다.
+
+앱 역할은 EC2 인스턴스 자격 증명으로만 쓸 수 있다(경계의 `OnlyFromAppInstances`). 첫 배포 때 SSM 접속, 시크릿 읽기, S3 쓰기, ECR pull, 로그 전송이 되는지 확인한다.
