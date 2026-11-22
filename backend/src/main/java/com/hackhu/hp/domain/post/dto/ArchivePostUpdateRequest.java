@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +24,10 @@ public record ArchivePostUpdateRequest(
                 String content,
         @Schema(description = "남길 기존 첨부 ID. 바꾸지 않을 때도 모두 보낸다. 빈 배열이면 기존 첨부를 모두 뺀다")
                 @NotNull(message = "남길 첨부파일 목록을 보내주세요.")
+                @Size(max = 5, message = "첨부파일은 5개까지 붙일 수 있습니다.")
                 List<@NotNull @Positive Long> attachmentIds,
-        @Schema(description = "새로 붙일 uploadId") List<@NotNull UUID> uploadIds) {
+        @Schema(description = "새로 붙일 uploadId") @Size(max = 5, message = "첨부파일은 5개까지 붙일 수 있습니다.")
+                List<@NotNull UUID> uploadIds) {
 
     public ArchivePostUpdateRequest {
         title = title == null ? null : title.strip();

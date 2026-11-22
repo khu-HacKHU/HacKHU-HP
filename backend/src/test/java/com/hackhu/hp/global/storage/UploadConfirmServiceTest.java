@@ -42,7 +42,8 @@ class UploadConfirmServiceTest {
                         repository,
                         imageFormatValidator,
                         new AttachmentFormatValidator(objectStore),
-                        objectStore);
+                        objectStore,
+                        new UploadRecordDiscarder(repository));
 
         when(imageFormatValidator.isSupportedImage(anyString())).thenReturn(true);
         // 기본은 요청한 수만큼 갱신에 성공한 상황으로 둔다.

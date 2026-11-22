@@ -281,6 +281,20 @@ class ArchivePostApiTest {
         assertThat(postCount()).isZero();
         verify(objectStore).deleteAll(List.of("attachment/" + upload));
         assertThat(output.getOut()).contains("업로드 형식 확인 실패 userId=" + AUTHOR);
+
+        // 글 작성 트랜잭션이 롤백돼도 사용 처리는 남아야 한다. 객체는 이미 지웠기 때문이다 (PR #135 리뷰).
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT status FROM upload_record WHERE id = ?",
+                                String.class,
+                                upload))
+                .isEqualTo("USED");
+        // 같은 uploadId로 다시 보내면 "형식이 아니다"가 아니라 이미 쓴 업로드라는 사유를 받는다.
+        mockMvc.perform(
+                        json(post("/api/v1/archive-posts"), writeBody(List.of(upload)))
+                                .with(as(AUTHOR, Role.MEMBER)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].reason").value("이미 사용했거나 만료된 업로드 주소입니다."));
     }
 
     @Test

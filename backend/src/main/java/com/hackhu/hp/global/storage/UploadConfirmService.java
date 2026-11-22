@@ -22,8 +22,11 @@ import org.springframework.stereotype.Service;
  * <p>검사 순서는 싼 것부터다. 발급 기록 조회(소유자·만료·중복)로 먼저 걸러내고, 통과한 것만 S3에서 실제 바이트를 읽어 매직바이트를 본다
  * (docs/spec/gallery/backend/4-2 4절).
  *
- * <p>이 클래스에는 트랜잭션을 걸지 않는다. 사용 처리는 레포지토리의 조건부 갱신이 하고, 그 메서드가 {@code @Transactional}이라 호출하는 쪽이 트랜잭션을
- * 걸었는지와 무관하게 동작한다. 여기에 트랜잭션을 걸면 실패 경로에서 S3 객체를 지운 뒤 예외를 던질 때 기록 갱신만 롤백돼 S3와 DB가 어긋난다.
+ * <p>이 클래스에는 트랜잭션을 걸지 않는다. 호출하는 쪽(앨범 생성, 자료게시판 작성·수정)은 보통 트랜잭션 안이고, 성공 경로의 사용 처리({@link
+ * UploadRecordRepository#claim})는 그 트랜잭션에 참여해 글이나 앨범 저장과 함께 커밋되거나 롤백된다.
+ *
+ * <p>실패 경로는 다르다. S3 객체를 지운 뒤 예외를 던지므로, 사용 처리가 호출하는 쪽 트랜잭션에 참여하면 그 롤백에 기록 갱신만 되돌아가 S3와 DB가 어긋난다. 그래서
+ * 실패 경로의 사용 처리는 {@link UploadRecordDiscarder}가 별도 트랜잭션으로 먼저 커밋한다 (PR #135 리뷰).
  */
 @Service
 public class UploadConfirmService {
@@ -38,16 +41,19 @@ public class UploadConfirmService {
     private final ImageFormatValidator imageFormatValidator;
     private final AttachmentFormatValidator attachmentFormatValidator;
     private final S3ObjectStore objectStore;
+    private final UploadRecordDiscarder discarder;
 
     public UploadConfirmService(
             UploadRecordRepository uploadRecordRepository,
             ImageFormatValidator imageFormatValidator,
             AttachmentFormatValidator attachmentFormatValidator,
-            S3ObjectStore objectStore) {
+            S3ObjectStore objectStore,
+            UploadRecordDiscarder discarder) {
         this.uploadRecordRepository = uploadRecordRepository;
         this.imageFormatValidator = imageFormatValidator;
         this.attachmentFormatValidator = attachmentFormatValidator;
         this.objectStore = objectStore;
+        this.discarder = discarder;
     }
 
     /**
@@ -154,7 +160,8 @@ public class UploadConfirmService {
     /** 실패한 요청의 객체를 지우고, 아직 안 쓰인 기록을 사용 처리해 재시도로 S3 읽기를 반복하지 못하게 한다. */
     private void discard(List<UploadRecord> cleanupTargets, Long userId, Instant now) {
         objectStore.deleteAll(cleanupTargets.stream().map(UploadRecord::getObjectKey).toList());
-        uploadRecordRepository.claim(
+        // 호출하는 쪽이 이 예외로 롤백해도 사용 처리는 남아야 한다. 따로 커밋한다.
+        discarder.claimInNewTransaction(
                 cleanupTargets.stream().map(UploadRecord::getId).toList(), userId, now);
     }
 
