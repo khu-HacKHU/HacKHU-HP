@@ -217,3 +217,26 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 - 실패만 세는 규칙을 시도한 뒤에 세면 동시에 들어온 시도가 모두 확인을 통과해 한도를 넘는다. 그래서 확인 전에 한 번을 잡는다. ([DECISIONS.md](DECISIONS.md) A21, 5-2-5)
 - 거부 로그는 창마다 처음 거부할 때만 남긴다. 거부할 때마다 남기면 누구나 로그를 쌓을 수 있다. (CWE-779)
 - 카운터는 서버 메모리에 있다. 재배포하면 초기화되고 인스턴스를 늘리면 느슨해진다. ([DECISIONS.md](DECISIONS.md) A11)
+
+<br>
+
+### 3-1-5. 다른 기능에 주는 회원 조회
+
+게시판과 갤러리는 글과 앨범에 작성자 이름을 보여 줘야 한다. 그 기능들은 `users` 테이블과 `UserRepository`를 직접 읽지 않고 인증권한팀이 주는 공개 메서드를 쓴다. ([backend/AGENTS.md](../../../../backend/AGENTS.md))
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `UserQueryService` | `domain/user/service` | 다른 기능이 회원 정보를 읽는 입구 |
+| `UserDisplayName` | `domain/user/repository` | `id`와 `name`만 담는 조회 결과 |
+
+```java
+public Map<Long, String> findDisplayNames(Collection<Long> userIds)
+```
+
+- **이름만 돌려준다.** 이메일, 역할, 비밀번호 해시, `User` 엔티티를 돌려주지 않는다. 쿼리가 `id`와 `name`만 선택하므로 나머지는 DB에서 나오지 않는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-9)
+- **탈퇴한 회원은 맵에 없다.** 탈퇴하면 `name`이 NULL이 되고 `ck_users_withdrawn_fields`가 그것을 보장하므로, 돌아온 이름에 NULL이 없다. 부르는 쪽이 없는 ID를 "탈퇴한 회원"처럼 표시한다.
+- **없는 ID도 맵에 없다.** 탈퇴와 구분하지 않는다. 구분해서 주면 ID로 계정이 있었는지를 떠볼 수 있다.
+- **ID 목록을 한 번의 조회로 읽는다.** 목록 한 페이지에 쿼리 한 번이다. 중복 ID는 합쳐서 한 번만 조회한다.
+- 목록이 비면 DB를 부르지 않고 빈 맵을 돌려준다. 돌려주는 맵은 바꿀 수 없다.
+
+부르는 쪽은 자기 팀의 인터페이스 뒤에서 이 메서드에 위임한다. 게시판은 `AuthorNameReader`를 두고 어댑터만 둔다. 그래야 게시판 코드가 `domain/user`에 직접 기대지 않는다. (#29, #53, #55)
