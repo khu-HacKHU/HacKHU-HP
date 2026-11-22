@@ -44,12 +44,11 @@ public class AlbumQueryService {
         Map<Long, String> coverKeys = coverObjectKeys(albums.getContent());
         Map<Long, Integer> photoCounts = photoCounts(albums.getContent());
         Page<AlbumSummaryResponse> content =
-                albums.map(
-                        album ->
-                                AlbumSummaryResponse.of(
-                                        album,
-                                        toUrl(coverKeys.get(album.getId())),
-                                        photoCounts.getOrDefault(album.getId(), 0)));
+                albums.map(album ->
+                        AlbumSummaryResponse.of(
+                                album,
+                                toUrl(coverKeys.get(album.getId())),
+                                photoCounts.getOrDefault(album.getId(), 0)));
         return AlbumPageResponse.from(content);
     }
 
@@ -63,12 +62,11 @@ public class AlbumQueryService {
                         .orElseThrow(() -> new BusinessException(GalleryErrorCode.ALBUM_NOT_FOUND));
         List<PhotoResponse> photos =
                 photoRepository.findByAlbumIdOrderByDisplayOrderAsc(albumId).stream()
-                        .map(
-                                photo ->
-                                        new PhotoResponse(
-                                                photo.getId(),
-                                                photoUrlResolver.resolve(photo.getObjectKey()),
-                                                photo.getDisplayOrder()))
+                        .map(photo ->
+                                new PhotoResponse(
+                                        photo.getId(),
+                                        photoUrlResolver.resolve(photo.getObjectKey()),
+                                        photo.getDisplayOrder()))
                         .toList();
         return AlbumDetailResponse.of(album, AlbumPermission.canDelete(album, user), photos);
     }

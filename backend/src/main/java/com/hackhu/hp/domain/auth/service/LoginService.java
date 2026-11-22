@@ -98,10 +98,8 @@ public class LoginService {
 
         Optional<IssuedTokens> issued =
                 user.isPresent() && matches
-                        ? transactionTemplate.execute(
-                                status ->
-                                        startSession(
-                                                user.get(), verifiedHash, existingRefreshToken))
+                        ? transactionTemplate.execute(status ->
+                                startSession(user.get(), verifiedHash, existingRefreshToken))
                         : Optional.empty();
         if (issued == null || issued.isEmpty()) {
             Long userId = user.map(User::getId).orElse(null);
@@ -147,10 +145,9 @@ public class LoginService {
         }
         refreshTokenRepository
                 .findSessionIdByTokenHash(RefreshTokenValues.hash(existingRefreshToken))
-                .ifPresent(
-                        sessionId ->
-                                loginSessionRepository.revoke(
-                                        sessionId, SessionRevokeReason.LOGOUT, clock.instant()));
+                .ifPresent(sessionId ->
+                        loginSessionRepository.revoke(
+                                sessionId, SessionRevokeReason.LOGOUT, clock.instant()));
     }
 
     // 72바이트가 넘는 비밀번호는 가입 규칙상 저장될 수 없으므로 틀린 것으로 본다.

@@ -112,11 +112,10 @@ abstract class AuthIntegrationTestSupport {
     }
 
     MockHttpServletRequestBuilder fromIp(MockHttpServletRequestBuilder request, String clientIp) {
-        return request.with(
-                r -> {
-                    r.setRemoteAddr(clientIp);
-                    return r;
-                });
+        return request.with(r -> {
+            r.setRemoteAddr(clientIp);
+            return r;
+        });
     }
 
     ResultActions login(String email, String password) throws Exception {

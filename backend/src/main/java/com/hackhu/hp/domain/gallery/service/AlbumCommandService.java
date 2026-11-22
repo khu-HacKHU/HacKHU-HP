@@ -77,12 +77,11 @@ public class AlbumCommandService {
 
         List<PhotoResponse> photoResponses =
                 photos.stream()
-                        .map(
-                                photo ->
-                                        new PhotoResponse(
-                                                photo.getId(),
-                                                photoUrlResolver.resolve(photo.getObjectKey()),
-                                                photo.getDisplayOrder()))
+                        .map(photo ->
+                                new PhotoResponse(
+                                        photo.getId(),
+                                        photoUrlResolver.resolve(photo.getObjectKey()),
+                                        photo.getDisplayOrder()))
                         .toList();
         // 방금 올린 사람이 보는 응답이라 지울 수 있다 (동아리원 이상만 이 API에 들어온다).
         return AlbumDetailResponse.of(album, true, photoResponses);
