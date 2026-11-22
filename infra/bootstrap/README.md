@@ -45,6 +45,13 @@ plan 역할은 `develop`에 있는 재사용 워크플로 `.github/workflows/ter
 - PR 워크플로는 이 파일을 `uses: khu-HacKHU/HacKHU-HP/.github/workflows/terraform-plan.yml@develop`로 부른다. `./.github/...`로 부르면 PR 브랜치의 파일이 돌아서 역할을 받지 못한다.
 - plan 잡은 PR의 Terraform 코드를 실행한다(`data "external"`, provider). 그래서 plan 역할로 상태 파일은 읽힌다고 보고, 상태에는 시크릿을 두지 않는다. 상태 버킷 밖의 S3 객체와 로그, 배포 명령 출력, 인스턴스 콘솔 출력의 본문은 plan 역할로 읽을 수 없게 막아 두었다.
 
+## apply와 배포 워크플로가 지켜야 할 것
+
+apply 역할은 `develop`에서 돈 `.github/workflows/terraform-apply.yml`과 `.github/workflows/deploy.yml`의 잡만 맡을 수 있다(신뢰 정책의 `job_workflow_ref` 조건). `develop`의 다른 워크플로가 `id-token: write`를 요청해도 역할을 받지 못한다.
+
+- Terraform apply와 앱 배포 워크플로는 이 두 파일 이름을 쓴다. 이름을 바꾸거나 파일을 더하면 이 디렉터리를 고쳐 다시 적용해야 한다.
+- 운영으로 승격하며 `develop`을 `main`으로 바꿀 때(DEPLOYMENT.md 8-2) apply 역할의 `sub`와 `job_workflow_ref` 조건도 함께 바꾼다.
+
 ## 그 뒤에 바꿀 때
 
 이 디렉터리도 PR로 바꾸지만 적용은 PM이 로컬에서 같은 방법으로 한다. apply 역할이 자기 자신, OIDC 공급자, 경계 정책을 바꿀 수 없게 막아 두었기 때문이다.

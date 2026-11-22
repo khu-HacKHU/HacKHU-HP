@@ -56,6 +56,15 @@ data "aws_iam_policy_document" "assume_apply" {
       variable = "token.actions.githubusercontent.com:sub"
       values   = ["repo:${local.repo}:ref:refs/heads/develop"]
     }
+    # develop의 워크플로 중 id-token을 요청하는 것이 늘어도, 정해 둔 두 파일의 잡만 역할을 받게 한다.
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:job_workflow_ref"
+      values = [
+        "${local.repo}/.github/workflows/terraform-apply.yml@refs/heads/develop",
+        "${local.repo}/.github/workflows/deploy.yml@refs/heads/develop",
+      ]
+    }
   }
 }
 
