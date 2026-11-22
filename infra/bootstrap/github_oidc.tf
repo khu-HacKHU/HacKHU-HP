@@ -86,6 +86,25 @@ data "aws_iam_policy_document" "terraform_plan_state" {
     actions       = ["s3:GetObject", "s3:GetObjectVersion"]
     not_resources = ["${aws_s3_bucket.tfstate.arn}/*"]
   }
+
+  # 같은 이유로 운영 로그, 배포 명령 출력, 인스턴스 콘솔 출력의 본문도 막는다. refresh에 쓰는 Describe와 List는 남긴다.
+  statement {
+    sid    = "NoLogData"
+    effect = "Deny"
+    actions = [
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+      "logs:GetLogRecord",
+      "logs:GetQueryResults",
+      "logs:StartQuery",
+      "logs:StartLiveTail",
+      "ssm:GetCommandInvocation",
+      "ssm:ListCommandInvocations",
+      "ec2:GetConsoleOutput",
+      "ec2:GetConsoleScreenshot",
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "terraform_plan_state" {
@@ -166,6 +185,12 @@ data "aws_iam_policy_document" "app_boundary" {
       "arn:aws:s3:::hackhu-hp-*",
       "arn:aws:s3:::hackhu-hp-*/*",
     ]
+    # S3 ARN에는 계정이 없어서, 같은 접두사로 남의 계정에 만든 버킷으로 내보내지 못하게 한다.
+    condition {
+      test     = "StringEquals"
+      variable = "s3:ResourceAccount"
+      values   = [local.account_id]
+    }
   }
 
   statement {
@@ -253,7 +278,6 @@ data "aws_iam_policy_document" "terraform_apply_iam" {
       "iam:DeleteRole",
       "iam:TagRole",
       "iam:UntagRole",
-      "iam:UpdateAssumeRolePolicy",
       "iam:CreateInstanceProfile",
       "iam:DeleteInstanceProfile",
       "iam:TagInstanceProfile",

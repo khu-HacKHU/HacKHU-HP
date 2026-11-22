@@ -43,10 +43,12 @@ rm -f terraform.tfstate terraform.tfstate.backup tfplan
 plan 역할은 `develop`에 있는 재사용 워크플로 `.github/workflows/terraform-plan.yml`의 잡만 맡을 수 있다(신뢰 정책의 `job_workflow_ref` 조건). PR이 자기 워크플로 파일을 고쳐 역할을 쓰지 못하게 하려는 것이다.
 
 - PR 워크플로는 이 파일을 `uses: khu-HacKHU/HacKHU-HP/.github/workflows/terraform-plan.yml@develop`로 부른다. `./.github/...`로 부르면 PR 브랜치의 파일이 돌아서 역할을 받지 못한다.
-- plan 잡은 PR의 Terraform 코드를 실행한다(`data "external"`, provider). 그래서 plan 역할로 상태 파일은 읽힌다고 보고, 상태에는 시크릿을 두지 않는다. 상태 버킷 밖의 S3 객체는 plan 역할로 읽을 수 없게 막아 두었다.
+- plan 잡은 PR의 Terraform 코드를 실행한다(`data "external"`, provider). 그래서 plan 역할로 상태 파일은 읽힌다고 보고, 상태에는 시크릿을 두지 않는다. 상태 버킷 밖의 S3 객체와 로그, 배포 명령 출력, 인스턴스 콘솔 출력의 본문은 plan 역할로 읽을 수 없게 막아 두었다.
 
 ## 그 뒤에 바꿀 때
 
 이 디렉터리도 PR로 바꾸지만 적용은 PM이 로컬에서 같은 방법으로 한다. apply 역할이 자기 자신, OIDC 공급자, 경계 정책을 바꿀 수 없게 막아 두었기 때문이다.
 
 앱 서버 역할은 `/hackhu-hp/app/` 경로에 만들고 `permissions_boundary`에 `app_boundary_policy_arn`을 넣는다. 빠지면 apply가 권한 오류로 멈춘다. 앱에 경계 밖의 권한이 필요하면 경계 정책을 이 디렉터리에서 PR로 넓힌다.
+
+apply 역할은 앱 역할의 신뢰 정책을 바꿀 수 없다. 바꿔야 하면 PM이 로컬에서 바꾼다.
