@@ -9,6 +9,8 @@ import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.exception.GalleryErrorCode;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.domain.gallery.repository.PhotoRepository.AlbumPhotoCount;
+import com.hackhu.hp.global.auth.LoginUser;
 import com.hackhu.hp.global.error.BusinessException;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 앨범 목록과 상세 조회. 둘 다 공개 API라 권한 검사가 없다 (5-1 1절). */
+/** 앨범 목록과 상세 조회. 둘 다 공개 API라 권한 검사가 없다 (5-1 1절). 상세의 {@code canDelete}는 화면 표시용으로만 계산한다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -40,13 +42,20 @@ public class AlbumQueryService {
     public AlbumPageResponse getAlbums(int page, int size) {
         Page<Album> albums = albumRepository.findAll(PageRequest.of(page, size, LIST_SORT));
         Map<Long, String> coverKeys = coverObjectKeys(albums.getContent());
+        Map<Long, Integer> photoCounts = photoCounts(albums.getContent());
         Page<AlbumSummaryResponse> content =
                 albums.map(album ->
-                        AlbumSummaryResponse.of(album, toUrl(coverKeys.get(album.getId()))));
+                        AlbumSummaryResponse.of(
+                                album,
+                                toUrl(coverKeys.get(album.getId())),
+                                photoCounts.getOrDefault(album.getId(), 0)));
         return AlbumPageResponse.from(content);
     }
 
-    public AlbumDetailResponse getAlbum(Long albumId) {
+    /**
+     * @param user 현재 사용자. 비로그인이면 null이다 (공개 API)
+     */
+    public AlbumDetailResponse getAlbum(Long albumId, LoginUser user) {
         Album album =
                 albumRepository
                         .findById(albumId)
@@ -59,7 +68,7 @@ public class AlbumQueryService {
                                         photoUrlResolver.resolve(photo.getObjectKey()),
                                         photo.getDisplayOrder()))
                         .toList();
-        return AlbumDetailResponse.of(album, photos);
+        return AlbumDetailResponse.of(album, AlbumPermission.canDelete(album, user), photos);
     }
 
     private Map<Long, String> coverObjectKeys(List<Album> albums) {
@@ -69,6 +78,18 @@ public class AlbumQueryService {
         List<Long> albumIds = albums.stream().map(Album::getId).toList();
         return photoRepository.findByAlbumIdInAndDisplayOrder(albumIds, Photo.COVER_ORDER).stream()
                 .collect(Collectors.toMap(Photo::getAlbumId, Photo::getObjectKey));
+    }
+
+    private Map<Long, Integer> photoCounts(List<Album> albums) {
+        if (albums.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> albumIds = albums.stream().map(Album::getId).toList();
+        return photoRepository.countByAlbumIds(albumIds).stream()
+                .collect(
+                        Collectors.toMap(
+                                AlbumPhotoCount::getAlbumId,
+                                count -> count.getPhotoCount().intValue()));
     }
 
     // 앨범은 사진이 1장 이상이라(D9) 대표 사진이 없을 일은 없지만, 데이터가 어긋나도 목록 전체가 깨지지 않게 null을 준다.
