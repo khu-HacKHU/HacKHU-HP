@@ -64,7 +64,7 @@
 |---|---|---|---|
 | id | BIGINT | PK | |
 | post_id | BIGINT | NOT NULL, FK `post.id` ON DELETE CASCADE | 첨부한 글 <br> 자료게시판 글만 가리킴 |
-| object_key | VARCHAR(255) | NOT NULL, UNIQUE | S3 객체 키 <br> 형식 `board/{uuid}.{확장자}`, 확장자는 형식 확인을 통과한 실제 형식 기준 <br> 응답에 넣지 않음 |
+| object_key | VARCHAR(255) | NOT NULL, UNIQUE | S3 객체 키 <br> 형식 `attachment/{uuid}`, `global/storage`가 발급할 때 만듦 <br> 확장자는 붙이지 않음 (DECISIONS.md B11) <br> 응답에 넣지 않음 |
 | file_name | VARCHAR(200) | NOT NULL | 원래 파일 이름 <br> 경로 부분과 제어 문자를 지우고 저장함 (5-1-6) |
 | content_type | VARCHAR(100) | NOT NULL | 형식 확인을 통과한 MIME 타입 |
 | size_bytes | BIGINT | NOT NULL | 파일 크기 |
@@ -111,7 +111,7 @@
 - `author_id`는 `users.id`를 참조한다. 활성 계정과 탈퇴한 계정의 행은 지우지 않으므로 참조가 깨지지 않는다. 승인 대기 회원은 글을 쓸 수 없어서 거절로 지워지는 행을 참조하는 글이 없다. (auth 3-2-DESIGN-DB-SCHEMA.md 3-2-6)
 - `post` 마이그레이션은 `users` 마이그레이션(#24) 뒤에 낸다. `set_updated_at()` 함수와 외래 키 대상이 모두 `users` 마이그레이션에 있기 때문이다. 번호는 낼 때 레포의 마지막 번호 다음으로 정한다. (작성 시점 기준 `V1`은 `users`(PR #106), `V2`는 갤러리(PR #107)로 열려 있음)
 - 작성자 이름은 `users.name`을 조회 시점에 읽는다. 글에 이름을 복사해 두지 않는다. 탈퇴하면 이름이 NULL이 되고 응답에서 "탈퇴한 회원"으로 보이게 된다. 응답 형식은 계약 문서를 따른다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md))
-- 업로드 발급 기록은 `global/storage`의 테이블이다. 게시판은 발급할 때 용도를 `BOARD_ATTACHMENT`로 남기고, 확정할 때 "이 사용자에게 이 용도로 발급했고 아직 쓰지 않았고 만료되지 않았는가"를 확인한다. 테이블 구성은 갤러리팀과 PL이 정한다. ([gallery 3-2](../../gallery/backend/3-2-DESIGN-DB-SCHEMA.md) 4절, #40)
+- 업로드 발급 기록은 `global/storage`의 테이블이다. 게시판은 발급할 때 용도를 `ATTACHMENT`로 남기고, 확정할 때 "이 사용자에게 이 용도로 발급했고 아직 쓰지 않았고 만료되지 않았는가"를 확인한다. 테이블 구성은 갤러리팀과 PL이 정한다. ([gallery 3-2](../../gallery/backend/3-2-DESIGN-DB-SCHEMA.md) 4절, #40)
 - 메인 화면의 최근 공지는 이 테이블을 `NOTICE` 조건으로 읽는다. 홈 기능에서 다룬다. ([홈 배경](../../home/BACKGROUND.md))
 
 <br>

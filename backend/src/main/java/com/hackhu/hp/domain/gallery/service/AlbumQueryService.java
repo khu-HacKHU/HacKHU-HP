@@ -41,10 +41,8 @@ public class AlbumQueryService {
         Page<Album> albums = albumRepository.findAll(PageRequest.of(page, size, LIST_SORT));
         Map<Long, String> coverKeys = coverObjectKeys(albums.getContent());
         Page<AlbumSummaryResponse> content =
-                albums.map(
-                        album ->
-                                AlbumSummaryResponse.of(
-                                        album, toUrl(coverKeys.get(album.getId()))));
+                albums.map(album ->
+                        AlbumSummaryResponse.of(album, toUrl(coverKeys.get(album.getId()))));
         return AlbumPageResponse.from(content);
     }
 
@@ -55,12 +53,11 @@ public class AlbumQueryService {
                         .orElseThrow(() -> new BusinessException(GalleryErrorCode.ALBUM_NOT_FOUND));
         List<PhotoResponse> photos =
                 photoRepository.findByAlbumIdOrderByDisplayOrderAsc(albumId).stream()
-                        .map(
-                                photo ->
-                                        new PhotoResponse(
-                                                photo.getId(),
-                                                photoUrlResolver.resolve(photo.getObjectKey()),
-                                                photo.getDisplayOrder()))
+                        .map(photo ->
+                                new PhotoResponse(
+                                        photo.getId(),
+                                        photoUrlResolver.resolve(photo.getObjectKey()),
+                                        photo.getDisplayOrder()))
                         .toList();
         return AlbumDetailResponse.of(album, photos);
     }
