@@ -8,8 +8,8 @@
 
 | 패키지 | 두는 것 |
 |---|---|
-| `domain/gallery/controller` | `AlbumController` |
-| `domain/gallery/service` | `AlbumQueryService`, `PhotoUrlResolver`, `CloudFrontPhotoUrlResolver` |
+| `domain/gallery/controller` | `AlbumController`(조회, 삭제), `GalleryUploadController`(업로드 주소 발급, 앨범 올리기) |
+| `domain/gallery/service` | `AlbumQueryService`, `AlbumCommandService`(올리기, 삭제), `AlbumPermission`(삭제 권한 규칙), `PhotoUrlResolver`, `CloudFrontPhotoUrlResolver` |
 | `domain/gallery/repository` | `AlbumRepository`, `PhotoRepository` |
 | `domain/gallery/entity` | `Album`, `Photo` |
 | `domain/gallery/dto` | 요청과 응답 `record` |
@@ -17,6 +17,8 @@
 | `domain/gallery/config` | 조회 주소 설정(`GalleryCdnProperties`)과 빈 등록 |
 
 의존 방향은 controller에서 service, service에서 repository 순이다. 컨트롤러는 엔티티를 반환하지 않는다.
+
+삭제 권한(작성자 또는 관리자)은 `AlbumPermission` 한 곳에서 정한다. 삭제 API와 상세 응답의 `canDelete`가 이 규칙을 같이 쓴다. 따로 두면 버튼은 보이는데 누르면 403이 나는 화면이 생긴다. S3 객체 삭제는 `global/storage`의 `S3ObjectStore`를 쓴다.
 
 <br>
 

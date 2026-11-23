@@ -17,12 +17,16 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.global.auth.LoginUser;
+import com.hackhu.hp.global.auth.Role;
 import com.hackhu.hp.global.error.BusinessException;
+import com.hackhu.hp.global.storage.S3ObjectStore;
 import com.hackhu.hp.global.storage.UploadConfirmService;
 import com.hackhu.hp.global.storage.UploadPurpose;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +39,7 @@ class AlbumCommandServiceTest {
     private UploadConfirmService uploadConfirmService;
     private AlbumRepository albumRepository;
     private PhotoRepository photoRepository;
+    private S3ObjectStore objectStore;
     private AlbumCommandService service;
 
     @BeforeEach
@@ -42,11 +47,16 @@ class AlbumCommandServiceTest {
         uploadConfirmService = mock(UploadConfirmService.class);
         albumRepository = mock(AlbumRepository.class);
         photoRepository = mock(PhotoRepository.class);
+        objectStore = mock(S3ObjectStore.class);
         PhotoUrlResolver photoUrlResolver = objectKey -> "https://cdn.example/" + objectKey;
 
         service =
                 new AlbumCommandService(
-                        uploadConfirmService, albumRepository, photoRepository, photoUrlResolver);
+                        uploadConfirmService,
+                        albumRepository,
+                        photoRepository,
+                        photoUrlResolver,
+                        objectStore);
 
         when(albumRepository.save(any(Album.class))).thenAnswer(i -> i.getArgument(0));
         when(photoRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
@@ -173,11 +183,144 @@ class AlbumCommandServiceTest {
         when(resolver.resolve(anyString())).thenReturn("https://cdn.example/x");
         AlbumCommandService withMockResolver =
                 new AlbumCommandService(
-                        uploadConfirmService, albumRepository, photoRepository, resolver);
+                        uploadConfirmService,
+                        albumRepository,
+                        photoRepository,
+                        resolver,
+                        objectStore);
 
         withMockResolver.create(UPLOADER, request(LocalDate.now(KST), 2));
 
         verify(resolver).resolve("gallery/a");
         verify(resolver).resolve("gallery/b");
+    }
+
+    // ---- 앨범 삭제 (#59) ----
+
+    private static final long ALBUM_ID = 12L;
+    private static final long OTHER_MEMBER = 8L;
+    private static final long ADMIN = 1L;
+
+    private Album givenAlbumWithPhotos(String... objectKeys) {
+        Album album = Album.create("10월 정기 세미나", LocalDate.now(KST).minusDays(1), UPLOADER);
+        when(albumRepository.findById(ALBUM_ID)).thenReturn(Optional.of(album));
+        List<Photo> photos = new java.util.ArrayList<>();
+        for (int order = 0; order < objectKeys.length; order++) {
+            photos.add(Photo.create(ALBUM_ID, objectKeys[order], (short) order));
+        }
+        when(photoRepository.findByAlbumIdOrderByDisplayOrderAsc(ALBUM_ID)).thenReturn(photos);
+        when(albumRepository.deleteAlbumById(ALBUM_ID)).thenReturn(1);
+        return album;
+    }
+
+    @Test
+    void 작성자는_앨범과_사진_파일을_지운다() {
+        givenAlbumWithPhotos("gallery/a", "gallery/b");
+
+        service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER));
+
+        verify(albumRepository).deleteAlbumById(ALBUM_ID);
+        verify(objectStore).deleteAll(List.of("gallery/a", "gallery/b"));
+    }
+
+    @Test
+    void 관리자는_다른_사람의_앨범을_지운다() {
+        givenAlbumWithPhotos("gallery/a");
+
+        service.delete(ALBUM_ID, new LoginUser(ADMIN, Role.ADMIN));
+
+        verify(albumRepository).deleteAlbumById(ALBUM_ID);
+        verify(objectStore).deleteAll(List.of("gallery/a"));
+    }
+
+    @Test
+    void 다른_동아리원은_지우지_못한다() {
+        givenAlbumWithPhotos("gallery/a");
+
+        BusinessException thrown =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.delete(ALBUM_ID, new LoginUser(OTHER_MEMBER, Role.MEMBER)));
+
+        assertEquals("GALLERY_FORBIDDEN", thrown.getErrorCode().code());
+        verify(albumRepository, never()).deleteAlbumById(anyLong());
+        verify(objectStore, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void 운영진도_관리자가_아니면_남의_앨범을_지우지_못한다() {
+        givenAlbumWithPhotos("gallery/a");
+
+        // 관리자는 ADMIN만이다 (PRODUCT.md 4절). STAFF는 운영진이라 포함하지 않는다.
+        BusinessException thrown =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.delete(ALBUM_ID, new LoginUser(OTHER_MEMBER, Role.STAFF)));
+
+        assertEquals("GALLERY_FORBIDDEN", thrown.getErrorCode().code());
+        verify(objectStore, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void 없는_앨범은_404다() {
+        when(albumRepository.findById(ALBUM_ID)).thenReturn(Optional.empty());
+
+        BusinessException thrown =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER)));
+
+        assertEquals("GALLERY_ALBUM_NOT_FOUND", thrown.getErrorCode().code());
+        verify(objectStore, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void DB를_먼저_지운_뒤_S3를_지운다() {
+        givenAlbumWithPhotos("gallery/a");
+
+        service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER));
+
+        // S3를 먼저 지우면 DB 삭제가 실패했을 때 사진만 사라진 앨범이 남는다 (5-2 5-2-2).
+        org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(albumRepository, objectStore);
+        inOrder.verify(albumRepository).deleteAlbumById(ALBUM_ID);
+        inOrder.verify(objectStore).deleteAll(anyList());
+    }
+
+    @Test
+    void 다른_요청이_먼저_지웠으면_404이고_S3는_건드리지_않는다() {
+        givenAlbumWithPhotos("gallery/a");
+        // 조회와 권한 검사는 통과했지만, 행 잠금을 기다리는 사이 앞 요청이 지워 0행이 지워진 경우 (5-2 5-2-2).
+        when(albumRepository.deleteAlbumById(ALBUM_ID)).thenReturn(0);
+
+        BusinessException thrown =
+                assertThrows(
+                        BusinessException.class,
+                        () -> service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER)));
+
+        assertEquals("GALLERY_ALBUM_NOT_FOUND", thrown.getErrorCode().code());
+        verify(objectStore, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void S3_삭제가_실패하면_예외를_그대로_던져_롤백되게_한다() {
+        givenAlbumWithPhotos("gallery/a");
+        org.mockito.Mockito.doThrow(new IllegalStateException("S3 장애"))
+                .when(objectStore)
+                .deleteAll(anyList());
+
+        // 예외를 삼키면 트랜잭션이 커밋되어 화면에서는 사라졌는데 사진 주소가 계속 열린다.
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.delete(ALBUM_ID, new LoginUser(UPLOADER, Role.MEMBER)));
+    }
+
+    @Test
+    void 올린_직후_응답은_지울_수_있다고_준다() {
+        when(uploadConfirmService.confirmImages(anyLong(), any(UploadPurpose.class), anyList()))
+                .thenReturn(List.of("gallery/a"));
+
+        AlbumDetailResponse response = service.create(UPLOADER, request(LocalDate.now(KST), 1));
+
+        org.junit.jupiter.api.Assertions.assertTrue(response.canDelete());
     }
 }
