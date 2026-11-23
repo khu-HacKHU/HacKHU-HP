@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App.tsx'
 import { clearSession } from './lib/session'
@@ -39,9 +39,11 @@ test('첫 화면에 동아리 이름이 보인다', async () => {
   expect(await screen.findByRole('link', { name: 'HacKHU' })).toBeDefined()
 })
 
-test('로그인하지 않으면 헤더에 로그인, 가입이 보인다', async () => {
+test('로그인하지 않으면 헤더에 로그인, 가입하기가 보인다', async () => {
   stubFetch()
   render(<App />)
-  expect(await screen.findByRole('link', { name: '로그인' })).toBeDefined()
-  expect(screen.getByRole('link', { name: '가입' })).toBeDefined()
+  // 첫 화면도 같은 이름의 가입 버튼을 두므로 헤더 안으로 범위를 좁힌다.
+  const header = await screen.findByRole('banner')
+  expect(within(header).getByRole('link', { name: '로그인' })).toBeDefined()
+  expect(within(header).getByRole('link', { name: '가입하기' })).toBeDefined()
 })
