@@ -4,7 +4,7 @@
 
 본 문서는 인증권한 API의 에러 코드와 상태, 실패별 처리를 정한다. 응답 형식은 API 규약을 따른다. ([api.md](../../../conventions/api.md))
 
-지금은 가입(5-3-2), 로그인(5-3-3), refresh와 로그아웃(5-3-4), 요청마다 하는 인증(5-3-5), 요청 횟수 제한(5-3-6), 회원 목록과 가입 승인(5-3-7)을 정했다. 다른 API의 에러 코드는 각 구현 이슈에서 채운다.
+지금은 가입(5-3-2), 로그인(5-3-3), refresh와 로그아웃(5-3-4), 요청마다 하는 인증(5-3-5), 요청 횟수 제한(5-3-6), 회원 목록과 가입 승인(5-3-7), 역할 변경(5-3-8)을 정했다. 다른 API의 에러 코드는 각 구현 이슈에서 채운다.
 
 <br>
 
@@ -113,3 +113,46 @@ access 토큰 검증 필터가 컨트롤러에 닿기 전에 준다. ([5-1-QUALI
 `AUTH_USER_NOT_FOUND`의 메시지는 "회원을 찾을 수 없습니다."이고, `AUTH_USER_NOT_PENDING`의 메시지는 "승인 대기 중인 회원이 아닙니다."다.
 
 승인과 거절은 성공과 404, 409를 모두 INFO 로그 한 줄로 남긴다. 처리한 사람 ID, 대상 ID, 결과(`SUCCESS`나 에러 코드)만 적는다. (5-1-QUALITY-SECURITY.md 5-1-9, 5-1-10)
+
+<br>
+
+### 5-3-8. 역할 변경
+
+`PUT /api/v1/admin/users/{userId}/role`의 실패다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) 4-2-13)
+
+| 실패 | 상태 | 코드 | 처리 |
+|---|---|---|---|
+| 로그인하지 않음 | 401 | `UNAUTHORIZED` | 컨트롤러에 닿기 전에 끝남 |
+| 관리자가 아님 | 403 | `FORBIDDEN` | 컨트롤러에 닿기 전에 끝남 |
+| 본문이 JSON이 아니거나 깨짐 | 415, 400 | `UNSUPPORTED_MEDIA_TYPE`, `INVALID_INPUT` | 행을 바꾸지 않음 |
+| `role`이 없거나 `MEMBER`, `STAFF`, `ADMIN`이 아님 | 400 | `INVALID_INPUT` | `errors`에 `role` 칸의 사유를 담음 <br> 행을 바꾸지 않음 |
+| 회원이 없거나 탈퇴함 | 404 | `AUTH_USER_NOT_FOUND` | 두 경우를 구분하지 않음 |
+| 대상이 승인 대기 회원임 | 409 | `AUTH_TARGET_PENDING` | 역할과 승인 시각을 바꾸지 않음 |
+| 활성 관리자가 대상 한 명뿐인데 역할을 내리려 함 | 409 | `AUTH_LAST_ADMIN` | 5-2-4의 잠금 안에서 확인함 |
+| 경로를 바꿔 한 번 다시 처리해도 대상의 역할이 또 바뀜 | 409 | `AUTH_ROLE_CHANGE_CONFLICT` | 행을 바꾸지 않음 <br> 다시 시도하면 됨 |
+
+**칸별 사유**
+
+| 칸 | 조건 | 사유 |
+|---|---|---|
+| role | 없거나 null임 | 역할을 선택해주세요. |
+| role | `MEMBER`, `STAFF`, `ADMIN`이 아님 | 역할은 MEMBER, STAFF, ADMIN 중 하나여야 합니다. |
+
+**로그**
+
+서비스까지 온 요청은 트랜잭션이 끝난 뒤 INFO 로그 한 줄을 남긴다. 이메일과 이름은 남기지 않는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-9, 5-1-10)
+
+```text
+역할 변경: actorId=1, targetId=17, from=STAFF, to=MEMBER, result=CHANGED
+```
+
+`from`은 마지막으로 읽은 대상의 역할이고, 대상이 없거나 탈퇴했으면 `null`이다. `to`는 요청한 역할이다.
+
+| `result` | 뜻 |
+|---|---|
+| `CHANGED` | 역할을 바꿈 |
+| `UNCHANGED` | 지금과 같은 역할이라 바꾸지 않음 |
+| `NOT_FOUND` | 회원이 없거나 탈퇴함 |
+| `TARGET_PENDING` | 대상이 승인 대기 회원임 |
+| `LAST_ADMIN` | 대상이 마지막 활성 관리자임 |
+| `CONFLICT` | 다시 처리해도 대상의 역할이 또 바뀜 |

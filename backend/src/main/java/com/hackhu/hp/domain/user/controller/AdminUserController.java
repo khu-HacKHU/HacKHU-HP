@@ -2,7 +2,9 @@ package com.hackhu.hp.domain.user.controller;
 
 import com.hackhu.hp.domain.user.dto.AdminUserPageResponse;
 import com.hackhu.hp.domain.user.dto.AdminUserResponse;
+import com.hackhu.hp.domain.user.dto.RoleChangeRequest;
 import com.hackhu.hp.domain.user.service.AdminUserService;
+import com.hackhu.hp.domain.user.service.UserRoleService;
 import com.hackhu.hp.global.auth.CurrentUser;
 import com.hackhu.hp.global.auth.LoginUser;
 import com.hackhu.hp.global.auth.Role;
@@ -10,6 +12,7 @@ import com.hackhu.hp.global.error.BusinessException;
 import com.hackhu.hp.global.error.CommonErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -17,9 +20,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -43,6 +49,7 @@ public class AdminUserController {
                     Sort.by(Sort.Direction.ASC, "createdAt"));
 
     private final AdminUserService adminUserService;
+    private final UserRoleService userRoleService;
 
     @Operation(
             summary = "회원 목록",
@@ -86,5 +93,18 @@ public class AdminUserController {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
         return sort.iterator().next().getDirection();
+    }
+
+    @Operation(
+            summary = "역할 변경",
+            description =
+                    "관리자. MEMBER, STAFF, ADMIN 중 하나로 바꾼다. 같은 역할이면 바꾸지 않고 200."
+                            + " 없거나 탈퇴한 회원은 404, 승인 대기 회원, 마지막 활성 관리자, 처리 중 경합은 409")
+    @PutMapping(path = "/{userId}/role", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public AdminUserResponse changeRole(
+            @CurrentUser LoginUser user,
+            @PathVariable long userId,
+            @Valid @RequestBody RoleChangeRequest request) {
+        return userRoleService.changeRole(user.id(), userId, request.toRole());
     }
 }
