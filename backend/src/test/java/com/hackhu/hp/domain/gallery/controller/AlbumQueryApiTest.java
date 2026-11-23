@@ -1,5 +1,6 @@
 package com.hackhu.hp.domain.gallery.controller;
 
+import static com.hackhu.hp.global.auth.LoginUserRequests.loginUser;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -14,6 +15,7 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.global.auth.Role;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * 앨범 목록·상세 조회 API (#36). 실제 PostgreSQL(Testcontainers)과 Flyway 마이그레이션으로 확인한다.
  *
- * <p>요청에 인증 정보를 하나도 붙이지 않는다. 조회는 공개 API라서 로그인 없이 200이어야 한다 (USER-STORIES 1절).
+ * <p>조회는 공개 API라 인증 정보 없이도 200이어야 한다 (USER-STORIES 1절). 로그인 사용자는 {@code canDelete}를 확인하는 테스트에만 붙인다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -194,6 +196,51 @@ class AlbumQueryApiTest {
         mockMvc.perform(get("/api/v1/albums/{albumId}", "abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    void 목록에_앨범별_사진_수가_있다() throws Exception {
+        saveAlbum("세 장", LocalDate.of(2026, 10, 2), 3);
+        saveAlbum("한 장", LocalDate.of(2026, 10, 1), 1);
+
+        mockMvc.perform(get("/api/v1/albums"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("세 장"))
+                .andExpect(jsonPath("$.content[0].photoCount").value(3))
+                .andExpect(jsonPath("$.content[1].photoCount").value(1));
+    }
+
+    @Test
+    void 비로그인이면_canDelete가_false다() throws Exception {
+        Album album = saveAlbum("MT", LocalDate.of(2026, 9, 1), 1);
+
+        mockMvc.perform(get("/api/v1/albums/{albumId}", album.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canDelete").value(false));
+    }
+
+    @Test
+    void 작성자와_관리자는_canDelete가_true다() throws Exception {
+        Album album = saveAlbum("MT", LocalDate.of(2026, 9, 1), 1);
+
+        mockMvc.perform(
+                        get("/api/v1/albums/{albumId}", album.getId())
+                                .with(loginUser(1L, Role.MEMBER)))
+                .andExpect(jsonPath("$.canDelete").value(true));
+        mockMvc.perform(
+                        get("/api/v1/albums/{albumId}", album.getId())
+                                .with(loginUser(99L, Role.ADMIN)))
+                .andExpect(jsonPath("$.canDelete").value(true));
+    }
+
+    @Test
+    void 다른_동아리원은_canDelete가_false다() throws Exception {
+        Album album = saveAlbum("MT", LocalDate.of(2026, 9, 1), 1);
+
+        mockMvc.perform(
+                        get("/api/v1/albums/{albumId}", album.getId())
+                                .with(loginUser(2L, Role.MEMBER)))
+                .andExpect(jsonPath("$.canDelete").value(false));
     }
 
     /** 사진을 일부러 역순으로 저장해서, 응답 순서가 저장 순서가 아니라 display_order 기준인지 확인한다. */
