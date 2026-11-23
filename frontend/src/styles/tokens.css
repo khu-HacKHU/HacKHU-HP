@@ -20,17 +20,32 @@
   --cyan: #5cc8e8;
   --coral: #f0727a;
 
-  /* 글꼴 (3절). 글꼴 파일을 아직 넣지 않아 OS 기본 글꼴로 뒤를 받친다. */
-  --sans: 'IBM Plex Sans KR', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'IBM Plex Mono', 'IBM Plex Sans KR', ui-monospace, monospace;
+  /* 글꼴 (3절). 파일은 main.tsx에서 번들에 넣는다. 외부 CDN을 거치지 않는다.
+   *
+   * --sans  본문과 한국어 제목. 한글 자폭이 고르고 굵기가 9단계라 화면용으로 받친다
+   * --display 영문 이름표(NOTICE, GALLERY)와 큰 영문 글자. 기하학적 산세리프다
+   * --mono  날짜, 글 번호, 배지, 셸 프롬프트, ASCII 로고. 고정폭이어야 정렬이 맞는다 */
+  --sans:
+    'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Segoe UI',
+    'Malgun Gothic', sans-serif;
+  --display: 'Outfit Variable', 'Pretendard Variable', system-ui, sans-serif;
+  /* 한글은 고정폭 글꼴에 없다. 뒤에 Pretendard를 둬서 한글이 섞인 줄도 읽히게 한다. */
+  --mono:
+    'IBM Plex Mono', ui-monospace, 'Consolas', 'Pretendard Variable', monospace;
 
-  /* 글자 크기 (3절) */
+  /* 글자 크기 (3절).
+   *
+   * 큰 세 단계는 화면 폭에 따라 움직인다. 고정값으로 두면 좁은 화면에서 제목이 넘치고 넓은
+   * 화면에서는 작아 보인다. clamp의 최대값이 디자인 시스템 표의 값이다. 이름은 늘리지 않는다. */
   --text-xs: 0.8rem;
   --text-sm: 0.875rem;
   --text-base: 1.0625rem;
-  --text-lg: 1.33rem;
-  --text-xl: 1.66rem;
-  --text-2xl: 2.3rem;
+  --text-lg: clamp(1.2rem, 1.1rem + 0.5vw, 1.33rem);
+  --text-xl: clamp(1.4rem, 1.2rem + 1.2vw, 1.9rem);
+  --text-2xl: clamp(1.875rem, 1.3rem + 3.2vw, 3.25rem);
+
+  /* 큰 제목은 자간을 좁힌다 (3절). 글자가 커지면 사이가 벌어져 보인다. */
+  --title-tracking: -0.01em;
 
   /* 간격 (4절). 이 9개 밖의 단계는 없다. */
   --space-1: 0.25rem;
@@ -46,9 +61,32 @@
   /* 모양 (4절) */
   --radius: 6px;
   --radius-badge: 4px;
+  /* 메인 화면 카드만 크게 쓴다. 폼, 입력창, 게시판 표는 --radius(6px)를 지킨다. */
+  --radius-card: 14px;
   --measure: 68ch;
   --page-max: 76rem;
-  --page-gutter: var(--space-6);
+
+  /* 좌우 여백은 24px에서 64px까지 움직인다. 넓은 화면에서 본문이 가장자리에 붙지 않게 한다. */
+  --page-gutter: clamp(var(--space-6), 0.25rem + 4vw, var(--space-16));
+
+  /* 섹션 리듬 (4절). 위아래 48px에서 96px까지. space 단계 안에서만 움직인다. */
+  --section-y: clamp(var(--space-12), 1.5rem + 5vw, var(--space-24));
+
+  /* 한 섹션이 한 화면을 차지하는 배치에 쓰는 값.
+   *
+   * 섹션 높이를 calc(--h * 100svh)로 두고 위아래를 --padt, --padb로 띄운다. 섹션 사이를
+   * 선으로 나누지 않고 높이와 여백만으로 나눈다. --nav는 고정 헤더 높이다 (7절). */
+  --nav: 3.5rem;
+  --padt: clamp(var(--space-16), 3rem + 4vw, 7.5rem);
+  --padb: clamp(var(--space-12), 2rem + 3vw, var(--space-16));
+
+  /* 움직임 (8절).
+   *
+   * --hover는 색이 바뀌는 시간이고 모든 화면에서 쓴다. --reveal은 메인 화면에서만 쓰는
+   * 떠오름 시간이다. 둘 다 사용자가 움직임 줄이기를 켜면 각 컴포넌트에서 끈다. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --hover-duration: 0.14s;
+  --reveal-duration: 520ms;
 }
 
 * {
