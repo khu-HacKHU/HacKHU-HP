@@ -1,0 +1,81 @@
+/*
+ * UI 디자인 시스템의 값 (docs/spec/UI-DESIGN-SYSTEM.md).
+ *
+ * 값은 여기서만 정한다. 컴포넌트의 *.module.css는 var(--...)로 가져다 쓰고 색이나 간격을
+ * 직접 적지 않는다. 새 값이 필요하면 화면에 넣지 말고 디자인 시스템 문서에 먼저 추가한다.
+ *
+ * 어두운 화면 하나만 쓴다. 밝은 테마는 두지 않는다 (1절).
+ */
+:root {
+  /* 색 (2절) */
+  --bg: #0f1022;
+  --panel: #181a33;
+  --line: #2c2e4d;
+  --line-strong: #676a96;
+  --ink: #ece8f4;
+  --muted: #a4a3bf;
+  --lilac: #e0bfe6;
+  --on-lilac: #1a1030;
+  --violet: #c58cf2;
+  --cyan: #5cc8e8;
+  --coral: #f0727a;
+
+  /* 글꼴 (3절). 글꼴 파일을 아직 넣지 않아 OS 기본 글꼴로 뒤를 받친다. */
+  --sans: 'IBM Plex Sans KR', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', 'IBM Plex Sans KR', ui-monospace, monospace;
+
+  /* 글자 크기 (3절) */
+  --text-xs: 0.8rem;
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.33rem;
+  --text-xl: 1.66rem;
+  --text-2xl: 2.3rem;
+
+  /* 간격 (4절). 이 9개 밖의 단계는 없다. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* 모양 (4절) */
+  --radius: 6px;
+  --radius-badge: 4px;
+  --measure: 68ch;
+  --page-max: 76rem;
+  --page-gutter: var(--space-6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.7;
+  /* 한국어 줄바꿈은 단어 단위로 한다 (3절). */
+  word-break: keep-all;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+/* 포커스를 받은 요소는 lilac 테두리로 보인다 (8절). 키보드로만 쓸 때 어디에 있는지 보여야 한다. */
+:focus-visible {
+  outline: 2px solid var(--lilac);
+  outline-offset: 2px;
+}
