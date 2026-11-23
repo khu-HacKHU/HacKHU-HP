@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import App from './App.tsx'
-import { clearSession } from './features/auth/session'
+import { clearSession } from './lib/session'
 
 afterEach(() => {
   vi.restoreAllMocks()

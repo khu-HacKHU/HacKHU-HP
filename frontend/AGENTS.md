@@ -18,7 +18,7 @@ React 19 / TypeScript / Vite / oxlint / Prettier / Vitest
 ```
 src/
   styles/tokens.css       디자인 시스템 값. 색·간격·모서리를 여기서만 정한다
-  lib/                    기능에 속하지 않는 공용 코드 (api 호출 래퍼 등)
+  lib/                    기능에 속하지 않는 공용 코드 (api 호출 래퍼, 로그인 상태 등)
   components/             두 기능 이상이 같이 쓰는 컴포넌트
   features/<기능>/         한 기능만 쓰는 화면, 컴포넌트, api, 타입
 ```
@@ -67,6 +67,18 @@ src/
 ## 인증 상태
 
 access 토큰은 **메모리에만** 둔다. `localStorage`, `sessionStorage`, 쿠키에 넣지 않는다 (CWE-922). 보관 방법과 새로고침 뒤 복구는 [auth/frontend/4-2-QUALITY.md](../docs/spec/auth/frontend/4-2-QUALITY.md)에서 정한다.
+
+**로그인 상태는 `src/lib/`에 있다.** 모든 기능이 로그인한 사용자와 역할을 읽으므로 `features/auth/` 안에 두지 않는다. 거기 두면 다른 팀이 쓸 때마다 "다른 기능의 `features/` 안쪽을 가져오지 않는다"를 어기게 된다.
+
+| 무엇                                   | 어디                              |
+| -------------------------------------- | --------------------------------- |
+| 지금 로그인한 사용자와 역할 (컴포넌트) | `lib/useAuth.ts`의 `useAuth()`    |
+| 토큰과 사용자 (컴포넌트 밖)            | `lib/session.ts`의 `getSession()` |
+| 로그인 상태를 화면에 연결하는 Provider | `components/AuthProvider.tsx`     |
+| 로그인, 가입, 로그아웃 **호출**        | `features/auth/api.ts`            |
+
+- 권한에 따라 화면을 바꿀 때는 `useAuth().session?.user.role`을 본다. 역할 검사는 서버가 하고, 화면은 편의일 뿐이다.
+- 토큰을 컴포넌트에서 직접 읽어 `fetch`에 붙이지 않는다. `lib/api.ts`의 `request`가 붙인다.
 
 ## 테스트
 

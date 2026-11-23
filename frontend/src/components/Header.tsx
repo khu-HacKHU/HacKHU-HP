@@ -9,8 +9,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { logout } from '../features/auth/api'
-import { useAuth } from '../features/auth/useAuth'
-import type { AuthUser } from '../features/auth/session'
+import type { AuthUser } from '../lib/session'
+import { useAuth } from '../lib/useAuth'
 import s from './Header.module.css'
 
 const ROLE_LABEL: Record<AuthUser['role'], string> = {
@@ -31,17 +31,21 @@ export function Header() {
   const { session, restoring } = useAuth()
   const navigate = useNavigate()
   const [leaving, setLeaving] = useState(false)
+  const [logoutFailed, setLogoutFailed] = useState(false)
 
   async function onLogout() {
     setLeaving(true)
+    setLogoutFailed(false)
     try {
       await logout()
+      navigate('/')
     } catch {
-      // logout()이 finally에서 세션을 비우므로 요청이 실패해도 화면은 이미 로그아웃됐다.
-      // 여기서 잡지 않으면 onClick이 돌려받지 않는 Promise가 거부되어 처리되지 않은 오류가 된다.
+      // 서버가 로그인 세션을 폐기하지 못했다. 화면만 비우고 넘어가면 refresh 쿠키가 남아
+      // 공용 PC에서 다음 사람이 새로고침만으로 앞사람으로 로그인된다 (A07, CWE-613).
+      // 조용히 넘기지 않고 다시 시도하게 한다. 로그아웃은 쿠키로만 하므로 재시도에 토큰이 없어도 된다.
+      setLogoutFailed(true)
     } finally {
       setLeaving(false)
-      navigate('/')
     }
   }
 
@@ -79,6 +83,21 @@ export function Header() {
           </div>
         )}
       </div>
+
+      {/* 세션이 비워져 로그아웃 버튼이 사라진 뒤에도 보여야 해서 세션 조건 밖에 둔다. */}
+      {logoutFailed && (
+        <p className={s.alert} role="alert">
+          로그아웃하지 못했습니다. 공용 PC라면 꼭 다시 시도해 주세요.{' '}
+          <button
+            className={s.button}
+            type="button"
+            onClick={onLogout}
+            disabled={leaving}
+          >
+            다시 시도
+          </button>
+        </p>
+      )}
     </header>
   )
 }

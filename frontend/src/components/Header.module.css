@@ -73,3 +73,17 @@
   color: var(--lilac);
   border-color: var(--lilac);
 }
+
+/* 오류 안내 상자: panel 배경, 왼쪽 3px coral 선 (6-3). 로그아웃 실패 안내에 쓴다. */
+.alert {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--page-gutter);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--panel);
+  border-left: 3px solid var(--coral);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}

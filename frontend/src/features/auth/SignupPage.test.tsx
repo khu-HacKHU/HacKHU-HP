@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
-import { getSession } from './session'
+import { getSession } from '../../lib/session'
 import { SignupPage } from './SignupPage'
 
 function json(body: unknown, status = 200) {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
-import { clearSession, getSession } from './session'
+import { clearSession, getSession } from '../../lib/session'
 import { LoginPage } from './LoginPage'
 
 function json(

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { clearSession, getSession, setSession } from '../features/auth/session'
+import {
+  clearSession,
+  getSession,
+  onSessionEvent,
+  setSession,
+  type SessionEvent,
+} from './session'
 import { AccountChangedError, ApiError, request } from './api'
 
 function json(
@@ -26,11 +32,18 @@ function tokenFor(user: typeof userA, accessToken: string) {
   return { accessToken, tokenType: 'Bearer', expiresIn: 900, user }
 }
 
+/** 요청 공통 처리가 화면을 어디로 보내라고 알렸는지 모아 둔다 (auth 4-2-1). */
+let events: SessionEvent[] = []
+let unsubscribe: () => void = () => {}
+
 beforeEach(() => {
   clearSession()
+  events = []
+  unsubscribe = onSessionEvent((event) => events.push(event))
 })
 
 afterEach(() => {
+  unsubscribe()
   vi.restoreAllMocks()
   clearSession()
 })
@@ -86,18 +99,114 @@ test('401을 받으면 갱신하고 원래 요청을 한 번 다시 보낸다', 
   expect(getSession()?.accessToken).toBe('new')
 })
 
-test('갱신도 401이면 세션을 비우고 원래 401을 던진다', async () => {
+test('갱신도 401이면 세션을 비우고 로그인 화면으로 보낸다', async () => {
+  setSession({ user: userA, accessToken: 'old' })
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      // 원래 요청, 갱신, 토큰 없이 보낸 재시도가 모두 401이다. 로그인해야 쓸 수 있는 API다.
+      .mockResolvedValue(json({ code: 'UNAUTHORIZED' }, 401)),
+  )
+
+  await expect(request('/api/v1/users/me')).rejects.toBeInstanceOf(ApiError)
+  expect(getSession()).toBeNull()
+  // 세션만 비우면 화면은 그대로 남는다. 계약은 로그인 화면으로 보내라고 한다 (4-2-1).
+  expect(events).toEqual(['expired'])
+})
+
+test('갱신이 401이면 토큰 없이 한 번 더 보낸다', async () => {
+  // 다른 탭에서 로그아웃한 뒤 공개 API를 부른 상황. 서버는 유효하지 않은 토큰이 붙은 공개 API도
+  // 401로 거절하므로(auth 5-3), 토큰을 떼고 다시 보내면 공지와 갤러리는 그대로 보인다.
+  setSession({ user: userA, accessToken: 'dead' })
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED' }, 401))
+    .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED' }, 401))
+    .mockResolvedValueOnce(json({ content: [] }))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(request('/api/v1/albums')).resolves.toEqual({ content: [] })
+
+  const retryHeaders = fetchMock.mock.calls[2][1].headers as Headers
+  expect(retryHeaders.get('Authorization')).toBeNull()
+  expect(getSession()).toBeNull()
+  // 공개 화면을 보던 사람을 로그인 화면으로 끌고 가지 않는다.
+  expect(events).toEqual([])
+})
+
+test('토큰이 없던 요청은 토큰 없이 다시 보내지 않는다', async () => {
+  // 같은 요청을 한 번 더 보내 봐야 결과가 같다.
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(json({ code: 'UNAUTHORIZED' }, 401)),
+  )
+
+  await expect(request('/api/v1/users/me')).rejects.toBeInstanceOf(ApiError)
+
+  expect(globalThis.fetch).toHaveBeenCalledTimes(2)
+  expect(events).toEqual(['expired'])
+})
+
+test('갱신이 서버 오류로 끝나면 세션을 비우지 않는다', async () => {
+  // 500은 "세션이 끝났다"가 아니라 "확인하지 못했다"다. 비우면 잠깐의 오류로 로그아웃된다.
+  setSession({ user: userA, accessToken: 'old' })
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED' }, 401))
+    .mockResolvedValueOnce(json({ code: 'INTERNAL_ERROR' }, 500))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(request('/api/v1/users/me')).rejects.toBeInstanceOf(ApiError)
+
+  expect(fetchMock).toHaveBeenCalledTimes(2)
+  expect(getSession()?.accessToken).toBe('old')
+  expect(events).toEqual([])
+})
+
+test('갱신이 네트워크 오류로 끝나도 세션을 비우지 않는다', async () => {
   setSession({ user: userA, accessToken: 'old' })
   vi.stubGlobal(
     'fetch',
     vi
       .fn()
       .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED' }, 401))
-      .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED' }, 401)),
+      .mockRejectedValueOnce(new TypeError('Failed to fetch')),
   )
 
   await expect(request('/api/v1/users/me')).rejects.toBeInstanceOf(ApiError)
-  expect(getSession()).toBeNull()
+
+  expect(getSession()?.accessToken).toBe('old')
+  expect(events).toEqual([])
+})
+
+test('비밀번호 변경이 필요하면 변경 화면으로 보내라고 알린다', async () => {
+  // 로그인할 때만 확인하면 새로고침한 사용자는 원래 화면에 남아 모든 요청이 403으로 막힌다.
+  setSession({ user: userA, accessToken: 'token-1' })
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(json({ code: 'AUTH_PASSWORD_CHANGE_REQUIRED' }, 403)),
+  )
+
+  await expect(request('/api/v1/albums')).rejects.toBeInstanceOf(ApiError)
+
+  expect(events).toEqual(['password-change-required'])
+  // 403은 로그인 상태가 끝난 것이 아니다.
+  expect(getSession()?.accessToken).toBe('token-1')
+})
+
+test('역할이 부족한 403은 화면을 옮기지 않는다', async () => {
+  setSession({ user: userA, accessToken: 'token-1' })
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(json({ code: 'FORBIDDEN' }, 403)),
+  )
+
+  await expect(request('/api/v1/admin/users')).rejects.toBeInstanceOf(ApiError)
+
+  expect(events).toEqual([])
 })
 
 test('다시 보낸 요청이 또 401이면 갱신을 다시 부르지 않는다', async () => {
@@ -114,6 +223,7 @@ test('다시 보낸 요청이 또 401이면 갱신을 다시 부르지 않는다
   // 원래 요청, 갱신, 재시도까지 세 번. 갱신이 두 번 불리지 않는다.
   expect(fetchMock).toHaveBeenCalledTimes(3)
   expect(getSession()).toBeNull()
+  expect(events).toEqual(['expired'])
 })
 
 test('갱신 결과가 다른 사용자면 원래 요청을 다시 보내지 않는다', async () => {
@@ -172,7 +282,8 @@ test('동시에 401을 받아도 갱신은 한 번만 부른다', async () => {
   const refreshCalls = fetchMock.mock.calls.filter(
     (call) => String(call[0]) === '/api/v1/auth/refresh',
   )
-  // 갱신은 토큰을 회전시킨다. 동시에 부르면 뒤에 온 것이 재사용으로 판정되어 세션이 끊긴다.
+  // 갱신은 토큰을 회전시킨다. 동시에 불러도 10초 안이면 계약이 받아 주지만(4-2-5 두 번째 줄),
+  // 요청 수만큼 쿠키가 회전하고 늦게 처리된 요청이 10초를 넘기면 재사용으로 판정된다.
   expect(refreshCalls).toHaveLength(1)
 })
 

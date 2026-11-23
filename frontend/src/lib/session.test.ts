@@ -1,10 +1,13 @@
 import { afterEach, expect, test } from 'vitest'
 import {
   clearSession,
+  emitSessionEvent,
   getSession,
+  onSessionEvent,
   replaceSession,
   setSession,
   subscribe,
+  type SessionEvent,
 } from './session'
 
 const user = {
@@ -64,4 +67,17 @@ test('갱신으로 다른 사용자가 오면 그 사용자로 바뀐다', () =>
 
   expect(getSession()?.user.id).toBe(9)
   expect(getSession()?.accessToken).toBe('token-2')
+})
+
+test('인증 결과 알림을 구독하고 해제할 수 있다', () => {
+  // 요청 공통 처리는 컴포넌트 밖이라 화면을 옮길 수 없다. 이 알림으로 AuthProvider가 옮긴다.
+  const seen: SessionEvent[] = []
+  const unsubscribe = onSessionEvent((event) => seen.push(event))
+
+  emitSessionEvent('expired')
+  emitSessionEvent('password-change-required')
+  unsubscribe()
+  emitSessionEvent('expired')
+
+  expect(seen).toEqual(['expired', 'password-change-required'])
 })

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
-import { AuthProvider } from '../features/auth/AuthProvider'
-import { clearSession } from '../features/auth/session'
+import { AuthProvider } from './AuthProvider'
+import { clearSession } from '../lib/session'
 import { Header } from './Header'
 
 function json(body: unknown, status = 200) {
@@ -92,7 +92,7 @@ test('로그아웃을 누르면 세션이 비워진다', async () => {
   expect(String(fetchMock.mock.calls[1][0])).toBe('/api/v1/auth/logout')
 })
 
-test('로그아웃 요청이 실패해도 화면은 로그아웃된다', async () => {
+test('로그아웃 요청이 실패하면 다시 시도하라고 알린다', async () => {
   const fetchMock = vi
     .fn()
     .mockResolvedValueOnce(json(tokenFor('MEMBER')))
@@ -102,10 +102,29 @@ test('로그아웃 요청이 실패해도 화면은 로그아웃된다', async (
 
   fireEvent.click(await screen.findByRole('button', { name: '로그아웃' }))
 
-  // 사용자가 로그아웃을 눌렀는데 로그인 상태로 남아 있는 쪽이 더 나쁘다.
-  await waitFor(() =>
-    expect(screen.getByRole('link', { name: '로그인' })).toBeDefined(),
-  )
+  // 서버가 세션을 폐기하지 못했으면 refresh 쿠키가 남아 다음 사람이 새로고침만으로
+  // 앞사람으로 로그인된다. 조용히 로그아웃된 것처럼 보이면 안다 (A07, CWE-613).
+  const alert = await screen.findByRole('alert')
+  expect(alert.textContent).toContain('로그아웃하지 못했습니다')
+  expect(screen.getByRole('button', { name: '다시 시도' })).toBeDefined()
+  // 화면의 세션은 비운다. 안내는 로그아웃 버튼이 사라진 뒤에도 보인다.
+  expect(screen.getByRole('link', { name: '로그인' })).toBeDefined()
   // 네트워크 실패가 처리되지 않은 Promise 거부로 빠져나가지 않아야 한다.
-  // onLogout이 잡지 않으면 테스트는 통과하지만 vitest가 프로세스를 실패로 끝낸다.
+})
+
+test('다시 시도가 성공하면 안내가 사라진다', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(json(tokenFor('MEMBER')))
+    .mockRejectedValueOnce(new TypeError('offline'))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }))
+  vi.stubGlobal('fetch', fetchMock)
+  renderHeader()
+
+  fireEvent.click(await screen.findByRole('button', { name: '로그아웃' }))
+  fireEvent.click(await screen.findByRole('button', { name: '다시 시도' }))
+
+  // 로그아웃은 refresh 쿠키로만 하므로 세션이 비워진 뒤에도 다시 보낼 수 있다 (4-2-6).
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  expect(String(fetchMock.mock.calls[2][0])).toBe('/api/v1/auth/logout')
 })

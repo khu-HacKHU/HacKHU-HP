@@ -4,7 +4,7 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router'
 import { Header } from './components/Header'
 import { PendingNotice } from './components/PendingNotice'
-import { AuthProvider } from './features/auth/AuthProvider'
+import { AuthProvider } from './components/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
 import { SignupPage } from './features/auth/SignupPage'
 import { GalleryPage } from './features/gallery/GalleryPage'

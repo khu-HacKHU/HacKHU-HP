@@ -4,7 +4,7 @@
  * 승인 대기 회원은 로그인은 되지만 공개된 글만 볼 수 있다 (auth 4-2-4, PRODUCT.md 역할).
  * 어느 화면에 있어도 지금 상태를 알 수 있게 헤더 아래에 둔다.
  */
-import { useAuth } from '../features/auth/useAuth'
+import { useAuth } from '../lib/useAuth'
 import s from './PendingNotice.module.css'
 
 export function PendingNotice() {

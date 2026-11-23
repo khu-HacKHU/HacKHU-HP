@@ -4,7 +4,7 @@
  * 공통 처리는 src/lib/api.ts의 request가 한다.
  */
 import { request } from '../../lib/api'
-import { clearSession, setSession, type AuthUser } from './session'
+import { clearSession, setSession, type AuthUser } from '../../lib/session'
 
 export type SignupInput = {
   email: string
@@ -52,13 +52,19 @@ export async function login(
 /**
  * 로그아웃한다. 서버가 refresh 쿠키의 세션을 폐기하고 쿠키를 지운다.
  *
- * <p>요청이 실패해도 화면의 세션은 비운다. 쿠키가 남아 있으면 새로고침 때 다시 로그인되지만,
- * 사용자가 로그아웃을 눌렀는데 로그인 상태로 남아 있는 쪽이 더 나쁘다.
+ * <p>요청이 실패해도 화면의 세션은 비우지만 **실패를 숨기지 않고 던진다.** 서버가 세션을
+ * 폐기하지 못했으면 refresh 쿠키가 그대로 남아, 공용 PC에서 다음 사람이 새로고침만으로
+ * 앞사람으로 로그인된다. 부르는 쪽이 다시 시도하도록 안내해야 한다 (A07, CWE-613).
+ *
+ * <p>쿠키가 없거나 이미 폐기된 세션이어도 서버는 204를 준다 (4-2-6). 그래서 이 실패는
+ * "이미 로그아웃됨"이 아니라 서버 오류나 네트워크 문제다.
  */
 export async function logout(): Promise<void> {
   try {
     await request<void>('/api/v1/auth/logout', { method: 'POST' })
-  } finally {
+  } catch (caught) {
     clearSession()
+    throw caught
   }
+  clearSession()
 }
