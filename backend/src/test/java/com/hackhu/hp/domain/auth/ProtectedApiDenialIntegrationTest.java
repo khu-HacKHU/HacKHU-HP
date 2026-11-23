@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpHeaders;
@@ -25,16 +27,19 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * 머지된 실제 API의 인증 거부 (#27, 6-RELEASE-TEST-CASES.md 6-12).
+ * 대표 API의 인증 거부 (#27, #144, 6-RELEASE-TEST-CASES.md 6-12).
  *
  * <p>테스트 전용 컨트롤러가 아니라 실제 API를 실제 토큰, 필터, DB로 부른다. 경로 규칙이나 필터가 깨지면 여기서 실패한다.
  *
- * <p>요청 본문은 일부러 입력 검증에 걸리게 보낸다. 인증을 통과한 동아리원은 400을 받으므로 경로가 실제로 있고 거부가 입력 검증보다 먼저라는 것을 함께 확인한다. 검증을
- * 통과하는 본문을 보내지 않으므로 S3 주소 발급이나 앨범 저장은 일어나지 않는다.
+ * <p>토큰 필터는 모든 경로에 공통이므로 동아리원 API는 앨범 API 두 개로, 운영진 권한은 공지 작성으로 대표한다. 경로별 권한 규칙은 각 API의 테스트가 보므로 새
+ * API를 만들어도 이 파일에 더하지 않는다.
+ *
+ * <p>앨범 API의 요청 본문은 일부러 입력 검증에 걸리게 보낸다. 인증을 통과한 동아리원은 400을 받으므로 경로가 실제로 있고 거부가 입력 검증보다 먼저라는 것을 함께
+ * 확인한다. 검증을 통과하는 본문을 보내지 않으므로 S3 주소 발급이나 앨범 저장은 일어나지 않는다.
  */
 class ProtectedApiDenialIntegrationTest extends AuthIntegrationTestSupport {
 
-    /** 머지된 API 가운데 로그인이 필요한 것. 모두 동아리원 이상이다 (SecurityConfig 기본 규칙, gallery 4-2 3, 4절). */
+    /** 대표로 부르는 동아리원 API (SecurityConfig 기본 규칙, gallery 4-2 3, 4절). */
     enum ProtectedApi {
         UPLOAD_URLS("/api/v1/albums/upload-urls", "{\"files\": []}"),
         CREATE_ALBUM("/api/v1/albums", "{}");
@@ -50,6 +55,12 @@ class ProtectedApiDenialIntegrationTest extends AuthIntegrationTestSupport {
 
     private static final Base64.Encoder BASE64_URL = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder BASE64_URL_DECODER = Base64.getUrlDecoder();
+
+    // post는 users를 참조하므로 먼저 지워야 다음 테스트의 준비(DELETE FROM users)가 실패하지 않는다.
+    @AfterEach
+    void removePosts() {
+        jdbc.update("DELETE FROM post");
+    }
 
     private ResultActions call(ProtectedApi api, Consumer<MockHttpServletRequestBuilder> customizer)
             throws Exception {
@@ -197,5 +208,44 @@ class ProtectedApiDenialIntegrationTest extends AuthIntegrationTestSupport {
         callWithToken(api, token)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(ProtectedApi.class)
+    void 로그아웃한_세션의_토큰은_만료_전이라도_401이고_로그인하지_않은_것과_같은_응답이다_D6(ProtectedApi api) throws Exception {
+        createUser("member@example.com", Role.MEMBER);
+        LoggedIn member = loginOk("member@example.com");
+        String anonymous = expectUnauthorized(call(api, r -> {}));
+        callWithToken(api, member.accessToken()).andExpect(status().isBadRequest());
+
+        logout(member.refreshCookie()).andExpect(status().isNoContent());
+
+        assertThat(expectUnauthorized(callWithToken(api, member.accessToken())))
+                .isEqualTo(anonymous);
+    }
+
+    @Test
+    void 운영진에서_내려가면_같은_토큰으로_공지를_쓸_수_없다_D7() throws Exception {
+        long staffId = createUser("staff@example.com", Role.STAFF);
+        String token = loginOk("staff@example.com").accessToken();
+        createNotice(token).andExpect(status().isCreated());
+
+        jdbc.update("UPDATE users SET role = 'MEMBER' WHERE id = ?", staffId);
+
+        createNotice(token)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        assertThat(count("SELECT count(*) FROM post WHERE author_id = ?", staffId)).isEqualTo(1);
+        // 세션은 살아 있어 동아리원 API는 계속 통과한다
+        callWithToken(ProtectedApi.CREATE_ALBUM, token).andExpect(status().isBadRequest());
+    }
+
+    // 공지의 운영진 검사는 서비스의 @PreAuthorize라 입력 검증 뒤에 돈다. 그래서 검증을 통과하는 본문을 보낸다.
+    private ResultActions createNotice(String token) throws Exception {
+        return mockMvc.perform(
+                post("/api/v1/notices")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"정기 세미나\", \"content\": \"동아리방에서 합니다.\"}"));
     }
 }
