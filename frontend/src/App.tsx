@@ -8,6 +8,7 @@ import { AuthProvider } from './components/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
 import { SignupPage } from './features/auth/SignupPage'
 import { GalleryPage } from './features/gallery/GalleryPage'
+import { ClubIntroPage } from './features/home/ClubIntroPage'
 import './styles/tokens.css'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<GalleryPage />} />
+            <Route path="/about" element={<ClubIntroPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/password" element={<PasswordChangeNotReady />} />

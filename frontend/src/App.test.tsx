@@ -6,6 +6,7 @@ import { clearSession } from './lib/session'
 afterEach(() => {
   vi.restoreAllMocks()
   clearSession()
+  window.history.pushState({}, '', '/')
 })
 
 // App이 뜰 때 AuthProvider가 refresh를 한 번 부르고, 첫 화면의 갤러리가 목록을 받는다.
@@ -44,4 +45,13 @@ test('로그인하지 않으면 헤더에 로그인, 가입이 보인다', async
   render(<App />)
   expect(await screen.findByRole('link', { name: '로그인' })).toBeDefined()
   expect(screen.getByRole('link', { name: '가입' })).toBeDefined()
+})
+
+test('/about 주소로 들어오면 동아리 소개 화면이 보인다', async () => {
+  stubFetch()
+  window.history.pushState({}, '', '/about')
+  render(<App />)
+  expect(
+    await screen.findByRole('heading', { name: 'HacKHU 소개' }),
+  ).toBeDefined()
 })

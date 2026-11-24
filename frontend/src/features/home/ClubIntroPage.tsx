@@ -1,5 +1,6 @@
 import { ACTIVITIES, CLUB_NAME, CONTACTS, INTRO_PARAGRAPHS } from './clubIntro'
 import type { Activity, Contact } from './clubIntro'
+import s from './ClubIntroPage.module.css'
 
 type ClubIntroPageProps = {
   // 기본은 clubIntro.ts의 내용. 테스트에서 바꿔 넣을 수 있게 열어 둔다
@@ -15,34 +16,42 @@ export function ClubIntroPage({
   contacts = CONTACTS,
 }: ClubIntroPageProps) {
   return (
-    <article>
-      <h2>{CLUB_NAME} 소개</h2>
+    <article className={s.page}>
+      <h1 className={s.title}>{CLUB_NAME} 소개</h1>
 
-      <section aria-labelledby="club-intro-about">
-        <h3 id="club-intro-about">소개</h3>
+      <section className={s.section} aria-labelledby="club-intro-about">
+        <h2 className={s.sectionTitle} id="club-intro-about">
+          소개
+        </h2>
         {intro.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+          <p className={s.paragraph} key={paragraph}>
+            {paragraph}
+          </p>
         ))}
       </section>
 
-      <section aria-labelledby="club-intro-activities">
-        <h3 id="club-intro-activities">활동</h3>
-        <ul>
+      <section className={s.section} aria-labelledby="club-intro-activities">
+        <h2 className={s.sectionTitle} id="club-intro-activities">
+          활동
+        </h2>
+        <ul className={s.list}>
           {activities.map((activity) => (
-            <li key={activity.name}>
-              <strong>{activity.name}</strong>
-              <p>{activity.description}</p>
+            <li className={s.activity} key={activity.name}>
+              <strong className={s.activityName}>{activity.name}</strong>
+              <p className={s.activityDescription}>{activity.description}</p>
             </li>
           ))}
         </ul>
       </section>
 
-      <section aria-labelledby="club-intro-contact">
-        <h3 id="club-intro-contact">문의</h3>
+      <section className={s.section} aria-labelledby="club-intro-contact">
+        <h2 className={s.sectionTitle} id="club-intro-contact">
+          문의
+        </h2>
         {contacts.length === 0 ? (
-          <p>연락처를 준비하고 있어요.</p>
+          <p className={s.empty}>연락처를 준비하고 있어요.</p>
         ) : (
-          <ul>
+          <ul className={s.list}>
             {contacts.map((contact) => (
               <li key={contact.label}>
                 <ContactLink contact={contact} />
@@ -60,7 +69,9 @@ function ContactLink({ contact }: { contact: Contact }) {
     return (
       <>
         {contact.label}:{' '}
-        <a href={`mailto:${contact.address}`}>{contact.address}</a>
+        <a className={s.link} href={`mailto:${contact.address}`}>
+          {contact.address}
+        </a>
       </>
     )
   }
@@ -68,7 +79,12 @@ function ContactLink({ contact }: { contact: Contact }) {
   if (!contact.url.startsWith('https://')) return <>{contact.label}</>
   // 새 탭으로 여는 외부 링크는 원래 창을 조작하지 못하게 noopener를 붙인다
   return (
-    <a href={contact.url} target="_blank" rel="noopener noreferrer">
+    <a
+      className={s.link}
+      href={contact.url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       {contact.label}
     </a>
   )
