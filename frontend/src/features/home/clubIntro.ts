@@ -13,6 +13,9 @@ export type Contact =
 
 export const CLUB_NAME = 'HacKHU'
 
+// 메인 화면의 한 줄 소개 (홈 USER-STORIES 1절)
+export const ONE_LINE_INTRO = '경희대학교 최초의 정보보안 동아리'
+
 export const INTRO_PARAGRAPHS = [
   'HacKHU는 경희대학교 최초의 정보보안 동아리입니다.',
   '전공, 학년, 경험과 관계없이 보안에 관심 있는 사람이라면 누구나 환영합니다.',
