@@ -5,6 +5,8 @@ import com.hackhu.hp.global.auth.Role;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -73,4 +75,50 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     """,
             nativeQuery = true)
     int markTemporaryPasswordUsed(@Param("id") long id, @Param("verifiedHash") String verifiedHash);
+
+    /** 회원 목록. 탈퇴한 계정은 나오지 않는다 (4-2-10). */
+    Page<User> findByWithdrawnAtIsNull(Pageable pageable);
+
+    /** 이 역할의 회원 목록. 탈퇴한 계정은 나오지 않는다 (4-2-10). */
+    Page<User> findByRoleAndWithdrawnAtIsNull(Role role, Pageable pageable);
+
+    /**
+     * 가입 승인. 아직 승인 대기인 활성 계정만 동아리원으로 바꾼다 (5-2-2).
+     *
+     * <p>승인과 거절이 동시에 오면 행 잠금으로 한쪽만 조건을 만족한다.
+     *
+     * @return 바뀐 행 수. 0이면 대상이 없거나 이미 처리되었다
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+            value =
+                    """
+                    UPDATE users
+                       SET role = 'MEMBER', approved_at = now()
+                     WHERE id = :id
+                       AND role = 'PENDING'
+                       AND withdrawn_at IS NULL
+                    """,
+            nativeQuery = true)
+    int approvePending(@Param("id") long id);
+
+    /**
+     * 가입 거절. 아직 승인 대기인 활성 계정의 행을 지운다 (5-2-2, DECISIONS.md A7). 로그인 세션과 refresh 토큰은 CASCADE로 함께
+     * 지워진다.
+     *
+     * @return 지운 행 수. 0이면 대상이 없거나 이미 처리되었다
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+            value =
+                    """
+                    DELETE FROM users
+                     WHERE id = :id
+                       AND role = 'PENDING'
+                       AND withdrawn_at IS NULL
+                    """,
+            nativeQuery = true)
+    int deletePending(@Param("id") long id);
 }

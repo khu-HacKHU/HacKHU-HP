@@ -4,7 +4,7 @@
 
 본 문서는 인증권한 백엔드의 구성 요소와 의존 방향을 정한다.
 
-지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1), 회원과 가입(3-1-2), 로그인과 토큰(3-1-3), 요청 횟수 제한(3-1-4)을 정했다. 가입 승인의 구성 요소는 구현 이슈(#45)에서 채운다.
+지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1), 회원과 가입(3-1-2), 로그인과 토큰(3-1-3), 요청 횟수 제한(3-1-4), 다른 기능에 주는 회원 조회(3-1-5), 회원 목록과 가입 승인(3-1-6)을 정했다.
 
 <br>
 
@@ -250,3 +250,29 @@ public Map<Long, String> findDisplayNames(Collection<Long> userIds)
 - 목록이 비면 DB를 부르지 않고 빈 맵을 돌려준다. 돌려주는 맵은 바꿀 수 없다.
 
 부르는 쪽은 자기 팀의 인터페이스 뒤에서 이 메서드에 위임한다. 게시판은 `AuthorNameReader`를 두고 어댑터만 둔다. 그래야 게시판 코드가 `domain/user`에 직접 기대지 않는다. (#29, #53, #55)
+
+<br>
+
+### 3-1-6. 회원 목록과 가입 승인
+
+운영진이 회원을 보고 가입을 승인하거나 거절하는 구성 요소다. 요청과 응답은 계약 문서가, 동시 처리는 동시성 문서가 정한다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) 4-2-10~12, [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md) 5-2-2)
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `AdminUserController` | `domain/user/controller` | `/api/v1/admin/users` 아래의 회원 관리 API <br> `sort`를 허용 목록으로 검사함 |
+| `AdminUserService` | `domain/user/service` | 회원 목록, 승인, 거절과 처리 기록 |
+| `AdminUserResponse` | `domain/user/dto` | 회원 목록의 항목 <br> 승인과 역할 변경의 응답도 이 형식임 |
+| `AdminUserPageResponse` | `domain/user/dto` | 회원 목록의 페이지 응답 |
+| `UserRepository.approvePending`, `deletePending` | `domain/user/repository` | 승인 대기인 활성 계정만 바꾸는 조건부 `UPDATE`, `DELETE` |
+
+**승인과 거절 처리 순서**
+
+1. `SecurityConfig`가 운영진 이상만 통과시킨다.
+2. 조건부 쿼리 하나로 확인과 쓰기를 함께 한다. 승인과 거절이 동시에 오면 행 잠금으로 한쪽만 1행을 바꾼다.
+3. 승인은 같은 트랜잭션에서 그 행을 다시 읽어 응답을 만든다. `approved_at`은 DB의 `now()`가 정한다.
+4. 0행이면 다시 읽어 없거나 탈퇴했으면 404, 그 밖에는 409를 준다. ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md) 5-3-7)
+5. 커밋한 뒤 처리한 사람 ID, 대상 ID, 결과를 INFO 로그로 남긴다. 이메일과 이름은 남기지 않는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-9, 5-1-10)
+
+- 승인은 세션을 폐기하지 않는다. 역할을 요청마다 DB에서 읽으므로 같은 토큰으로 다음 요청부터 동아리원이 된다. ([DECISIONS.md](DECISIONS.md) A2)
+- 거절은 행을 지운다. 로그인 세션과 refresh 토큰은 CASCADE로 함께 지워져 기존 토큰이 바로 401이 된다. ([DECISIONS.md](DECISIONS.md) A7)
+- 목록은 가입 시각이 같으면 ID를 같은 방향으로 정렬해 페이지 사이에서 항목이 흔들리지 않게 한다.
