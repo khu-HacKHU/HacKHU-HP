@@ -1,5 +1,6 @@
+import { request } from '../../lib/api'
+
 // 메인 화면이 쓰는 공지 목록 계약 (board backend 4-2-3)
-// 공지 목록 API(#29, PR #113)가 머지되기 전이라 테스트는 가짜 응답으로 한다.
 // 게시판 프론트가 생기면 그쪽 API 함수로 옮긴다.
 
 export type NoticeSummary = {
@@ -18,9 +19,10 @@ export async function fetchRecentNotices(): Promise<NoticeSummary[]> {
     page: '0',
     size: String(RECENT_NOTICE_COUNT),
   })
-  const res = await fetch(`/api/v1/notices?${params}`)
-  if (!res.ok) throw new Error(`공지 목록 요청 실패: ${res.status}`)
-  const body: { content: NoticeSummary[] } = await res.json()
+  // 공통 처리(credentials, 토큰 헤더, 401 뒤 갱신, 오류 변환)는 request가 한다 (frontend/AGENTS.md)
+  const body = await request<{ content: NoticeSummary[] }>(
+    `/api/v1/notices?${params}`,
+  )
   return body.content
 }
 
