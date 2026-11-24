@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AlbumDetail } from './types'
 
 // 이 컴포넌트가 받는 props의 모양
@@ -17,6 +17,13 @@ export function AlbumDetailView({
   deleting = false,
 }: AlbumDetailViewProps) {
   const [confirming, setConfirming] = useState(false) // 삭제를 한 번 더 확인하는 중
+  const confirmButtonRef = useRef<HTMLButtonElement>(null)
+
+  // 확인 단계로 바뀌면 누르던 버튼이 사라져 포커스가 body로 떨어진다. 삭제 버튼으로 옮겨 준다
+  useEffect(() => {
+    if (confirming) confirmButtonRef.current?.focus()
+  }, [confirming])
+
   const photos = [...album.photos].sort((a, b) => a.order - b.order)
   return (
     <section>
@@ -38,6 +45,7 @@ export function AlbumDetailView({
                   className="button button--danger"
                   onClick={onDelete}
                   disabled={deleting}
+                  ref={confirmButtonRef}
                 >
                   삭제
                 </button>

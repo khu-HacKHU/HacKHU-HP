@@ -94,3 +94,19 @@ test('삭제하는 중에는 확인 버튼을 누를 수 없다', () => {
       .disabled,
   ).toBe(true)
 })
+
+test('확인 단계로 바뀌면 삭제 버튼에 포커스가 간다', () => {
+  render(
+    <AlbumDetailView
+      album={{ ...album, canDelete: true }}
+      onBack={() => {}}
+      onDelete={() => {}}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: '앨범 삭제' }))
+
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: '삭제' }),
+  )
+})

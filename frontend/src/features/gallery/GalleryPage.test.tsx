@@ -54,8 +54,16 @@ test('목록을 불러와 보여 주고, 앨범을 누르면 상세가 보인다
   )
 
   expect(await screen.findByRole('button', { name: '목록으로' })).toBeDefined()
-  expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/v1/albums?page=0&size=20')
-  expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/v1/albums/12')
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    1,
+    '/api/v1/albums?page=0&size=20',
+    expect.objectContaining({ method: 'GET', credentials: 'include' }),
+  )
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    2,
+    '/api/v1/albums/12',
+    expect.objectContaining({ method: 'GET', credentials: 'include' }),
+  )
 })
 
 test('없는 앨범이면 안내가 보이고 목록은 그대로 남는다', async () => {
@@ -151,9 +159,12 @@ test('앨범을 지우면 목록에서 바로 사라진다', async () => {
   fireEvent.click(screen.getByRole('button', { name: '삭제' }))
 
   expect(await screen.findByText('아직 올라온 앨범이 없어요.')).toBeDefined()
-  expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/v1/albums/12', {
-    method: 'DELETE',
-  })
+  // 토큰과 쿠키는 lib/api.ts의 request가 붙인다
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    3,
+    '/api/v1/albums/12',
+    expect.objectContaining({ method: 'DELETE', credentials: 'include' }),
+  )
 })
 
 test('권한이 없으면 안내가 보이고 상세에 남는다', async () => {
