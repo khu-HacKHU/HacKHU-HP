@@ -8,6 +8,7 @@ import { AuthProvider } from './components/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
 import { SignupPage } from './features/auth/SignupPage'
 import { GalleryPage } from './features/gallery/GalleryPage'
+import { useAuth } from './lib/useAuth'
 import './styles/tokens.css'
 
 function App() {
@@ -18,7 +19,7 @@ function App() {
         <PendingNotice />
         <main>
           <Routes>
-            <Route path="/" element={<GalleryPage />} />
+            <Route path="/" element={<GalleryRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/password" element={<PasswordChangeNotReady />} />
@@ -28,6 +29,14 @@ function App() {
       </AuthProvider>
     </BrowserRouter>
   )
+}
+
+// 앨범 올리기 버튼은 동아리원 이상(MEMBER, STAFF, ADMIN)에게만 보인다 (gallery USER-STORIES 2절,
+// backend 5-1). 로그인하지 않았거나 승인 대기(PENDING)면 숨긴다. 화면 편의일 뿐이고 권한 검사는
+// 서버가 한다 (frontend/AGENTS.md "인증 상태").
+function GalleryRoute() {
+  const role = useAuth().session?.user.role
+  return <GalleryPage canUpload={role !== undefined && role !== 'PENDING'} />
 }
 
 // 임시 비밀번호로 로그인하면 여기로 온다 (auth 4-2-4). 화면은 #51에서 만들고 이 자리를 대체한다.
