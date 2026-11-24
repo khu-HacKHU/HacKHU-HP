@@ -52,9 +52,12 @@ public class SecurityConfig {
     };
 
     // 공개 API. 명세에 "공개"라고 적힌 API만 메서드별로 넣는다 (5-1-1, api.md 4절).
-    // 갤러리 조회는 gallery/backend/4-2 1, 2절에 "공개"로 적혀 있다.
+    // 갤러리 조회는 gallery/backend/4-2 1, 2절에, 공지 조회는 board/backend/4-2-2에 "공개"로 적혀 있다.
+    // 자유게시판과 자료게시판은 동아리원 전용이라 넣지 않는다 (board/backend/5-1-1).
     // *는 한 세그먼트만 맞으므로 /api/v1/albums/12는 열리고 그 아래 경로는 열리지 않는다.
-    private static final String[] PUBLIC_GET_PATHS = {"/api/v1/albums", "/api/v1/albums/*"};
+    private static final String[] PUBLIC_GET_PATHS = {
+        "/api/v1/albums", "/api/v1/albums/*", "/api/v1/notices", "/api/v1/notices/*"
+    };
 
     // refresh와 로그아웃은 access 토큰 대신 refresh 쿠키로 확인하므로 여기 둔다.
     // 로그인, refresh, 로그아웃의 Origin 허용 목록 검사는 AuthOriginFilter가 한다 (5-1-5).
@@ -99,36 +102,30 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(INFRA_PATHS)
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
-                                        .permitAll()
-                                        // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(
-                                                HttpMethod.PUT, "/api/v1/users/me/password")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
-                                        .hasRole(PENDING.name())
-                                        .requestMatchers(
-                                                HttpMethod.PUT, "/api/v1/admin/users/*/role")
-                                        .hasRole(ADMIN.name())
-                                        .requestMatchers("/api/v1/admin/**")
-                                        .hasRole(STAFF.name())
-                                        .anyRequest()
-                                        .hasRole(MEMBER.name()))
+                .authorizeHttpRequests(auth ->
+                        auth.requestMatchers(INFRA_PATHS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
+                                .permitAll()
+                                // "로그인" 수준. 승인 대기 회원도 부르는 내 정보 API 세 개에만 쓴다 (5-1-1).
+                                .requestMatchers(HttpMethod.GET, "/api/v1/users/me")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/me/password")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me")
+                                .hasRole(PENDING.name())
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/admin/users/*/role")
+                                .hasRole(ADMIN.name())
+                                .requestMatchers("/api/v1/admin/**")
+                                .hasRole(STAFF.name())
+                                .anyRequest()
+                                .hasRole(MEMBER.name()))
                 // 인증 없음은 401, 역할 부족은 403을 공통 에러 형식으로 준다 (api.md 3절).
-                .exceptionHandling(
-                        e ->
-                                e.authenticationEntryPoint(
-                                                new ApiAuthenticationEntryPoint(errorWriter))
-                                        .accessDeniedHandler(
-                                                new ApiAccessDeniedHandler(errorWriter)));
+                .exceptionHandling(e ->
+                        e.authenticationEntryPoint(new ApiAuthenticationEntryPoint(errorWriter))
+                                .accessDeniedHandler(new ApiAccessDeniedHandler(errorWriter)));
         return http.build();
     }
 

@@ -16,7 +16,8 @@ public enum GalleryErrorCode implements ErrorCode {
             HttpStatus.TOO_MANY_REQUESTS,
             "GALLERY_TOO_MANY_REQUESTS",
             "업로드 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
-    ALBUM_NOT_FOUND(HttpStatus.NOT_FOUND, "GALLERY_ALBUM_NOT_FOUND", "앨범을 찾을 수 없습니다.");
+    ALBUM_NOT_FOUND(HttpStatus.NOT_FOUND, "GALLERY_ALBUM_NOT_FOUND", "앨범을 찾을 수 없습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "GALLERY_FORBIDDEN", "앨범을 삭제할 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

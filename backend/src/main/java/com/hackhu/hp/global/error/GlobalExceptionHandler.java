@@ -58,11 +58,9 @@ public class GlobalExceptionHandler {
         for (ParameterValidationResult result : e.getParameterValidationResults()) {
             String name = result.getMethodParameter().getParameterName();
             result.getResolvableErrors()
-                    .forEach(
-                            err ->
-                                    errors.add(
-                                            new ErrorResponse.FieldError(
-                                                    name, err.getDefaultMessage())));
+                    .forEach(err ->
+                            errors.add(
+                                    new ErrorResponse.FieldError(name, err.getDefaultMessage())));
         }
         ErrorCode code = CommonErrorCode.INVALID_INPUT;
         return ResponseEntity.status(code.status()).body(ErrorResponse.of(code, errors));
