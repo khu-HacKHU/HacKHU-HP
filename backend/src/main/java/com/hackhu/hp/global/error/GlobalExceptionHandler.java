@@ -3,6 +3,7 @@ package com.hackhu.hp.global.error;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -31,6 +32,15 @@ public class GlobalExceptionHandler {
         return respond(e.getErrorCode());
     }
 
+    // 요청 횟수 제한. 프론트엔드가 Retry-After의 초만큼 기다리라고 안내한다 (auth 4-2-1).
+    @ExceptionHandler(TooManyRequestsException.class)
+    ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException e) {
+        ErrorCode code = e.getErrorCode();
+        return ResponseEntity.status(code.status())
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.retryAfterSeconds()))
+                .body(ErrorResponse.of(code));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
         List<ErrorResponse.FieldError> errors =
@@ -48,11 +58,9 @@ public class GlobalExceptionHandler {
         for (ParameterValidationResult result : e.getParameterValidationResults()) {
             String name = result.getMethodParameter().getParameterName();
             result.getResolvableErrors()
-                    .forEach(
-                            err ->
-                                    errors.add(
-                                            new ErrorResponse.FieldError(
-                                                    name, err.getDefaultMessage())));
+                    .forEach(err ->
+                            errors.add(
+                                    new ErrorResponse.FieldError(name, err.getDefaultMessage())));
         }
         ErrorCode code = CommonErrorCode.INVALID_INPUT;
         return ResponseEntity.status(code.status()).body(ErrorResponse.of(code, errors));

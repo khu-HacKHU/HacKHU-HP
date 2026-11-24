@@ -4,7 +4,7 @@
 
 본 문서는 인증권한 백엔드의 구성 요소와 의존 방향을 정한다.
 
-지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1)만 정했다. 회원, 토큰 발급, 가입 승인의 구성 요소는 구현 이슈(#24, #25, #45)에서 채운다.
+지금은 다른 기능이 현재 사용자와 역할을 확인하는 방법(3-1-1), 회원과 가입(3-1-2), 로그인과 토큰(3-1-3), 요청 횟수 제한(3-1-4), 다른 기능에 주는 회원 조회(3-1-5), 회원 목록과 가입 승인(3-1-6)을 정했다.
 
 <br>
 
@@ -32,7 +32,7 @@
 
 역할을 토큰이 아니라 DB에서 읽으므로 역할 변경과 탈퇴가 다음 요청부터 반영된다. ([DECISIONS.md](DECISIONS.md) A2)
 
-> access 토큰 검증 필터(1, 2단계)는 로그인 API(#25)에서 만든다. 그 전에는 실제 요청에 로그인 사용자가 실리지 않는다. 다른 기능은 아래 테스트 도우미로 개발하고 테스트한다.
+access 토큰 검증 필터(1, 2단계)의 구성은 3-1-3에 있다. 다른 기능의 컨트롤러 테스트(`@WebMvcTest`)에는 이 필터가 없으므로 아래 테스트 도우미로 사용자를 넣는다.
 
 **컨트롤러에서 받기**
 
@@ -102,3 +102,167 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 - 둘 다 `src/test/java`의 `com.hackhu.hp.global.auth`에 있다. 예시는 `CurrentUserTest`.
 - `with(user("1").roles("MEMBER"))`, `@WithMockUser`로 만든 사용자는 `LoginUser`가 아니라서 `@CurrentUser`가 null이 된다. `@CurrentUser`를 쓰는 API는 위 도우미로 테스트한다.
 - 권한이 걸린 API는 비로그인 401, 승인 대기 회원 403, 역할 부족이나 남의 리소스 403(또는 404)을 테스트한다. ([backend/AGENTS.md](../../../../backend/AGENTS.md))
+
+<br>
+
+### 3-1-2. 회원과 가입
+
+회원(`users` 테이블)과 가입 API의 구성 요소다. 테이블은 스키마 문서가, 요청과 응답은 계약 문서가 정한다. ([3-2-DESIGN-DB-SCHEMA.md](3-2-DESIGN-DB-SCHEMA.md), [4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md))
+
+**구성 요소**
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `User` | `domain/user/entity` | 회원 엔티티 <br> 가입은 `User.signUp(email, name, passwordHash)`로만 만들고 역할은 `PENDING`으로 시작함 |
+| `Emails` | `domain/user/entity` | 이메일 정규화 <br> 앞뒤 공백을 지우고 ASCII일 때만 소문자로 바꿈 <br> 로그인도 같은 함수를 씀 |
+| `UserRepository` | `domain/user/repository` | `users` 조회와 저장 |
+| `SignupRequest`, `SignupResponse` | `domain/user/dto` | 가입 요청과 응답 <br> 요청은 생성자에서 정규화한 뒤 검증함 |
+| `@Password`, `@PersonName`, `@PasswordNotEmail` | `domain/user/dto/validation` | 비밀번호 규칙, 이름 규칙, 비밀번호와 이메일 비교 <br> 같은 규칙을 쓰는 다른 API도 이 애너테이션을 붙임 |
+| `SignupService` | `domain/user/service` | 중복 확인, 비밀번호 해시, 저장 |
+| `SignupController` | `domain/user/controller` | `POST /api/v1/auth/signup` |
+| `UserErrorCode` | `domain/user/exception` | 회원 에러 코드 ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md)) |
+| `PasswordEncoderConfig` | `global/security` | bcrypt cost 12의 `PasswordEncoder` 빈 |
+
+- 가입 API의 경로는 `/api/v1/auth` 아래지만 회원을 만드는 일이라 `domain/user`에 둔다. 로그인과 토큰은 `domain/auth`에 둔다. ([backend/AGENTS.md](../../../../backend/AGENTS.md))
+- `Role` enum은 3-1-1의 `global/auth`에 있다. `User.role`도 이 enum을 쓴다.
+- 다른 기능은 `users.id`만 참조하고 `User` 엔티티를 직접 읽지 않는다. 작성자 이름이 필요하면 인증권한팀에 공개 메서드를 요청한다.
+
+**가입 처리 순서**
+
+1. `SignupRequest` 생성자가 이메일과 이름을 정규화한다. 비밀번호는 바꾸지 않는다.
+2. Bean Validation이 필드 규칙을 검사한다. 실패하면 400과 칸별 사유를 주고 끝난다.
+3. `SignupService`가 활성 계정이 그 이메일을 쓰는지 확인한다. 쓰면 bcrypt를 계산하지 않고 409로 끝난다.
+4. 비밀번호를 bcrypt로 해시하고 `User.signUp`으로 행을 저장한다.
+5. 3과 4 사이에 같은 이메일이 먼저 저장되었으면 `uk_users_email` 위반이 나고, 이를 409로 바꾼다. 다른 제약 위반은 바꾸지 않고 500으로 둔다. ([5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md))
+6. `201`, `Location: /api/v1/users/me`와 가입한 회원을 준다. 토큰은 주지 않는다.
+
+`SignupService.signup`은 트랜잭션으로 묶지 않는다. bcrypt 계산(약 0.3초) 동안 DB 연결을 잡지 않으려는 것이다. 쓰기는 행 추가 하나라 따로 묶을 것이 없다. ([DECISIONS.md](DECISIONS.md) A15)
+
+**시각 컬럼**
+
+- `created_at`은 DB의 `now()`가 정하고, 저장한 뒤 엔티티가 그 값을 다시 읽는다(`@Generated`). 서버 시계와 DB 시계가 섞이지 않게 하려는 것이다.
+- `updated_at`은 행이 바뀔 때마다 트리거 `set_updated_at()`이 갱신한다. 조건부 `UPDATE` 쿼리로 바꿔도 따로 적지 않아도 된다. ([DECISIONS.md](DECISIONS.md) A19)
+
+**요청 횟수 제한**
+
+`SignupController`가 서비스를 부르기 전에 IP 기준 제한(1시간에 50회)을 확인한다. 한도를 넘으면 bcrypt를 계산하지 않고 `429`와 `Retry-After`로 끝난다. 본문 검증(400)을 통과한 요청만 센다. 검증에서 끝나는 요청은 bcrypt를 계산하지 않기 때문이다. 카운터와 클라이언트 IP 판별은 3-1-4를 따른다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-7)
+
+<br>
+
+### 3-1-3. 로그인과 토큰
+
+로그인, refresh, 로그아웃 API와 요청마다 하는 인증의 구성 요소다. 요청과 응답은 계약 문서가, 회전 규칙은 4-2-5가, 잠금과 쿼리는 동시성 문서가 정한다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md), [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md))
+
+**구성 요소**
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `AccessTokenService` | `global/auth` | access 토큰(JWT) 발급과 서명, 발급자, 만료 검증 <br> `HS256` 고정, 서명 키가 없거나 32바이트보다 짧으면 서버가 시작하지 않음 |
+| `AccessTokenAuthenticator` | `global/auth` | 토큰으로 현재 사용자를 정하는 인터페이스 <br> 필터가 도메인 패키지에 기대지 않게 인터페이스만 둠 |
+| `LoginSessionAuthenticator` | `domain/auth/service` | 위 인터페이스의 구현 <br> `sid`의 로그인 세션과 계정을 한 번에 읽어 폐기, 만료, 사용자 불일치, 탈퇴를 거부함 |
+| `AccessTokenAuthenticationFilter` | `global/security` | `Authorization: Bearer`에서 토큰을 꺼내 위 구현을 부르고 `LoginUserAuthentication`을 SecurityContext에 넣음 <br> 비밀번호 변경 필요 상태의 403도 여기서 줌 |
+| `AuthOriginFilter` | `global/security` | 로그인, refresh, 로그아웃의 `Origin` 허용 목록 검사 <br> 허용 목록은 CORS와 같은 `app.cors.allowed-origins` |
+| `AuthController` | `domain/auth/controller` | `POST /api/v1/auth/login`, `/refresh`, `/logout` |
+| `LoginService` | `domain/auth/service` | 요청 횟수 제한, bcrypt 검증, 일반과 임시 비밀번호 경로, 같은 브라우저의 기존 세션 폐기 |
+| `TokenRefreshService` | `domain/auth/service` | 세션 행을 잠그고 4-2-5의 회전 규칙을 적용함 |
+| `LogoutService` | `domain/auth/service` | refresh 쿠키의 세션 하나를 폐기함 |
+| `SessionIssuer` | `domain/auth/service` | 로그인 세션, refresh 토큰, access 토큰을 만듦 <br> 부르는 쪽의 트랜잭션 안에서만 돎 |
+| `LoginFailureMonitor` | `domain/auth/service` | 한 계정에 1시간 50회 넘는 로그인 실패를 경고 로그로 남김 |
+| `LoginSessionCleanup` | `domain/auth/service` | 매일 04:30(UTC)에 끝난 지 하루가 지난 세션을 지움 (3-2-7) |
+| `LoginSession`, `RefreshToken` | `domain/auth/entity` | `login_sessions`, `refresh_tokens` 테이블 |
+| `AuthErrorCode` | `domain/auth/exception` | `AUTH_INVALID_CREDENTIALS` ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md)) |
+
+- `global/security`의 필터가 `domain/auth`를 직접 부르지 않는다. `SecurityConfig`는 `AccessTokenAuthenticator` 빈이 있을 때만 필터를 붙인다. 다른 기능의 `@WebMvcTest`에는 이 빈이 없어 필터 없이 테스트 도우미(3-1-1)로 사용자를 넣는다.
+- 서버 시각은 `Clock` 빈(`global/config/ClockConfig`, UTC)에서 읽는다. 토큰 만료, 세션 수명, 회전 시각, 요청 제한 창이 모두 이 시계를 쓴다. 임시 비밀번호 만료(`temp_password_expires_at`)는 5-2-3의 쿼리대로 DB의 `now()`와 비교한다.
+
+**로그인 처리 순서**
+
+1. `AuthOriginFilter`가 `Origin`을 확인한다. 다르면 403으로 끝난다.
+2. 본문이 JSON이 아니면 415, 비었으면 400으로 끝난다. 이메일은 가입과 같은 `Emails.normalize`로 정규화한다.
+3. `LoginService`가 IP 기준 제한(모든 시도)을 세고, IP와 이메일 조합 제한(실패만)에서 한 번을 잡는다. 한도면 429로 끝난다. (3-1-4)
+4. 활성 계정을 이메일로 찾고 bcrypt로 비밀번호를 검증한다. 계정이 없으면 미리 만든 더미 해시와 비교한다. 72바이트가 넘는 비밀번호는 저장될 수 없으므로 틀린 것으로 보고 계산은 그대로 한다.
+5. 한 트랜잭션에서 5-2-3대로 해시를 다시 확인한다. 임시 비밀번호가 있는 계정은 조건부 갱신, 아니면 `users` 행 잠금이다. 통과하면 요청에 실려 온 refresh 쿠키의 세션을 폐기하고 새 세션을 만든다.
+6. 실패면 401 `AUTH_INVALID_CREDENTIALS`이고 잡아 둔 한 번은 실패로 남는다. 성공이면 잡아 둔 한 번을 돌려준다.
+
+**요청마다 하는 인증**
+
+| 요청 | 처리 |
+|---|---|
+| `Authorization` 헤더 없음 | 방문자. 아무것도 넣지 않음 |
+| `/api/v1/auth/**` | 헤더를 보지 않음 ([DECISIONS.md](DECISIONS.md) A22) |
+| `Bearer`가 아니거나, 토큰이 비었거나, 받아 줄 수 없는 토큰 | 공개 API여도 401 `UNAUTHORIZED` <br> 이유는 DEBUG 로그에만 남김 |
+| 비밀번호 변경 필요 상태 | 내 정보 조회, 비밀번호 변경만 통과 <br> 나머지는 403 `AUTH_PASSWORD_CHANGE_REQUIRED` |
+| 그 밖 | `LoginUserAuthentication`을 넣고 경로 규칙(3-1-1 3단계)으로 넘김 |
+
+<br>
+
+### 3-1-4. 요청 횟수 제한
+
+로그인, 가입, 비밀번호 변경과 탈퇴의 요청 횟수 제한을 하는 공통 구성 요소다. 규칙의 값은 보안 문서가 정한다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-7)
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `RateLimiter` | `global/security` | 고정 창 카운터 <br> Caffeine 캐시, 항목 수 상한 10만 개, 창이 끝나면 지워짐 <br> 키마다 원자적으로 늘리고 확인함 |
+| `AuthRateLimits` | `global/security` | 5-1-7의 규칙 네 개 |
+| `ClientIpResolver` | `global/security` | 믿는 프록시에서 온 연결만 `X-Forwarded-For`의 오른쪽 값을 씀 (CWE-348) <br> 돌려주는 값은 IP 표기 문자만 남기고 45자로 묶어 로그에 그대로 쓸 수 있음 (CWE-117) <br> 설정은 `app.client-ip.trusted-proxies`, `trusted-hops` |
+| `TooManyRequestsException` | `global/error` | `429 TOO_MANY_REQUESTS`와 `Retry-After`(초) |
+
+| 규칙 | 붙인 곳 | 세는 것 |
+|---|---|---|
+| `LOGIN_ATTEMPTS_PER_IP` | `LoginService` | 모든 시도 |
+| `LOGIN_FAILURES_PER_IP_AND_EMAIL` | `LoginService` | 실패 <br> 확인 전에 `tryAcquire`로 잡고 성공하면 `release`로 돌려줌 |
+| `SIGNUP_ATTEMPTS_PER_IP` | `SignupController` | 본문 검증을 통과한 모든 시도 |
+| `PASSWORD_CONFIRM_FAILURES_PER_USER` | 비밀번호 변경, 탈퇴(#49) | 지금 비밀번호가 틀린 시도 <br> 로그인과 같이 확인 전에 잡고 맞으면 돌려줌 |
+
+- 실패만 세는 규칙을 시도한 뒤에 세면 동시에 들어온 시도가 모두 확인을 통과해 한도를 넘는다. 그래서 확인 전에 한 번을 잡는다. ([DECISIONS.md](DECISIONS.md) A21, 5-2-5)
+- 거부 로그는 창마다 처음 거부할 때만 남긴다. 거부할 때마다 남기면 누구나 로그를 쌓을 수 있다. (CWE-779)
+- 카운터는 서버 메모리에 있다. 재배포하면 초기화되고 인스턴스를 늘리면 느슨해진다. ([DECISIONS.md](DECISIONS.md) A11)
+
+<br>
+
+### 3-1-5. 다른 기능에 주는 회원 조회
+
+게시판과 갤러리는 글과 앨범에 작성자 이름을 보여 줘야 한다. 그 기능들은 `users` 테이블과 `UserRepository`를 직접 읽지 않고 인증권한팀이 주는 공개 메서드를 쓴다. ([backend/AGENTS.md](../../../../backend/AGENTS.md))
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `UserQueryService` | `domain/user/service` | 다른 기능이 회원 정보를 읽는 입구 |
+| `UserDisplayName` | `domain/user/repository` | `id`와 `name`만 담는 조회 결과 |
+
+```java
+public Map<Long, String> findDisplayNames(Collection<Long> userIds)
+```
+
+- **이름만 돌려준다.** 이메일, 역할, 비밀번호 해시, `User` 엔티티를 돌려주지 않는다. 쿼리가 `id`와 `name`만 선택하므로 나머지는 DB에서 나오지 않는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-9)
+- **탈퇴한 회원은 맵에 없다.** 탈퇴하면 `name`이 NULL이 되고 `ck_users_withdrawn_fields`가 그것을 보장하므로, 돌아온 이름에 NULL이 없다. 부르는 쪽이 없는 ID를 "탈퇴한 회원"처럼 표시한다.
+- **없는 ID도 맵에 없다.** 탈퇴와 구분하지 않는다. 구분해서 주면 ID로 계정이 있었는지를 떠볼 수 있다.
+- **ID 목록을 한 번의 조회로 읽는다.** 목록 한 페이지에 쿼리 한 번이다. 중복 ID는 합쳐서 한 번만 조회한다.
+- 목록이 비면 DB를 부르지 않고 빈 맵을 돌려준다. 돌려주는 맵은 바꿀 수 없다.
+
+부르는 쪽은 자기 팀의 인터페이스 뒤에서 이 메서드에 위임한다. 게시판은 `AuthorNameReader`를 두고 어댑터만 둔다. 그래야 게시판 코드가 `domain/user`에 직접 기대지 않는다. (#29, #53, #55)
+
+<br>
+
+### 3-1-6. 회원 목록과 가입 승인
+
+운영진이 회원을 보고 가입을 승인하거나 거절하는 구성 요소다. 요청과 응답은 계약 문서가, 동시 처리는 동시성 문서가 정한다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) 4-2-10~12, [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md) 5-2-2)
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `AdminUserController` | `domain/user/controller` | `/api/v1/admin/users` 아래의 회원 관리 API <br> `sort`를 허용 목록으로 검사함 |
+| `AdminUserService` | `domain/user/service` | 회원 목록, 승인, 거절과 처리 기록 |
+| `AdminUserResponse` | `domain/user/dto` | 회원 목록의 항목 <br> 승인과 역할 변경의 응답도 이 형식임 |
+| `AdminUserPageResponse` | `domain/user/dto` | 회원 목록의 페이지 응답 |
+| `UserRepository.approvePending`, `deletePending` | `domain/user/repository` | 승인 대기인 활성 계정만 바꾸는 조건부 `UPDATE`, `DELETE` |
+
+**승인과 거절 처리 순서**
+
+1. `SecurityConfig`가 운영진 이상만 통과시킨다.
+2. 조건부 쿼리 하나로 확인과 쓰기를 함께 한다. 승인과 거절이 동시에 오면 행 잠금으로 한쪽만 1행을 바꾼다.
+3. 승인은 같은 트랜잭션에서 그 행을 다시 읽어 응답을 만든다. `approved_at`은 DB의 `now()`가 정한다.
+4. 0행이면 다시 읽어 없거나 탈퇴했으면 404, 그 밖에는 409를 준다. ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md) 5-3-7)
+5. 커밋한 뒤 처리한 사람 ID, 대상 ID, 결과를 INFO 로그로 남긴다. 이메일과 이름은 남기지 않는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-9, 5-1-10)
+
+- 승인은 세션을 폐기하지 않는다. 역할을 요청마다 DB에서 읽으므로 같은 토큰으로 다음 요청부터 동아리원이 된다. ([DECISIONS.md](DECISIONS.md) A2)
+- 거절은 행을 지운다. 로그인 세션과 refresh 토큰은 CASCADE로 함께 지워져 기존 토큰이 바로 401이 된다. ([DECISIONS.md](DECISIONS.md) A7)
+- 목록은 가입 시각이 같으면 ID를 같은 방향으로 정렬해 페이지 사이에서 항목이 흔들리지 않게 한다.

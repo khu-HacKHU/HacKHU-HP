@@ -1,0 +1,83 @@
+import { afterEach, expect, test } from 'vitest'
+import {
+  clearSession,
+  emitSessionEvent,
+  getSession,
+  onSessionEvent,
+  replaceSession,
+  setSession,
+  subscribe,
+  type SessionEvent,
+} from './session'
+
+const user = {
+  id: 7,
+  email: 'member@example.com',
+  name: '홍길동',
+  role: 'MEMBER' as const,
+  mustChangePassword: false,
+}
+
+afterEach(() => clearSession())
+
+test('처음에는 로그인하지 않은 상태다', () => {
+  expect(getSession()).toBeNull()
+})
+
+test('세션을 세우고 비울 수 있다', () => {
+  setSession({ user, accessToken: 'token-1' })
+  expect(getSession()?.accessToken).toBe('token-1')
+
+  clearSession()
+  expect(getSession()).toBeNull()
+})
+
+test('토큰을 브라우저 저장소에 넣지 않는다', () => {
+  setSession({ user, accessToken: 'secret-token' })
+
+  // 메모리에만 둔다 (CWE-922). localStorage에 두면 XSS로 장기 탈취된다.
+  const stored = [
+    ...Object.values(localStorage),
+    ...Object.values(sessionStorage),
+    document.cookie,
+  ].join(' ')
+  expect(stored).not.toContain('secret-token')
+})
+
+test('바뀌면 알림이 온다', () => {
+  let calls = 0
+  const unsubscribe = subscribe(() => calls++)
+
+  setSession({ user, accessToken: 'token-1' })
+  replaceSession(user, 'token-2')
+  clearSession()
+
+  expect(calls).toBe(3)
+
+  unsubscribe()
+  setSession({ user, accessToken: 'token-3' })
+  expect(calls).toBe(3)
+})
+
+test('갱신으로 다른 사용자가 오면 그 사용자로 바뀐다', () => {
+  setSession({ user, accessToken: 'token-1' })
+  const other = { ...user, id: 9, name: '김영희' }
+
+  replaceSession(other, 'token-2')
+
+  expect(getSession()?.user.id).toBe(9)
+  expect(getSession()?.accessToken).toBe('token-2')
+})
+
+test('인증 결과 알림을 구독하고 해제할 수 있다', () => {
+  // 요청 공통 처리는 컴포넌트 밖이라 화면을 옮길 수 없다. 이 알림으로 AuthProvider가 옮긴다.
+  const seen: SessionEvent[] = []
+  const unsubscribe = onSessionEvent((event) => seen.push(event))
+
+  emitSessionEvent('expired')
+  emitSessionEvent('password-change-required')
+  unsubscribe()
+  emitSessionEvent('expired')
+
+  expect(seen).toEqual(['expired', 'password-change-required'])
+})
