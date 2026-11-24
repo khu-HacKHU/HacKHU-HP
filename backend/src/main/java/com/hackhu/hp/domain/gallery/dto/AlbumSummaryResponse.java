@@ -13,14 +13,16 @@ public record AlbumSummaryResponse(
         @Schema(example = "2026-10-18") LocalDate eventDate,
         @Schema(description = "대표 사진의 CloudFront 서명 URL. 1시간 뒤 만료된다", nullable = true)
                 String coverPhotoUrl,
+        @Schema(description = "앨범의 사진 수 (UI-DESIGN-SYSTEM 6-6)", example = "12") int photoCount,
         @Schema(example = "2026-10-19T09:00:00Z") Instant createdAt) {
 
-    public static AlbumSummaryResponse of(Album album, String coverPhotoUrl) {
+    public static AlbumSummaryResponse of(Album album, String coverPhotoUrl, int photoCount) {
         return new AlbumSummaryResponse(
                 album.getId(),
                 album.getTitle(),
                 album.getEventDate(),
                 coverPhotoUrl,
+                photoCount,
                 album.getCreatedAt());
     }
 }

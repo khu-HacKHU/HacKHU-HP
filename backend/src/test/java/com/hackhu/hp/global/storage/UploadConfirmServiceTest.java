@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -35,7 +37,13 @@ class UploadConfirmServiceTest {
         repository = mock(UploadRecordRepository.class);
         imageFormatValidator = mock(ImageFormatValidator.class);
         objectStore = mock(S3ObjectStore.class);
-        service = new UploadConfirmService(repository, imageFormatValidator, objectStore);
+        service =
+                new UploadConfirmService(
+                        repository,
+                        imageFormatValidator,
+                        new AttachmentFormatValidator(objectStore),
+                        objectStore,
+                        new UploadRecordDiscarder(repository));
 
         when(imageFormatValidator.isSupportedImage(anyString())).thenReturn(true);
         // 기본은 요청한 수만큼 갱신에 성공한 상황으로 둔다.
@@ -264,5 +272,58 @@ class UploadConfirmServiceTest {
 
         // 비싼 S3 호출을 아끼는 순서인지 확인한다.
         verify(imageFormatValidator, never()).isSupportedImage(any());
+    }
+
+    // 자료게시판 첨부 (board 5-1-8)
+
+    private UploadRecord issuedAttachment(Long userId) {
+        return UploadRecord.issue(
+                userId,
+                UploadPurpose.ATTACHMENT,
+                "application/pdf",
+                2048,
+                Instant.now().plus(10, ChronoUnit.MINUTES),
+                "자료.pdf");
+    }
+
+    @Test
+    void 첨부는_통과하면_발급_기록을_요청_순서대로_돌려준다() {
+        UploadRecord first = issuedAttachment(OWNER);
+        UploadRecord second = issuedAttachment(OWNER);
+        givenRecords(second, first);
+        when(objectStore.readHead(anyString(), anyInt()))
+                .thenReturn("%PDF-1.7".getBytes(StandardCharsets.US_ASCII));
+
+        List<UploadRecord> records =
+                service.confirmAttachments(OWNER, List.of(first.getId(), second.getId()));
+
+        assertEquals(List.of(first, second), records);
+        assertEquals("자료.pdf", records.get(0).getOriginalFileName());
+    }
+
+    @Test
+    void 첨부의_실제_형식이_신고와_다르면_전부_거부하고_객체를_지운다() {
+        UploadRecord record = issuedAttachment(OWNER);
+        givenRecords(record);
+        when(objectStore.readHead(anyString(), anyInt()))
+                .thenReturn(new byte[] {'M', 'Z', 0, 0, 0});
+
+        UploadConfirmException e =
+                assertThrows(
+                        UploadConfirmException.class,
+                        () -> service.confirmAttachments(OWNER, List.of(record.getId())));
+
+        assertEquals("실제 파일이 신고한 형식이 아닙니다.", e.getFailures().get(0).reason());
+        verify(objectStore).deleteAll(List.of(record.getObjectKey()));
+    }
+
+    @Test
+    void 갤러리용으로_발급받은_업로드는_첨부로_쓸_수_없다() {
+        UploadRecord gallery = issued(OWNER);
+        givenRecords(gallery);
+
+        assertThrows(
+                UploadConfirmException.class,
+                () -> service.confirmAttachments(OWNER, List.of(gallery.getId())));
     }
 }

@@ -63,14 +63,13 @@ class LoginFailureMonitorTest {
             for (int i = 0; i < threads; i++) {
                 String ip = "192.0.2." + i;
                 futures.add(
-                        executor.submit(
-                                () -> {
-                                    start.await();
-                                    if (monitor.recordFailure(7L, ip)) {
-                                        alerts.incrementAndGet();
-                                    }
-                                    return null;
-                                }));
+                        executor.submit(() -> {
+                            start.await();
+                            if (monitor.recordFailure(7L, ip)) {
+                                alerts.incrementAndGet();
+                            }
+                            return null;
+                        }));
             }
             start.countDown();
             for (Future<?> future : futures) {

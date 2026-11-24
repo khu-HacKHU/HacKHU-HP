@@ -101,14 +101,13 @@ class RateLimiterTest {
         try {
             for (int i = 0; i < threads; i++) {
                 futures.add(
-                        executor.submit(
-                                () -> {
-                                    start.await();
-                                    if (limiter.tryAcquire(rule, "same").allowed()) {
-                                        allowed.incrementAndGet();
-                                    }
-                                    return null;
-                                }));
+                        executor.submit(() -> {
+                            start.await();
+                            if (limiter.tryAcquire(rule, "same").allowed()) {
+                                allowed.incrementAndGet();
+                            }
+                            return null;
+                        }));
             }
             start.countDown();
             for (Future<?> future : futures) {
