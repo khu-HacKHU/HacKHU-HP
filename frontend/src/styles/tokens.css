@@ -1,9 +1,13 @@
-/* UI-DESIGN-SYSTEM.md의 값을 코드로 옮긴 파일이다. 값을 바꾸려면 문서를 먼저 고친다.
-   스타일링 방식(CSS Modules, Tailwind 등)은 frontend/AGENTS.md에서 아직 미정이라
-   새 패키지 없이 평범한 CSS로 둔다. 방식이 정해지면 옮긴다. */
-
+/*
+ * UI 디자인 시스템의 값 (docs/spec/UI-DESIGN-SYSTEM.md).
+ *
+ * 값은 여기서만 정한다. 컴포넌트의 *.module.css는 var(--...)로 가져다 쓰고 색이나 간격을
+ * 직접 적지 않는다. 새 값이 필요하면 화면에 넣지 말고 디자인 시스템 문서에 먼저 추가한다.
+ *
+ * 어두운 화면 하나만 쓴다. 밝은 테마는 두지 않는다 (1절).
+ */
 :root {
-  /* 2절 색 */
+  /* 색 (2절) */
   --bg: #0f1022;
   --panel: #181a33;
   --line: #2c2e4d;
@@ -16,12 +20,11 @@
   --cyan: #5cc8e8;
   --coral: #f0727a;
 
-  /* 3절 글꼴. 웹폰트 파일을 넣는 것은 화면 전체에 걸린 공통 작업이라
-     여기서는 이름만 두고, 없으면 시스템 글꼴로 떨어진다. */
-  --sans: 'IBM Plex Sans KR', system-ui, sans-serif;
+  /* 글꼴 (3절). 글꼴 파일을 아직 넣지 않아 OS 기본 글꼴로 뒤를 받친다. */
+  --sans: 'IBM Plex Sans KR', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'IBM Plex Mono', 'IBM Plex Sans KR', ui-monospace, monospace;
 
-  /* 3절 크기 */
+  /* 글자 크기 (3절) */
   --text-xs: 0.8rem;
   --text-sm: 0.875rem;
   --text-base: 1.0625rem;
@@ -29,7 +32,7 @@
   --text-xl: 1.66rem;
   --text-2xl: 2.3rem;
 
-  /* 4절 간격. 이 9개 밖의 단계는 만들지 않는다 */
+  /* 간격 (4절). 이 9개 밖의 단계는 없다. */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -40,106 +43,39 @@
   --space-16: 4rem;
   --space-24: 6rem;
 
-  /* 4절 모양 */
+  /* 모양 (4절) */
   --radius: 6px;
-  --radius-small: 4px;
+  --radius-badge: 4px;
   --measure: 68ch;
-  --page: 76rem;
+  --page-max: 76rem;
+  --page-gutter: var(--space-6);
 }
 
-/* 1절 어두운 화면 하나만 쓴다. 밝은 테마는 두지 않는다 */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
   font-size: var(--text-base);
+  font-weight: 400;
   line-height: 1.7;
-  word-break: keep-all; /* 3절 한국어 줄바꿈 */
+  /* 한국어 줄바꿈은 단어 단위로 한다 (3절). */
+  word-break: keep-all;
 }
 
-/* 4절 페이지 최대 폭과 좌우 여백 */
-main {
-  max-width: var(--page);
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-6);
-}
-
-h1 {
-  font-size: var(--text-2xl);
-  font-weight: 700;
+h1,
+h2,
+h3 {
   line-height: 1.3;
-}
-
-h2 {
-  font-size: var(--text-lg);
   font-weight: 600;
-  line-height: 1.3;
 }
 
-/* 3절 날짜와 번호는 mono, muted */
-time {
-  font-family: var(--mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-/* 8절 포커스는 요소에서 2px 떨어진 2px lilac 테두리. 표시를 지우지 않는다 */
+/* 포커스를 받은 요소는 lilac 테두리로 보인다 (8절). 키보드로만 쓸 때 어디에 있는지 보여야 한다. */
 :focus-visible {
   outline: 2px solid var(--lilac);
   outline-offset: 2px;
-}
-
-/* 6-1 버튼. 공용 컴포넌트 위치가 정해지면 컴포넌트로 옮긴다 */
-.button {
-  background: transparent;
-  color: inherit;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--sans);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    color 0.14s,
-    border-color 0.14s;
-}
-
-/* 기본 버튼은 마우스를 올리면 테두리와 글자가 lilac이 된다 */
-.button:hover:not(:disabled) {
-  border-color: var(--lilac);
-  color: var(--lilac);
-}
-
-/* 위험 버튼: 삭제, 탈퇴, 가입 거절 */
-.button--danger,
-.button--danger:hover:not(:disabled) {
-  border-color: var(--coral);
-  color: var(--coral);
-}
-
-/* 비활성 버튼은 원래 모양에 투명도 40% */
-.button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* 6-3 안내 상자. 경고는 왼쪽 선이 coral이다 */
-.notice {
-  background: var(--panel);
-  border-left: 3px solid var(--lilac);
-  border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
-}
-
-.notice--warning {
-  border-left-color: var(--coral);
-}
-
-/* 8절 사용자가 움직임 줄이기를 켜면 색 변화도 끈다 */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-  }
 }
