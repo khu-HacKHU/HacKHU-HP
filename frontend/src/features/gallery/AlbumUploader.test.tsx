@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
+import { clearSession, setSession } from '../../lib/session'
 import { AlbumUploader } from './AlbumUploader'
 
 function jsonResponse(body: unknown, status = 200) {
@@ -54,6 +55,10 @@ function stubServer(handlers: {
     if (url === '/api/v1/albums') {
       return handlers.create?.() ?? jsonResponse(createdBody, 201)
     }
+    // 401을 받으면 request가 갱신을 한 번 시도한다. 테스트에는 refresh 쿠키가 없다
+    if (url === '/api/v1/auth/refresh') {
+      return new Response(null, { status: 401 })
+    }
     throw new Error(`예상하지 못한 요청: ${url}`)
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -80,6 +85,38 @@ function fillAndSubmit() {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  clearSession()
+})
+
+test('로그인했으면 서버 요청에만 토큰을 붙이고 S3 요청에는 붙이지 않는다', async () => {
+  setSession({
+    user: {
+      id: 1,
+      email: 'member@example.com',
+      name: '동아리원',
+      role: 'MEMBER',
+      mustChangePassword: false,
+    },
+    accessToken: 'test-token',
+  })
+  const fetchMock = stubServer({})
+  const onUploaded = vi.fn()
+  render(<AlbumUploader onUploaded={onUploaded} onCancel={vi.fn()} />)
+
+  fillAndSubmit()
+
+  await vi.waitFor(() => expect(onUploaded).toHaveBeenCalledWith(createdBody))
+  const calls = fetchMock.mock.calls as [string, RequestInit][]
+  const authOf = ([, init]: [string, RequestInit]) =>
+    new Headers(init.headers).get('Authorization')
+
+  for (const call of calls.filter(([url]) => url.startsWith('/api/v1/'))) {
+    expect(authOf(call)).toBe('Bearer test-token')
+  }
+  // presigned URL이 권한이다. 토큰이 S3로 나가면 안 된다
+  for (const call of calls.filter(([url]) => !url.startsWith('/api/v1/'))) {
+    expect(authOf(call)).toBeNull()
+  }
 })
 
 test('주소 발급, 사진 PUT, 앨범 만들기를 차례로 하고 만든 앨범을 넘긴다', async () => {

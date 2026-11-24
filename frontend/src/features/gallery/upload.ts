@@ -1,4 +1,4 @@
-import { ApiError, toApiError } from './api'
+import { ApiError, request } from '../../lib/api'
 import type { AlbumDetail } from './types'
 import { resolveContentType } from './validation'
 
@@ -7,8 +7,9 @@ import { resolveContentType } from './validation'
 //   2. 받은 주소에 사진을 PUT 한다 (S3 presigned PUT, 서버를 거치지 않음)
 //   3. POST /api/v1/albums 로 uploadId 목록을 넘겨 앨범을 만든다
 //
-// 인증 헤더는 아직 붙이지 않는다. 토큰 보관 위치가 정해지면(#26) 붙인다 (frontend/AGENTS.md, CWE-922).
-// 그 전까지 실제 서버는 401을 준다.
+// 1, 3단계는 우리 서버라 lib/api.ts의 request로 부른다. access 토큰 헤더, credentials,
+// 401 뒤 갱신, 오류 변환을 request가 한다 (frontend/AGENTS.md "API 호출").
+// 2단계는 S3로 바로 가므로 request를 쓰지 않는다. 토큰을 S3에 보내면 안 된다.
 
 export type UploadSlot = {
   uploadId: string
@@ -27,20 +28,21 @@ export class StorageUploadError extends Error {}
 
 // 1. 업로드 주소 발급: POST /api/v1/albums/upload-urls
 export async function requestUploadUrls(files: File[]): Promise<UploadSlot[]> {
-  const res = await fetch('/api/v1/albums/upload-urls', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      files: files.map((file) => ({
-        contentType: resolveContentType(file),
-        size: file.size,
-      })),
-    }),
-  })
-  if (!res.ok) throw await toApiError(res)
-  const body: { uploads: UploadSlot[] } = await res.json()
+  const body = await request<{ uploads: UploadSlot[] }>(
+    '/api/v1/albums/upload-urls',
+    {
+      method: 'POST',
+      body: {
+        files: files.map((file) => ({
+          contentType: resolveContentType(file),
+          size: file.size,
+        })),
+      },
+    },
+  )
+  // 사진 수만큼 주소를 받지 못했으면 서버 응답이 잘못된 것이다
   if (body.uploads.length !== files.length) {
-    throw new ApiError(res.status, 'UNKNOWN', '')
+    throw new ApiError(500, 'UNKNOWN', '')
   }
   return body.uploads
 }
@@ -63,16 +65,11 @@ export async function putPhoto(slot: UploadSlot, file: File): Promise<void> {
 }
 
 // 3. 앨범 만들기: POST /api/v1/albums. 성공하면 상세와 같은 형태를 준다
-export async function createAlbum(
-  request: CreateAlbumRequest,
-): Promise<AlbumDetail> {
-  const res = await fetch('/api/v1/albums', {
+export function createAlbum(album: CreateAlbumRequest): Promise<AlbumDetail> {
+  return request<AlbumDetail>('/api/v1/albums', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: album,
   })
-  if (!res.ok) throw await toApiError(res)
-  return res.json()
 }
 
 // 1~2단계: 주소를 받고 사진을 모두 올린 뒤, 3단계에 넘길 요청을 돌려준다.

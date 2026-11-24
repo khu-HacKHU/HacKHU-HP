@@ -8,7 +8,7 @@ import type { AlbumDetail, AlbumSummary } from './types'
 type GalleryPageProps = {
   // 동아리원이면 true. 올리기 버튼을 보여 줄지만 정한다 (USER-STORIES 2절).
   // 화면 편의일 뿐이고 권한 검사는 서버가 한다 (frontend/AGENTS.md).
-  // 로그인 사용자의 role을 받을 수 있게 되면(#25, #26) 연결한다. 그 전까지는 숨긴다
+  // 로그인한 사용자의 역할로 App.tsx가 정해서 넘긴다. 넘기지 않으면 숨긴다
   canUpload?: boolean
 }
 

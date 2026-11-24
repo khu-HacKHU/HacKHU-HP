@@ -1,4 +1,4 @@
-import { ApiError } from './api'
+import { AccountChangedError, ApiError } from '../../lib/api'
 import { StorageUploadError } from './upload'
 
 // 올리기 실패를 화면 문구로 바꾼다.
@@ -6,6 +6,10 @@ import { StorageUploadError } from './upload'
 export function uploadErrorMessage(error: unknown): string {
   if (error instanceof StorageUploadError) {
     return '사진을 올리지 못했어요. 잠시 후 다시 시도해 주세요.'
+  }
+  if (error instanceof AccountChangedError) {
+    // 올리는 도중 다른 탭에서 계정이 바뀌어 request가 요청을 버렸다 (auth 4-2-1)
+    return '다른 탭에서 계정이 바뀌었어요. 확인한 뒤 다시 올려 주세요.'
   }
   if (!(error instanceof ApiError)) {
     return '앨범을 올리지 못했어요. 네트워크를 확인해 주세요.'
