@@ -9,6 +9,7 @@ const albums: AlbumSummary[] = [
     title: '10월 정기 세미나',
     eventDate: '2026-10-18',
     coverPhotoUrl: 'https://example.com/12.jpg',
+    photoCount: 12,
     createdAt: '2026-10-19T09:00:00Z',
   },
   {
@@ -16,6 +17,7 @@ const albums: AlbumSummary[] = [
     title: '9월 MT',
     eventDate: '2026-09-20',
     coverPhotoUrl: 'https://example.com/7.jpg',
+    photoCount: 3,
     createdAt: '2026-09-21T09:00:00Z',
   },
 ]
