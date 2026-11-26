@@ -1,0 +1,90 @@
+/*
+ * 아직 만들지 않은 화면 자리 (docs/spec/UI-DESIGN-SYSTEM.md).
+ * 값은 토큰에서만 가져온다 (frontend/AGENTS.md "스타일링").
+ */
+
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--section-y) var(--page-gutter);
+}
+
+.card {
+  max-width: 34rem;
+  padding: var(--space-8);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: var(--title-tracking);
+}
+
+.body {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-base);
+}
+
+.note {
+  margin: 0 0 var(--space-6);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+}
+
+/* 경고 안내 상자 (6-3절). 회원 전용 안내에 쓴다. */
+.warn {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg);
+  border-left: 3px solid var(--coral);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* 버튼 (6-1절). */
+.primaryButton,
+.button {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--hover-duration) var(--ease-out);
+}
+
+.primaryButton {
+  background: var(--lilac);
+  color: var(--on-lilac);
+  border: 1px solid var(--lilac);
+}
+
+.primaryButton:hover {
+  background: var(--violet);
+  border-color: var(--violet);
+}
+
+.button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+}
+
+.button:hover {
+  color: var(--lilac);
+  border-color: var(--lilac);
+}

@@ -42,13 +42,13 @@ afterEach(() => {
   clearSession()
 })
 
-test('로그인하지 않으면 로그인, 가입 버튼이 보인다', async () => {
+test('로그인하지 않으면 로그인, 가입하기 버튼이 보인다', async () => {
   // 앱이 시작할 때 refresh를 한 번 부른다. 쿠키가 없으면 401이다.
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({}, 401)))
   renderHeader()
 
   expect(await screen.findByRole('link', { name: '로그인' })).toBeDefined()
-  expect(screen.getByRole('link', { name: '가입' })).toBeDefined()
+  expect(screen.getByRole('link', { name: '가입하기' })).toBeDefined()
   expect(screen.queryByRole('button', { name: '로그아웃' })).toBeNull()
 })
 

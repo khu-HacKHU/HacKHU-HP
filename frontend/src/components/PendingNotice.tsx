@@ -13,8 +13,10 @@ export function PendingNotice() {
 
   return (
     <p className={s.notice} role="status">
-      승인 대기 중입니다. 운영진이 승인하면 동아리원이 되어 회원 전용 게시판을
-      볼 수 있습니다.
+      승인 대기 중입니다.
+      <br />
+      운영진이 승인하면 동아리원이 되어 자유게시판과 자료게시판을 볼 수
+      있습니다.
     </p>
   )
 }
