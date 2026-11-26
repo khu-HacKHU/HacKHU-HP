@@ -42,7 +42,7 @@ test('이름표가 있는 입력창 세 개가 보인다', () => {
 
 test('하나라도 비면 버튼을 누를 수 없다', () => {
   renderPage()
-  const button = screen.getByRole('button', { name: '가입' })
+  const button = screen.getByRole('button', { name: '가입하기' })
   expect(button).toHaveProperty('disabled', true)
 
   fireEvent.change(screen.getByLabelText('이메일'), {
@@ -73,7 +73,7 @@ test('가입을 마치면 승인 대기 안내가 보인다', async () => {
   renderPage()
 
   fillAll()
-  fireEvent.click(screen.getByRole('button', { name: '가입' }))
+  fireEvent.click(screen.getByRole('button', { name: '가입하기' }))
 
   expect(await screen.findByText(/운영진이 승인하면/)).toBeDefined()
   // 가입은 토큰을 주지 않는다. 로그인되지 않아야 한다 (auth 4-2-3).
@@ -88,7 +88,7 @@ test('이미 가입된 이메일이면 안내가 보인다', async () => {
   renderPage()
 
   fillAll()
-  fireEvent.click(screen.getByRole('button', { name: '가입' }))
+  fireEvent.click(screen.getByRole('button', { name: '가입하기' }))
 
   const alert = await screen.findByRole('alert')
   expect(alert.textContent).toContain('이미 가입된 이메일')
@@ -113,7 +113,7 @@ test('서버가 준 항목별 사유를 그 입력창 아래에 보여 준다', 
   renderPage()
 
   fillAll()
-  fireEvent.click(screen.getByRole('button', { name: '가입' }))
+  fireEvent.click(screen.getByRole('button', { name: '가입하기' }))
 
   expect(
     await screen.findByText('비밀번호는 12자 이상이어야 합니다.'),

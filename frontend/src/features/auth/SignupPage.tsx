@@ -41,17 +41,41 @@ export function SignupPage() {
 
   if (done) {
     return (
-      <section className={s.card}>
-        <h1 className={s.title}>가입 신청을 받았습니다</h1>
-        <p className={s.notice}>
-          운영진이 승인하면 동아리원이 됩니다. 승인 전에는 공개된 글만 볼 수
-          있습니다.
-        </p>
-        <p className={s.footer}>
-          승인을 기다리는 동안 <Link to="/login">로그인</Link>해서 상태를 볼 수
-          있습니다.
-        </p>
-      </section>
+      <div className={s.page}>
+        <section className={s.card} data-enter="">
+          <p className={s.sectionLabel}>
+            <span className={s.dot} aria-hidden="true" />
+            SIGNUP
+          </p>
+          <h1 className={s.title}>가입 신청을 받았습니다</h1>
+
+          <ol className={s.steps}>
+            <li className={s.step}>
+              <span className={s.stepNumber}>01</span>
+              <span>가입 신청</span>
+            </li>
+            <li className={`${s.step} ${s.stepNow}`}>
+              <span className={s.stepNumber}>02</span>
+              <span>운영진 승인 대기</span>
+            </li>
+            <li className={s.step}>
+              <span className={s.stepNumber}>03</span>
+              <span>동아리원</span>
+            </li>
+          </ol>
+
+          {/* 여러 문장인 서술은 문장마다 줄을 바꾼다. */}
+          <p className={s.notice}>
+            운영진이 승인하면 동아리원이 됩니다.
+            <br />
+            승인 전에는 공개된 글만 볼 수 있습니다.
+          </p>
+          <p className={s.footer}>
+            기다리는 동안 <Link to="/login">로그인</Link>해서 상태를 볼 수
+            있습니다.
+          </p>
+        </section>
+      </div>
     )
   }
 
@@ -59,57 +83,68 @@ export function SignupPage() {
   const summary = error === null ? null : summaryOf(error)
 
   return (
-    <section className={s.card}>
-      <h1 className={s.title}>가입</h1>
+    <div className={s.page}>
+      <section className={s.card} data-enter="">
+        <p className={s.sectionLabel}>
+          <span className={s.dot} aria-hidden="true" />
+          SIGNUP
+        </p>
+        <h1 className={s.title}>회원가입</h1>
+        <p className={s.lead}>
+          가입 신청 후 운영진의 승인을 거쳐 계정을 이용할 수 있습니다.
+          <br />
+          이름은 가입 확인을 위해 실명으로 입력해 주세요.
+        </p>
 
-      <form className={s.form} onSubmit={onSubmit} noValidate>
-        {summary !== null && (
-          <p className={s.alert} id={errorId} role="alert">
-            {summary}
-          </p>
-        )}
+        <form className={s.form} onSubmit={onSubmit} noValidate>
+          {summary !== null && (
+            <p className={s.alert} id={errorId} role="alert">
+              {summary}
+            </p>
+          )}
 
-        <Field
-          id={emailId}
-          label="이메일"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={setEmail}
-          reason={apiError?.reasonFor('email') ?? null}
-          describedBy={summary !== null ? errorId : undefined}
-        />
+          <Field
+            id={emailId}
+            label="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={setEmail}
+            reason={apiError?.reasonFor('email') ?? null}
+            describedBy={summary !== null ? errorId : undefined}
+          />
 
-        <Field
-          id={nameId}
-          label="이름"
-          type="text"
-          autoComplete="name"
-          value={name}
-          onChange={setName}
-          reason={apiError?.reasonFor('name') ?? null}
-          hint="1자 이상 30자 이하"
-        />
+          <Field
+            id={nameId}
+            label="이름"
+            type="text"
+            autoComplete="name"
+            value={name}
+            onChange={setName}
+            reason={apiError?.reasonFor('name') ?? null}
+            hint="1~30자"
+          />
 
-        <Field
-          id={passwordId}
-          label="비밀번호"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={setPassword}
-          reason={apiError?.reasonFor('password') ?? null}
-        />
+          <Field
+            id={passwordId}
+            label="비밀번호"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={setPassword}
+            reason={apiError?.reasonFor('password') ?? null}
+          />
 
-        <button className={s.primary} type="submit" disabled={!canSubmit}>
-          {sending ? '가입하는 중' : '가입'}
-        </button>
-      </form>
+          <button className={s.primary} type="submit" disabled={!canSubmit}>
+            {sending ? '가입하는 중' : '가입하기'}
+          </button>
+        </form>
 
-      <p className={s.footer}>
-        이미 계정이 있으면 <Link to="/login">로그인</Link>하세요.
-      </p>
-    </section>
+        <p className={s.footer}>
+          이미 계정이 있다면 <Link to="/login">로그인</Link>하세요.
+        </p>
+      </section>
+    </div>
   )
 }
 
@@ -169,7 +204,7 @@ function Field(props: FieldProps) {
 
 function summaryOf(error: Error): string {
   if (!(error instanceof ApiError)) {
-    return '연결하지 못했습니다. 잠시 후 다시 시도해주세요.'
+    return '연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'
   }
   if (error.status === 409) {
     return '이미 가입된 이메일입니다.'
@@ -177,11 +212,11 @@ function summaryOf(error: Error): string {
   if (error.status === 429) {
     const seconds = error.retryAfterSeconds
     return seconds === null
-      ? '요청이 많아 잠시 후 다시 시도해주세요.'
-      : `요청이 많습니다. ${seconds}초 뒤에 다시 시도해주세요.`
+      ? '요청이 많습니다. 잠시 후 다시 시도해 주세요.'
+      : `요청이 많습니다. ${seconds}초 뒤에 다시 시도해 주세요.`
   }
   if (error.status === 400) {
-    return '입력한 내용을 다시 확인해주세요.'
+    return '입력한 내용을 다시 확인해 주세요.'
   }
-  return '가입하지 못했습니다. 잠시 후 다시 시도해주세요.'
+  return '가입하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
