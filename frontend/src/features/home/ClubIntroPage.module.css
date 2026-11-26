@@ -1,0 +1,74 @@
+/*
+ * 동아리 소개 화면의 모양 (docs/spec/UI-DESIGN-SYSTEM.md).
+ * 값은 전부 src/styles/tokens.css의 변수로 가져온다 (frontend/AGENTS.md "스타일링").
+ */
+
+/* 페이지 최대 폭과 좌우 여백은 헤더와 맞춘다 (4절). 긴 글 본문은 measure 폭을 넘지 않는다. */
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--space-12) var(--page-gutter);
+}
+
+.title {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-xl);
+}
+
+.section {
+  max-width: var(--measure);
+  margin-bottom: var(--space-12);
+}
+
+/* 영역은 1px 선으로만 나눈다 (1절). */
+.sectionTitle {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-lg);
+}
+
+.paragraph {
+  margin: 0 0 var(--space-3);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 활동 하나는 panel 배경 카드. 그림자를 쓰지 않는다 (1절). */
+.activity {
+  padding: var(--space-4);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.activityName {
+  font-weight: 600;
+}
+
+.activityDescription {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* 링크는 본문 글자색에 밑줄, 마우스를 올리면 violet (2절). lilac은 주요 동작에만 남겨 둔다. */
+.link {
+  color: var(--ink);
+}
+
+.link:hover {
+  color: var(--violet);
+}
