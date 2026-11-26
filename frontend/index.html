@@ -3,16 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- UI-DESIGN-SYSTEM.md 3절 글꼴. 굵기는 화면에서 실제로 쓰는 것만 받는다
-         (sans 400 본문, 500 버튼, 600 제목, 700 첫 제목 / mono 400 날짜).
-         폰트 파일은 fonts.gstatic.com에서 오므로 preconnect를 두 곳 다 건다.
-         CSP를 걸 때 style-src에 fonts.googleapis.com, font-src에 fonts.gstatic.com이 필요하다 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap"
-    />
+    <!-- 글꼴은 src/main.tsx에서 번들에 넣는다 (UI-DESIGN-SYSTEM.md 3절).
+         외부 CDN을 거치지 않으므로 여기에 link를 두지 않는다 -->
     <title>HacKHU</title>
   </head>
   <body>
