@@ -28,6 +28,13 @@ gitleaks-report.*
 semgrep-report.*
 checkov-report.*
 
+# AI 도구 스킬 — 각자 설치해서 쓴다. 서드파티 코드를 레포에 벤더링하지 않는다.
+# 라이선스 표기가 없고, 자동 실행 훅이 딸려 있고, 보안 스캔 결과가 우리 코드가 아닌 것으로 덮인다
+.agents/
+skills-lock.json
+# 스킬이 만드는 빌드 산출물
+.taste-skill/
+
 # Node
 node_modules/
 dist/
