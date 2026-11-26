@@ -266,3 +266,37 @@ public Map<Long, String> findDisplayNames(Collection<Long> userIds)
 - 승인은 세션을 폐기하지 않는다. 역할을 요청마다 DB에서 읽으므로 같은 토큰으로 다음 요청부터 동아리원이 된다. ([DECISIONS.md](DECISIONS.md) A2)
 - 거절은 행을 지운다. 로그인 세션과 refresh 토큰은 CASCADE로 함께 지워져 기존 토큰이 바로 401이 된다. ([DECISIONS.md](DECISIONS.md) A7)
 - 목록은 가입 시각이 같으면 ID를 같은 방향으로 정렬해 페이지 사이에서 항목이 흔들리지 않게 한다.
+
+<br>
+
+### 3-1-7. 역할 변경과 마지막 관리자 잠금
+
+요청과 응답은 계약 문서가, 잠금과 재시도 규칙은 동시성 문서가 정한다. ([4-2-INTERACTION-CONTRACT.md](4-2-INTERACTION-CONTRACT.md) 4-2-13, [5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md) 5-2-4)
+
+| 구성 요소 | 위치 | 하는 일 |
+|---|---|---|
+| `AdminUserController` | `domain/user/controller` | `PUT /api/v1/admin/users/{userId}/role` |
+| `RoleChangeRequest` | `domain/user/dto` | 역할 변경 요청 <br> `role`을 받는 유일한 요청 DTO |
+| `UserRoleService` | `domain/user/service` | 대상을 읽고 경로를 골라 역할을 바꿈 <br> 끝난 뒤 처리 로그를 남김 |
+| `ActiveAdminLock` | `domain/user/service` | 활성 관리자 행을 모두 잠그고 대상의 상태를 돌려줌 |
+| `UserRepository.updateRoleIfCurrentIn` | `domain/user/repository` | 역할이 아직 예상한 값일 때만 바꾸는 조건부 갱신 |
+
+**처리 순서**
+
+1. 트랜잭션을 시작하고 대상을 읽는다. 없거나 탈퇴했으면 404, 승인 대기 회원이면 409, 같은 역할이면 바꾸지 않고 성공이다.
+2. 대상이 관리자면 `ActiveAdminLock.lockAndCheck`로 잠근다. 마지막 활성 관리자면 409다.
+3. 처음 읽은 역할로 고른 경로의 조건을 넣어 `updateRoleIfCurrentIn`을 실행한다.
+4. 2에서 대상이 관리자가 아니었거나 3이 0행이면 트랜잭션을 끝내고 새 트랜잭션에서 1부터 한 번만 다시 처리한다. 또 그러면 409다.
+5. 트랜잭션이 끝난 뒤 처리 로그를 남긴다. ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md) 5-3-8)
+
+**마지막 관리자 잠금을 쓰는 법**
+
+활성 관리자를 없앨 수 있는 작업은 대상을 바꾸는 쿼리와 같은 트랜잭션에서 `ActiveAdminLock.lockAndCheck(targetId)`를 먼저 부른다. 트랜잭션 밖에서 부르면 예외가 난다.
+
+| 돌려준 값 | 뜻 | 부르는 쪽이 할 일 |
+|---|---|---|
+| `OTHER_ADMIN_EXISTS` | 다른 활성 관리자가 있음 | 같은 트랜잭션에서 `role = 'ADMIN'` 조건으로 대상을 바꿈 |
+| `LAST_ADMIN` | 대상이 마지막 활성 관리자임 | 409로 끝냄 |
+| `NOT_ACTIVE_ADMIN` | 잠그고 보니 대상이 활성 관리자가 아님 | 다시 읽어 비관리자 경로로 한 번 처리함 |
+
+활성 관리자 수를 세기만 하는 조회는 행을 잠그지 않으므로 이 잠금을 대신할 수 없다.

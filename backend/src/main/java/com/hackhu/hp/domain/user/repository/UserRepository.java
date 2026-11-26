@@ -118,4 +118,44 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     """,
             nativeQuery = true)
     int deletePending(@Param("id") long id);
+
+    /**
+     * 활성 관리자 행을 {@code id} 오름차순으로 모두 잠그고 ID를 돌려준다 (5-2-4). 직접 부르지 않고 {@link
+     * com.hackhu.hp.domain.user.service.ActiveAdminLock}을 쓴다.
+     *
+     * <p>이 잠금을 잡은 트랜잭션이 끝날 때까지 다른 관리자의 강등과 탈퇴가 기다린다. 기다리는 동안 관리자가 아니게 된 행은 결과에서 빠진다.
+     */
+    @Query(
+            value =
+                    """
+                    SELECT id
+                      FROM users
+                     WHERE role = 'ADMIN'
+                       AND withdrawn_at IS NULL
+                     ORDER BY id
+                       FOR UPDATE
+                    """,
+            nativeQuery = true)
+    List<Long> lockActiveAdminIds();
+
+    /**
+     * 활성 회원의 역할이 아직 {@code expectedRoles} 중 하나일 때만 바꾼다 (5-2-4). 호출하는 쪽의 트랜잭션 안에서 부른다.
+     *
+     * <p>처음 읽은 역할로 고른 경로의 전제를 조건에 넣는다. 그 사이 대상이 관리자가 되었으면 0행이 되어 마지막 관리자 확인을 건너뛰지 않는다.
+     *
+     * @return 바뀐 행 수. 0이면 다시 읽어 맞는 경로로 처리한다
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+            """
+            update User u
+               set u.role = :newRole
+             where u.id = :id
+               and u.role in :expectedRoles
+               and u.withdrawnAt is null
+            """)
+    int updateRoleIfCurrentIn(
+            @Param("id") long id,
+            @Param("newRole") Role newRole,
+            @Param("expectedRoles") Collection<Role> expectedRoles);
 }
