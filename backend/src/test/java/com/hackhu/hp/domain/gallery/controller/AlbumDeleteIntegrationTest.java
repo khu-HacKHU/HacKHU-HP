@@ -20,6 +20,8 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.domain.user.entity.User;
+import com.hackhu.hp.domain.user.repository.UserRepository;
 import com.hackhu.hp.global.auth.Role;
 import com.hackhu.hp.global.storage.S3ObjectStore;
 import java.time.LocalDate;
@@ -44,11 +46,13 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(TestcontainersConfiguration.class)
 class AlbumDeleteIntegrationTest {
 
-    private static final long UPLOADER = 7L;
+    /** 앨범을 올린 사람. album.uploader_id에 FK가 걸려 있어 실제 users 행이 있어야 한다 (#143). */
+    private long uploader;
 
     @Autowired MockMvc mockMvc;
     @Autowired AlbumRepository albumRepository;
     @Autowired PhotoRepository photoRepository;
+    @Autowired UserRepository userRepository;
 
     @MockitoBean S3ObjectStore objectStore;
 
@@ -56,6 +60,8 @@ class AlbumDeleteIntegrationTest {
     void setUp() {
         photoRepository.deleteAllInBatch();
         albumRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        uploader = userRepository.save(User.signUp("uploader@khu.ac.kr", "올린사람", "hash")).getId();
     }
 
     @Test
@@ -64,7 +70,7 @@ class AlbumDeleteIntegrationTest {
 
         mockMvc.perform(
                         delete("/api/v1/albums/{albumId}", album.getId())
-                                .with(loginUser(UPLOADER, Role.MEMBER)))
+                                .with(loginUser(uploader, Role.MEMBER)))
                 .andExpect(status().isNoContent());
 
         assertFalse(albumRepository.existsById(album.getId()));
@@ -108,7 +114,7 @@ class AlbumDeleteIntegrationTest {
 
         mockMvc.perform(
                         delete("/api/v1/albums/{albumId}", album.getId())
-                                .with(loginUser(UPLOADER, Role.MEMBER)))
+                                .with(loginUser(uploader, Role.MEMBER)))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"));
 
@@ -156,14 +162,14 @@ class AlbumDeleteIntegrationTest {
     private int deleteStatus(long albumId) throws Exception {
         return mockMvc.perform(
                         delete("/api/v1/albums/{albumId}", albumId)
-                                .with(loginUser(UPLOADER, Role.MEMBER)))
+                                .with(loginUser(uploader, Role.MEMBER)))
                 .andReturn()
                 .getResponse()
                 .getStatus();
     }
 
     private Album saveAlbum(int photoCount) {
-        Album album = albumRepository.save(Album.create("MT", LocalDate.of(2026, 9, 1), UPLOADER));
+        Album album = albumRepository.save(Album.create("MT", LocalDate.of(2026, 9, 1), uploader));
         for (int order = 0; order < photoCount; order++) {
             photoRepository.save(
                     Photo.create(album.getId(), objectKey(album, order), (short) order));

@@ -15,6 +15,8 @@ import com.hackhu.hp.domain.gallery.entity.Album;
 import com.hackhu.hp.domain.gallery.entity.Photo;
 import com.hackhu.hp.domain.gallery.repository.AlbumRepository;
 import com.hackhu.hp.domain.gallery.repository.PhotoRepository;
+import com.hackhu.hp.domain.user.entity.User;
+import com.hackhu.hp.domain.user.repository.UserRepository;
 import com.hackhu.hp.global.auth.Role;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,11 +42,17 @@ class AlbumQueryApiTest {
     @Autowired MockMvc mockMvc;
     @Autowired AlbumRepository albumRepository;
     @Autowired PhotoRepository photoRepository;
+    @Autowired UserRepository userRepository;
+
+    /** 앨범을 올린 사람. album.uploader_id에 FK가 걸려 있어 실제 users 행이 있어야 한다 (#143). */
+    private long uploaderId;
 
     @BeforeEach
     void setUp() {
         photoRepository.deleteAllInBatch();
         albumRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        uploaderId = userRepository.save(User.signUp("uploader@khu.ac.kr", "올린사람", "hash")).getId();
     }
 
     @Test
@@ -225,7 +233,7 @@ class AlbumQueryApiTest {
 
         mockMvc.perform(
                         get("/api/v1/albums/{albumId}", album.getId())
-                                .with(loginUser(1L, Role.MEMBER)))
+                                .with(loginUser(uploaderId, Role.MEMBER)))
                 .andExpect(jsonPath("$.canDelete").value(true));
         mockMvc.perform(
                         get("/api/v1/albums/{albumId}", album.getId())
@@ -239,13 +247,13 @@ class AlbumQueryApiTest {
 
         mockMvc.perform(
                         get("/api/v1/albums/{albumId}", album.getId())
-                                .with(loginUser(2L, Role.MEMBER)))
+                                .with(loginUser(uploaderId + 1, Role.MEMBER)))
                 .andExpect(jsonPath("$.canDelete").value(false));
     }
 
     /** 사진을 일부러 역순으로 저장해서, 응답 순서가 저장 순서가 아니라 display_order 기준인지 확인한다. */
     private Album saveAlbum(String title, LocalDate eventDate, int photoCount) {
-        Album album = albumRepository.save(Album.create(title, eventDate, 1L));
+        Album album = albumRepository.save(Album.create(title, eventDate, uploaderId));
         for (int order = photoCount - 1; order >= 0; order--) {
             photoRepository.save(
                     Photo.create(album.getId(), objectKey(album, order), (short) order));
