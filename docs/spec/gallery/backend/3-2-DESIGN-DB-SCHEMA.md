@@ -16,7 +16,9 @@
 
 인덱스: `(event_date DESC)`. 목록이 항상 이 순서로 조회된다.
 
-**확정**: `users` 테이블이 아직 마이그레이션되지 않아서(인증권한팀 진행 중), 지금은 FK 없이 `uploader_id`만 둔다. 인증권한팀 마이그레이션이 끝난 뒤 `REFERENCES users(id)`로 FK만 추가하는 마이그레이션을 별도로 낸다. 번호는 그때 순서 맞춰서 정한다.
+**확정**: `uploader_id`는 `users.id`를 참조한다. `V2`에서는 `users` 테이블이 없어 FK를 걸지 못했고, `V1__create_users.sql`이 머지된 뒤 `V8__add_album_uploader_fk.sql`로 FK만 추가했다 (#143).
+
+`ON DELETE` 옵션은 두지 않는다. 탈퇴해도 `users` 행은 남고 개인정보 필드만 NULL이 되므로([auth 3-2-2](../../auth/backend/3-2-DESIGN-DB-SCHEMA.md)) 참조가 끊기지 않는다. 앨범은 올린 사람이 탈퇴해도 남는다 (USER-STORIES).
 
 <br>
 
