@@ -44,6 +44,7 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 | `GALLERY_CDN_BASE_URL` | 갤러리 사진 CloudFront 배포 주소 (`https://...`) |
 | `GALLERY_CDN_KEY_PAIR_ID` | CloudFront 공개 키 ID |
 | `GALLERY_CDN_PRIVATE_KEY` | CloudFront 서명용 RSA 개인 키 (PKCS#8 PEM) |
+| `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_NAME`, `INITIAL_ADMIN_PASSWORD` | 처음 관리자의 이메일, 이름, 초기 비밀번호. 활성 관리자가 0명일 때만 이 값으로 관리자를 만든다. 관리자가 없는데 값이 없거나, 값이 일부만 있거나 가입 규칙에 맞지 않거나, 같은 이메일의 계정이 이미 있으면 서버가 시작하지 않는다. 관리자가 첫 로그인에서 비밀번호를 바꾼 뒤 지운다 ([5-1-6](../docs/spec/auth/backend/5-1-QUALITY-SECURITY.md)) |
 | `S3_BUCKET` | 사진을 올리는 S3 버킷 이름 |
 | `AWS_REGION` | S3 리전 (기본값 `ap-northeast-2`) |
 
@@ -51,4 +52,6 @@ CI도 `./gradlew build`를 그대로 돌린다. 로컬에서 통과하면 CI도 
 
 `local` 프로파일은 `JWT_SECRET` 없이도 실행된다. 실행할 때마다 무작위 서명 키를 만든다.
 
-값은 GitHub Secrets 또는 AWS 파라미터 스토어에만 둔다.
+`local` 프로파일은 `INITIAL_ADMIN_*` 없이도 실행된다. 활성 관리자가 없으면 경고만 남긴다. 로컬에서 관리자가 필요하면 세 값을 환경변수로 넣고 실행한다.
+
+시크릿 값은 GitHub Secrets(CI)나 AWS Secrets Manager(운영)에만 둔다. 어느 값이 시크릿인지는 [배포 문서](../docs/spec/DEPLOYMENT.md) 4절에 있다.

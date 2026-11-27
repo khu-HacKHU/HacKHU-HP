@@ -122,6 +122,7 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 | `SignupController` | `domain/user/controller` | `POST /api/v1/auth/signup` |
 | `UserErrorCode` | `domain/user/exception` | 회원 에러 코드 ([5-3-QUALITY-ERROR-HANDLING.md](5-3-QUALITY-ERROR-HANDLING.md)) |
 | `PasswordEncoderConfig` | `global/security` | bcrypt cost 12의 `PasswordEncoder` 빈 |
+| `InitialAdminService`, `InitialAdminProperties` | `domain/user/service` | 처음 관리자 생성 <br> 서버가 요청을 받기 전에 활성 관리자가 0명이면 `INITIAL_ADMIN_*` 값으로 `User.initialAdmin`을 저장함 |
 
 - 가입 API의 경로는 `/api/v1/auth` 아래지만 회원을 만드는 일이라 `domain/user`에 둔다. 로그인과 토큰은 `domain/auth`에 둔다. ([backend/AGENTS.md](../../../../backend/AGENTS.md))
 - `Role` enum은 3-1-1의 `global/auth`에 있다. `User.role`도 이 enum을 쓴다.
@@ -137,6 +138,15 @@ boolean member = user != null && user.hasRoleAtLeast(Role.MEMBER);
 6. `201`, `Location: /api/v1/users/me`와 가입한 회원을 준다. 토큰은 주지 않는다.
 
 `SignupService.signup`은 트랜잭션으로 묶지 않는다. bcrypt 계산(약 0.3초) 동안 DB 연결을 잡지 않으려는 것이다. 쓰기는 행 추가 하나라 따로 묶을 것이 없다. ([DECISIONS.md](DECISIONS.md) A15)
+
+**처음 관리자 생성**
+
+규칙과 환경변수는 보안 문서가 정한다. 여기는 처리 순서만 적는다. ([5-1-QUALITY-SECURITY.md](5-1-QUALITY-SECURITY.md) 5-1-6)
+
+1. `InitialAdminService`는 `SmartInitializingSingleton`이다. 모든 빈을 만든 뒤(Flyway 마이그레이션이 끝난 뒤), 웹 서버가 요청을 받기 전에 돈다. 여기서 예외가 나면 서버가 시작하지 않는다.
+2. 한 트랜잭션에서 `pg_advisory_xact_lock(InitialAdminService.LOCK_KEY)`를 잡고 활성 관리자 수를 센다. 1명 이상이면 끝낸다. ([5-2-QUALITY-CONCURRENCY.md](5-2-QUALITY-CONCURRENCY.md) 5-2-2)
+3. 값을 `SignupRequest`로 만들어 가입과 같은 정규화와 Bean Validation을 거친다. 규칙이 따로 생기지 않게 하려는 것이다.
+4. 같은 이메일의 활성 계정이 있으면 멈춘다. 없으면 bcrypt로 해시해 `User.initialAdmin`을 저장한다. bcrypt를 잠금 안에서 계산하지만 서버 시작 때 한 번뿐이다.
 
 **시각 컬럼**
 

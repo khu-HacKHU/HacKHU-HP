@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /** 이 이메일을 쓰는 활성 계정. 탈퇴한 계정은 email이 NULL이라 나오지 않는다. */
     Optional<User> findByEmail(String email);
 
+    /** 이 역할의 활성 계정 수. 탈퇴한 계정은 세지 않는다. */
+    long countByRoleAndWithdrawnAtIsNull(Role role);
+
     /**
      * 화면에 보여 줄 회원 이름을 한 번에 읽는다 ({@link
      * com.hackhu.hp.domain.user.service.UserQueryService#findDisplayNames}).
